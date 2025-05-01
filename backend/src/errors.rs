@@ -1,7 +1,7 @@
 use std::fmt;
 pub enum ParserError {
     InvalidInput(String),
-    UnexpectedToken(String),
+    UnexpectedToken(String), // currently not used
 }
 
 impl fmt::Display for ParserError {
