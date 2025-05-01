@@ -1,10 +1,16 @@
-use backend::parser::parse_blocks_from_file;
-use std::fs::write;
+use backend::{parser::parse_blocks_from_file, tangle::tangle_blocks};
+use std::{env, fs::write};
 
-const INPUT_FILE: &str = "input_file.txt";
-const OUTPUT_FILE: &str = "output_file.txt";
+const INPUT_FILE: &str = "./test_data/test_file.md";
+const OUTPUT_FILE: &str = "./test_data/output_file.rs";
 
 fn main() {
+    match env::current_dir() {
+        Ok(path) => println!("Current directory: {}", path.display()),
+        Err(e) => eprintln!("Error getting current dir: {}", e),
+    }
+
+    // Parse blocks from the input file
     let blocks = match parse_blocks_from_file(INPUT_FILE) {
         Ok(blocks) => blocks,
         Err(e) => {
@@ -13,11 +19,10 @@ fn main() {
         }
     };
 
-    let output = blocks
-        .iter()
-        .map(|block| format!("{}\n", block))
-        .collect::<String>();
+    // Tangle blocks
+    let output = tangle_blocks(blocks);
 
+    // Write the output to a file
     match write(OUTPUT_FILE, output) {
         Ok(_) => println!("Blocks written to {}", OUTPUT_FILE),
         Err(e) => println!("Error writing to file: {}", e),
