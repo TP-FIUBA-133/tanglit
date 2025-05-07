@@ -35,6 +35,21 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_input_block_and_text() {
+        let input = r#"
+        This is some text.
+        ```python
+        print("Hello, world!")
+        ```
+        More text here.
+        "#;
+
+        let blocks = parse_input(input).unwrap();
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].trim(), r#"print("Hello, world!")"#);
+    }
+
+    #[test]
     fn test_parse_input_malformed_blocks() {
         let input = r#"
         ```python

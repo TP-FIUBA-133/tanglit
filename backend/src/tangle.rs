@@ -13,8 +13,8 @@ mod tests {
     #[test]
     fn test_tangle_blocks() {
         let blocks = vec![
-            "print('Hello, world!')".to_string(),
-            "console.log('Hello, world!')".to_string(),
+            "print('Hello, world!')\n".to_string(),
+            "console.log('Hello, world!')\n".to_string(),
         ];
         let tangle = tangle_blocks(blocks);
         assert_eq!(
@@ -32,7 +32,7 @@ mod tests {
 
     #[test]
     fn test_tangle_blocks_single() {
-        let blocks = vec!["print('Hello, world!')".to_string()];
+        let blocks = vec!["print('Hello, world!')\n".to_string()];
         let tangle = tangle_blocks(blocks);
         assert_eq!(tangle, "print('Hello, world!')\n");
     }
