@@ -12,7 +12,7 @@ async function greet() {
 </script>
 
 <template>
-  <main class=         "contain          eraaa"                                   >
+  <main class=                  "       contain          eraaa"                                   >
     <h1>Welcome to Tauri + Vue</h1>
 
     <div class="row">
