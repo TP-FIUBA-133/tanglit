@@ -27,5 +27,5 @@ jobs:
         working-directory: ./frontend
 
       - name: Check code format
-        run: npm run prettier --check src
+        run: npx prettier --check src
         working-directory: ./frontend
