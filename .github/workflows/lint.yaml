@@ -3,8 +3,7 @@ name: Lint Vue Project
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  pull_request:  # Triggers on all PRs, regardless of target branch
 
 jobs:
   lint:
