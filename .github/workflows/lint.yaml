@@ -25,3 +25,7 @@ jobs:
       - name: Run linter
         run: npm run lint
         working-directory: ./frontend
+
+      - name: Check code format
+        run: npm run prettier --check src
+        working-directory: ./frontend
