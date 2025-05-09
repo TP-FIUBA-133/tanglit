@@ -6,8 +6,8 @@ A literate‑programming toolkit that unifies docs, executes code, generates sli
 ## Backend Development
 
 ### Milestone 1: Basic Code Export 🔨
-- [ ] Initialize Rust project
 - [ ] Implement block parsing and concatenation
+- [ ] Add some test to the CI.
 - [ ] Integrate Markdown parser
 - [ ] Build basic CLI interface (using [clap](https://github.com/clap-rs/clap))
 
