@@ -2,6 +2,7 @@ use crate::errors::ParserError;
 use regex::Regex;
 
 const BLOCK_REGEX: &str = r"```(?:\w*\n)?([^`]*)```";
+const TAG_REGEX: &str = r"@tanglit-block-def:(\w+)";
 
 // Currently, blocks are strings, but they should later be a struct
 pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserError> {
@@ -37,6 +38,26 @@ fn get_blocks(mdast: markdown::mdast::Node) -> Result<Vec<String>, ParserError> 
         // blocks.extend(get_blocks(child.clone())?);
     }
     Ok(blocks)
+}
+
+fn get_block_tags(blocks: Vec<String>) -> Result<Vec<(String, String)>, ParserError> {
+    let mut block_with_tags = Vec::new();
+    let re = Regex::new(TAG_REGEX).unwrap();
+
+    for (index, block) in blocks.iter().enumerate() {
+        if let Some(caps) = re.captures(block) {
+            if let Some(tag) = caps.get(1) {
+                // Remove the matched tag line from the block
+                let cleaned_block = re.replace(block, "").trim_start_matches('\n').to_string();
+                block_with_tags.push((tag.as_str().to_string(), cleaned_block));
+                continue;
+            }
+        }
+        // Fallback to auto-generated tag if no match
+        block_with_tags.push((format!("block_{}", index), block.clone()));
+    }
+
+    Ok(block_with_tags)
 }
 
 #[cfg(test)]
@@ -117,5 +138,33 @@ fn main() {
 }"#
             .trim()
         );
+    }
+
+    #[test]
+    fn test_parse_input_block_with_macro() {
+        let input = r#"
+        ```python
+        @tanglit-block-def:hello_world
+        print("Hello, world!")
+        ```
+        "#;
+
+        let blocks = parse_markdown(input).unwrap();
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(
+            blocks[0].trim(),
+            r#"@tanglit-block-def:hello_world
+print("Hello, world!")"#
+        );
+        let block_tags = get_block_tags(vec![
+            "@tanglit-block-def:hello_world\nprint('Hello, world!')".to_string(),
+            "print('Hello, world!')".to_string(),
+        ])
+        .unwrap();
+        assert_eq!(block_tags.len(), 2);
+        assert_eq!(block_tags[0].0, "hello_world");
+        assert_eq!(block_tags[0].1, "print('Hello, world!')");
+        assert_eq!(block_tags[1].0, "block_1");
+        assert_eq!(block_tags[1].1, "print('Hello, world!')");
     }
 }
