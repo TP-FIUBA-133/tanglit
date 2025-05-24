@@ -5,7 +5,7 @@ test:
 	cargo test
 
 format:
-	cargo fmt --all -- --check
+	cargo fmt
 
 run:
 	cargo run
