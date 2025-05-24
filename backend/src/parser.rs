@@ -1,7 +1,4 @@
 use crate::errors::ParserError;
-use regex::Regex;
-
-const BLOCK_REGEX: &str = r"```(?:\w*\n)?([^`]*)```";
 
 // Currently, blocks are strings, but they should later be a struct
 pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserError> {
@@ -9,14 +6,6 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserErro
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
 
     parse_markdown(input.as_str())
-}
-
-fn parse_input(input: &str) -> Result<Vec<String>, ParserError> {
-    let re = Regex::new(BLOCK_REGEX).unwrap();
-    Ok(re
-        .captures_iter(input)
-        .map(|cap| cap[1].to_string())
-        .collect())
 }
 
 fn parse_markdown(input: &str) -> Result<Vec<String>, ParserError> {
