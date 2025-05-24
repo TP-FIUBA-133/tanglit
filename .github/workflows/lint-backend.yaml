@@ -1,4 +1,4 @@
-name: "Lint Backend"
+name: "Backend"
 
 on:
   pull_request:
