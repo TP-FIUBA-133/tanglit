@@ -1,4 +1,5 @@
 use crate::errors::ParserError;
+use markdown::{ParseOptions, mdast::Node};
 
 // Currently, blocks are strings, but they should later be a struct
 pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserError> {
@@ -9,20 +10,21 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserErro
 }
 
 fn parse_markdown(input: &str) -> Result<Vec<String>, ParserError> {
-    // TODO: remove unwrap
-    let mdast = markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap();
+    let mdast = markdown::to_mdast(input, &ParseOptions::mdx())
+        .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))?;
     get_blocks(mdast)
 }
 
-fn get_blocks(mdast: markdown::mdast::Node) -> Result<Vec<String>, ParserError> {
+fn get_blocks(mdast: Node) -> Result<Vec<String>, ParserError> {
     let mut blocks = Vec::new();
     let Some(children) = mdast.children() else {
         return Ok(blocks);
     };
     for child in children {
-        if let markdown::mdast::Node::Code(code_block) = child {
+        if let Node::Code(code_block) = child {
             blocks.push(code_block.value.clone());
         }
+        // Not sure if nested blocks are supported
         // blocks.extend(get_blocks(child.clone())?);
     }
     Ok(blocks)
