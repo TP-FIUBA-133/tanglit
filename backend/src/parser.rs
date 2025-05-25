@@ -1,21 +1,25 @@
 use crate::errors::ParserError;
 use markdown::{ParseOptions, mdast::Node};
 
+// TODO: We should read the file outside of this function
 // Currently, blocks are strings, but they should later be a struct
 pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserError> {
+    // Read the file content
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
 
-    parse_markdown(input.as_str())
+    let mdast = input_to_mdast(&input)?;
+
+    // Extract code blocks from the tree
+    get_blocks_from_mdast(mdast)
 }
 
-fn parse_markdown(input: &str) -> Result<Vec<String>, ParserError> {
-    let mdast = markdown::to_mdast(input, &ParseOptions::mdx())
-        .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))?;
-    get_blocks(mdast)
+fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
+    markdown::to_mdast(input, &ParseOptions::mdx())
+        .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
-fn get_blocks(mdast: Node) -> Result<Vec<String>, ParserError> {
+fn get_blocks_from_mdast(mdast: Node) -> Result<Vec<String>, ParserError> {
     let mut blocks = Vec::new();
     let Some(children) = mdast.children() else {
         return Ok(blocks);
@@ -41,7 +45,9 @@ mod tests {
         No code blocks here.
         "#;
 
-        let blocks = parse_markdown(input).unwrap();
+        let mdast = input_to_mdast(&input).unwrap();
+        let blocks = get_blocks_from_mdast(mdast).unwrap();
+
         assert!(blocks.is_empty());
     }
 
@@ -55,7 +61,9 @@ mod tests {
         More text here.
         "#;
 
-        let blocks = parse_markdown(input).unwrap();
+        let mdast = input_to_mdast(&input).unwrap();
+        let blocks = get_blocks_from_mdast(mdast).unwrap();
+
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].trim(), r#"print("Hello, world!")"#);
     }
@@ -71,8 +79,9 @@ mod tests {
             println!("Hello, world!");
         "#; // Missing closing backticks
 
-        let blocks = parse_markdown(input).unwrap();
-        println!("{:?}", blocks);
+        let mdast = input_to_mdast(&input).unwrap();
+        let blocks = get_blocks_from_mdast(mdast).unwrap();
+
         assert_eq!(blocks.len(), 2);
         assert_eq!(blocks[0].trim(), r#"print("Hello, world!")"#);
         assert_eq!(
@@ -97,7 +106,9 @@ fn main() {
 }
 ```"#;
 
-        let blocks = parse_markdown(input).unwrap();
+        let mdast = input_to_mdast(&input).unwrap();
+        let blocks = get_blocks_from_mdast(mdast).unwrap();
+
         assert_eq!(blocks.len(), 3);
         assert_eq!(blocks[0], r#"print("Block 1")"#);
         assert_eq!(blocks[1], r#"console.log("Block 2");"#);
