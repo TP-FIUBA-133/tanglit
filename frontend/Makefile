@@ -8,8 +8,5 @@ clean: init
 	cd src-tauri
 	cargo clean
 
-build-debug: init
-	npm run tauri build -- --debug
-
-build-release: init
-	npm run tauri build --release
+build: init
+	npm run tauri build
