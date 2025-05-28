@@ -1,0 +1,51 @@
+name: "Backend"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Rustup toolchain install
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Run cargo check
+        working-directory: ./backend
+        run: cargo check
+
+      - name: Run cargo clippy
+        working-directory: ./backend
+        run: make lint
+      - name: Run cargo fmt
+        working-directory: ./backend
+        run: cargo fmt -- --check
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Rustup toolchain install
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        working-directory: ./backend
+        run: make test
