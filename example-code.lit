@@ -1,0 +1,62 @@
+```python
+print("Bloque de codigo normal")
+```
+
+```python @macro_ejemplo
+print("Esto es una macro que se llama macro_ejemplo")
+```
+
+```python @macro_con_parametros(param1, param2)
+print("Esto es una macro con 2 parametros @{param1} y @{param2}")
+```
+
+```python
+# Este bloque usa las dos macros de arriba
+@macro_ejemplo
+@macro_con_parametros("foo", "bar")
+```
+
+```python archivo_sumar.py
+def sumar(a, b):
+  return a + b
+```
+
+Por ejemplo:
+```python
+sumar(3, 6)
+```%
+
+
+resultado de tangle:
+-----------------------------------------------------
+print("Bloque de codigo normal")
+print("Esto es una macro que se llama macro_ejemplo")
+print("Esto es una macro con 2 parametros foo y bar")
+def sumar(a, b):
+  return a + b
+-----------------------------------------------------
+
+main() {
+   sumar(3, 6)
+}
+
+
+
+```c
+int sumar(int a, int b) {
+  return a + b;
+}
+``` 
+
+```
+sumar(x)
+```<<< ejecutable
+
+int sumar(int a, int b) {
+  return a + b;
+}
+
+int main () {
+  // bloque que quiero ejecutar
+}
+
