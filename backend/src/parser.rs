@@ -1,19 +1,36 @@
+pub mod code_block;
+
 use crate::errors::ParserError;
-use markdown::{ParseOptions, mdast::Node};
+use code_block::CodeBlock;
+use markdown::{
+    ParseOptions,
+    mdast::{Code, Node},
+};
 
 // TODO: We should read the file outside of this function
-const TAG_REGEX: &str = r"@tanglit-block-def:(\w+)";
-
 // Currently, blocks are strings, but they should later be a struct
-pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserError> {
+pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserError> {
     // Read the file content
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
 
+    parse_input(input)
+}
+
+pub fn parse_input(input: String) -> Result<Vec<CodeBlock>, ParserError> {
+    // Parse the input to an MDast tree
     let mdast = input_to_mdast(&input)?;
 
-    // Extract code blocks from the tree
-    get_blocks_from_mdast(mdast)
+    // Extract code nodes from the tree
+    let code_nodes = get_code_nodes_from_mdast(mdast)?;
+
+    // Convert code nodes to CodeBlocks
+    let code_blocks = code_nodes
+        .into_iter()
+        .map(CodeBlock::from_code_node)
+        .collect();
+
+    Ok(code_blocks)
 }
 
 fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
@@ -21,39 +38,19 @@ fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
-fn get_blocks_from_mdast(mdast: Node) -> Result<Vec<String>, ParserError> {
-    let mut blocks = Vec::new();
+fn get_code_nodes_from_mdast(mdast: Node) -> Result<Vec<Code>, ParserError> {
+    let mut code_nodes = Vec::new();
     let Some(children) = mdast.children() else {
-        return Ok(blocks);
+        return Ok(code_nodes);
     };
     for child in children {
         if let Node::Code(code_block) = child {
-            blocks.push(code_block.value.clone());
+            code_nodes.push(code_block.clone());
         }
-        // Not sure if nested blocks are supported
-        // blocks.extend(get_blocks(child.clone())?);
+        // Not sure if nested code_nodes are supported
+        // code_nodes.extend(get_code_nodes_from_mdast(child.clone())?);
     }
-    Ok(blocks)
-}
-
-fn get_block_tags(blocks: Vec<String>) -> Result<Vec<(String, String)>, ParserError> {
-    let mut block_with_tags = Vec::new();
-    let re = Regex::new(TAG_REGEX).unwrap();
-
-    for (index, block) in blocks.iter().enumerate() {
-        if let Some(caps) = re.captures(block) {
-            if let Some(tag) = caps.get(1) {
-                // Remove the matched tag line from the block
-                let cleaned_block = re.replace(block, "").trim_start_matches('\n').to_string();
-                block_with_tags.push((tag.as_str().to_string(), cleaned_block));
-                continue;
-            }
-        }
-        // Fallback to auto-generated tag if no match
-        block_with_tags.push((format!("block_{}", index), block.clone()));
-    }
-
-    Ok(block_with_tags)
+    Ok(code_nodes)
 }
 
 #[cfg(test)]
@@ -67,8 +64,7 @@ mod tests {
         No code blocks here.
         "#;
 
-        let mdast = input_to_mdast(&input).unwrap();
-        let blocks = get_blocks_from_mdast(mdast).unwrap();
+        let blocks = parse_input(input.to_string()).unwrap();
 
         assert!(blocks.is_empty());
     }
@@ -82,12 +78,10 @@ mod tests {
         ```
         More text here.
         "#;
-
-        let mdast = input_to_mdast(&input).unwrap();
-        let blocks = get_blocks_from_mdast(mdast).unwrap();
+        let blocks = parse_input(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].trim(), r#"print("Hello, world!")"#);
+        assert_eq!(blocks[0].code.trim(), r#"print("Hello, world!")"#);
     }
 
     #[test]
@@ -101,13 +95,12 @@ mod tests {
             println!("Hello, world!");
         "#; // Missing closing backticks
 
-        let mdast = input_to_mdast(&input).unwrap();
-        let blocks = get_blocks_from_mdast(mdast).unwrap();
+        let blocks = parse_input(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 2);
-        assert_eq!(blocks[0].trim(), r#"print("Hello, world!")"#);
+        assert_eq!(blocks[0].code.trim(), r#"print("Hello, world!")"#);
         assert_eq!(
-            blocks[1].trim(),
+            blocks[1].code.trim(),
             r#"fn main() {
     println!("Hello, world!");"#
         );
@@ -128,46 +121,17 @@ fn main() {
 }
 ```"#;
 
-        let mdast = input_to_mdast(&input).unwrap();
-        let blocks = get_blocks_from_mdast(mdast).unwrap();
+        let blocks = parse_input(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 3);
-        assert_eq!(blocks[0], r#"print("Block 1")"#);
-        assert_eq!(blocks[1], r#"console.log("Block 2");"#);
+        assert_eq!(blocks[0].code, r#"print("Block 1")"#);
+        assert_eq!(blocks[1].code, r#"console.log("Block 2");"#);
         assert_eq!(
-            blocks[2],
+            blocks[2].code,
             r#"fn main() {
     println!("Block 3");
 }"#
             .trim()
         );
-    }
-
-    #[test]
-    fn test_parse_input_block_with_macro() {
-        let input = r#"
-        ```python
-        @tanglit-block-def:hello_world
-        print("Hello, world!")
-        ```
-        "#;
-
-        let blocks = parse_markdown(input).unwrap();
-        assert_eq!(blocks.len(), 1);
-        assert_eq!(
-            blocks[0].trim(),
-            r#"@tanglit-block-def:hello_world
-print("Hello, world!")"#
-        );
-        let block_tags = get_block_tags(vec![
-            "@tanglit-block-def:hello_world\nprint('Hello, world!')".to_string(),
-            "print('Hello, world!')".to_string(),
-        ])
-        .unwrap();
-        assert_eq!(block_tags.len(), 2);
-        assert_eq!(block_tags[0].0, "hello_world");
-        assert_eq!(block_tags[0].1, "print('Hello, world!')");
-        assert_eq!(block_tags[1].0, "block_1");
-        assert_eq!(block_tags[1].1, "print('Hello, world!')");
     }
 }
