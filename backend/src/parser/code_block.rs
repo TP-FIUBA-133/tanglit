@@ -3,6 +3,7 @@ use regex::Regex;
 
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
+#[derive(Debug, PartialEq)]
 pub enum Language {
     Unknown,
     Python,
