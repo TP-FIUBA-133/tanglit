@@ -12,7 +12,7 @@ pub enum Language {
 }
 
 impl Language {
-    pub fn from_str(lang: &str) -> Self {
+    pub fn parse_language(lang: &str) -> Self {
         match lang {
             "python" => Language::Python,
             "rust" => Language::Rust,
@@ -49,7 +49,7 @@ impl CodeBlock {
     }
 
     pub fn from_code_node(code_block: Code) -> Self {
-        let language = Language::from_str(&code_block.lang.unwrap_or_default());
+        let language = Language::parse_language(&code_block.lang.unwrap_or_default());
         let (tag, imports) = Self::parse_metadata(&code_block.meta.unwrap_or_default());
         Self::new(language, code_block.value, tag, imports)
     }
@@ -75,7 +75,6 @@ impl CodeBlock {
 
         // Take the first word that is not part of `use=` as the tag
         let tag = metadata_without_use
-            .trim()
             .split_whitespace()
             .next()
             .map(|s| s.to_string());
