@@ -2,7 +2,7 @@ pub fn tangle_blocks(blocks: Vec<String>) -> String {
     let mut tangle = String::new();
     for block in blocks {
         tangle.push_str(&block);
-        tangle.push_str(&"\n");
+        tangle.push('\n');
     }
     tangle
 }
