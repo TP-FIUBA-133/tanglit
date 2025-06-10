@@ -14,7 +14,7 @@ pub fn tangle_block(block: String, blocks: &[CodeBlock]) -> Result<String, Tangl
     let code_block = blocks
         .iter()
         .find(|b| b.tag.clone().unwrap_or_default() == block)
-        .ok_or_else(|| TangleError::BlockNotFound(block))?;
+        .ok_or(TangleError::BlockNotFound(block))?;
 
     // Search imported blocks
     let imported_blocks: Vec<CodeBlock> = blocks
