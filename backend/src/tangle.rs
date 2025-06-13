@@ -36,14 +36,19 @@ pub fn tangle_block(block: String, blocks: &[CodeBlock]) -> Result<String, Tangl
 
     tangle.push('\n');
 
-    // Add the main block code
-    tangle.push_str("int main() {\n"); // TODO: this should be configurable
-    tangle.push_str(&code_block.code); // TODO: handle indentation
-    tangle.push('\n');
-    tangle.push_str("\treturn 0;");
-    tangle.push_str("\n}\n");
+    add_main_code_block(code_block, &mut tangle);
 
     Ok(tangle)
+}
+
+// TODO: this should use a template depending on the language
+// TODO: handle indentation
+pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
+    tangle.push_str("int main() {\n");
+    tangle.push_str(&code_block.code);
+    tangle.push('\n');
+    tangle.push_str("    return 0;");
+    tangle.push_str("\n}\n");
 }
 
 #[cfg(test)]
