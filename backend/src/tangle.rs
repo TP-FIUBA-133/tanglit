@@ -9,12 +9,12 @@ pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     tangle
 }
 
-pub fn tangle_block(block: String, blocks: &[CodeBlock]) -> Result<String, TangleError> {
+pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
     // Search block
     let code_block = blocks
         .iter()
         .find(|b| b.tag.clone().unwrap_or_default() == block)
-        .ok_or(TangleError::BlockNotFound(block))?;
+        .ok_or(TangleError::BlockNotFound(block.into()))?;
 
     // Search imported blocks
     let imported_blocks: Vec<CodeBlock> = blocks
@@ -32,9 +32,9 @@ pub fn tangle_block(block: String, blocks: &[CodeBlock]) -> Result<String, Tangl
     for block in imported_blocks {
         tangle.push_str(&block.code);
         tangle.push('\n');
+        // TODO: lines between blocks should be configurable
+        tangle.push('\n');
     }
-
-    tangle.push('\n');
 
     add_main_code_block(code_block, &mut tangle);
 
