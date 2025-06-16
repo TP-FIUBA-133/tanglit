@@ -2,17 +2,21 @@ use super::*;
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::input_to_mdast;
     use super::*;
+    use crate::parser::input_to_mdast;
 
-    #[test]
-    fn test_empty_markdown_returns_empty_slides() {
-        let input = r#""#;
+    fn check_returned_slides(input: &str, expected_slides: Vec<Slide>) {
         let input_str = input.trim();
         let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
         let slides = get_slides(&root_ast, input_str);
-        assert_eq!(slides, Vec::<Slide>::new());
+        assert_eq!(slides, expected_slides);
     }
+
+    #[test]
+    fn test_empty_markdown_returns_empty_slides() {
+        check_returned_slides(r#""#, vec![]);
+    }
+
     #[test]
     fn test_single_slide_no_title() {
         let input = r#"
@@ -24,15 +28,15 @@ Cras lacinia non justo at ornare.
 - Proin imperdiet nulla vel hendrerit aliquet.
 - Fusce id tellus vitae lectus ornare venenatis consectetur quis nisl. 
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slide = Slide {
-            title: None,
-            content: vec![0, 1], // 0: paragraph node, 1: list node
-            start_line: 1,
-        };
-        assert_eq!(slides, vec![expected_slide]);
+
+        check_returned_slides(
+            input,
+            vec![Slide {
+                title: None,
+                content: vec![0, 1], // 0: paragraph node, 1: list node
+                start_line: 1,
+            }],
+        );
     }
 
     #[test]
@@ -47,15 +51,15 @@ Cras lacinia non justo at ornare.
 - Proin imperdiet nulla vel hendrerit aliquet.
 - Fusce id tellus vitae lectus ornare venenatis consectetur quis nisl. 
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slide = Slide {
-            title: Some(0),      // 0: title node
-            content: vec![1, 2], // 1: paragraph node, 2: list node
-            start_line: 1,
-        };
-        assert_eq!(slides, vec![expected_slide]);
+
+        check_returned_slides(
+            input,
+            vec![Slide {
+                title: Some(0),      // 0: title node
+                content: vec![1, 2], // 1: paragraph node, 2: list node
+                start_line: 1,
+            }],
+        );
     }
 
     #[test]
@@ -71,15 +75,14 @@ Cras lacinia non justo at ornare.
 - Proin imperdiet nulla vel hendrerit aliquet.
 - Fusce id tellus vitae lectus ornare venenatis consectetur quis nisl. 
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slide = Slide {
-            title: None,         // no title (just like starting slide with --- ---)
-            content: vec![1, 2], // 1: paragraph node, 2: list node
-            start_line: 1,
-        };
-        assert_eq!(slides, vec![expected_slide]);
+        check_returned_slides(
+            input,
+            vec![Slide {
+                title: None,         // no title (just like starting slide with --- ---)
+                content: vec![1, 2], // 1: paragraph node, 2: list node
+                start_line: 1,
+            }],
+        );
     }
 
     #[test]
@@ -99,27 +102,27 @@ Interdum et malesuada fames ac ante ipsum primis in faucibus.
 Fusce ultricies magna eget ultrices fringilla. Nullam egestas, metus 
 sed accumsan varius, odio metus porta ante, id feugiat erat tortor eget lacus.
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slides = vec![
-            Slide {
-                title: Some(0),   // 0: title node
-                content: vec![1], // 1: paragraph node
-                start_line: 1,
-            },
-            Slide {
-                title: Some(2),   // 2: title node
-                content: vec![3], // 3: list node
-                start_line: 5,
-            },
-            Slide {
-                title: Some(4),   // 4: title node
-                content: vec![5], // 5: paragraph node
-                start_line: 10,
-            },
-        ];
-        assert_eq!(slides, expected_slides);
+
+        check_returned_slides(
+            input,
+            vec![
+                Slide {
+                    title: Some(0),   // 0: title node
+                    content: vec![1], // 1: paragraph node
+                    start_line: 1,
+                },
+                Slide {
+                    title: Some(2),   // 2: title node
+                    content: vec![3], // 3: list node
+                    start_line: 5,
+                },
+                Slide {
+                    title: Some(4),   // 4: title node
+                    content: vec![5], // 5: paragraph node
+                    start_line: 10,
+                },
+            ],
+        );
     }
 
     #[test]
@@ -137,22 +140,22 @@ Cras lacinia non justo at ornare.
 - Proin imperdiet nulla vel hendrerit aliquet.
 - Fusce id tellus vitae lectus ornare venenatis consectetur quis nisl.
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slides = vec![
-            Slide {
-                title: Some(0),   // 0: title node
-                content: vec![1], // 1: paragraph node
-                start_line: 1,
-            },
-            Slide {
-                title: Some(0),   // 0: title node (same as previous slide)
-                content: vec![3], // 3: list node
-                start_line: 6,
-            },
-        ];
-        assert_eq!(slides, expected_slides);
+
+        check_returned_slides(
+            input,
+            vec![
+                Slide {
+                    title: Some(0),   // 0: title node
+                    content: vec![1], // 1: paragraph node
+                    start_line: 1,
+                },
+                Slide {
+                    title: Some(0),   // 0: title node (same as previous slide)
+                    content: vec![3], // 3: list node
+                    start_line: 6,
+                },
+            ],
+        );
     }
 
     #[test]
@@ -176,27 +179,26 @@ Interdum et malesuada fames ac ante ipsum primis in faucibus.
 Fusce ultricies magna eget ultrices fringilla. Nullam egestas, metus 
 sed accumsan varius, odio metus porta ante, id feugiat erat tortor eget lacus.
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slides = vec![
-            Slide {
-                title: Some(0),   // 0: title node
-                content: vec![1], // 1: paragraph node
-                start_line: 1,
-            },
-            Slide {
-                title: Some(0),   // 0: title node (same as previous slide)
-                content: vec![3], // 3: list node
-                start_line: 6,
-            },
-            Slide {
-                title: Some(0),   // 0: title node (same as previous slide)
-                content: vec![5], // 3: list node
-                start_line: 13,
-            },
-        ];
-        assert_eq!(slides, expected_slides);
+        check_returned_slides(
+            input,
+            vec![
+                Slide {
+                    title: Some(0),   // 0: title node
+                    content: vec![1], // 1: paragraph node
+                    start_line: 1,
+                },
+                Slide {
+                    title: Some(0),   // 0: title node (same as previous slide)
+                    content: vec![3], // 3: list node
+                    start_line: 6,
+                },
+                Slide {
+                    title: Some(0),   // 0: title node (same as previous slide)
+                    content: vec![5], // 3: list node
+                    start_line: 13,
+                },
+            ],
+        );
     }
 
     #[test]
@@ -214,21 +216,21 @@ Cras lacinia non justo at ornare.
 - Proin imperdiet nulla vel hendrerit aliquet.
 - Fusce id tellus vitae lectus ornare venenatis consectetur quis nisl.
         "#;
-        let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
-        let expected_slides = vec![
-            Slide {
-                title: Some(0),   // 0: title node
-                content: vec![1], // 1: paragraph node
-                start_line: 1,
-            },
-            Slide {
-                title: None,      // no title
-                content: vec![3], // 3: list node
-                start_line: 6,
-            },
-        ];
-        assert_eq!(slides, expected_slides);
+
+        check_returned_slides(
+            input,
+            vec![
+                Slide {
+                    title: Some(0),   // 0: title node
+                    content: vec![1], // 1: paragraph node
+                    start_line: 1,
+                },
+                Slide {
+                    title: None,      // no title
+                    content: vec![3], // 3: list node
+                    start_line: 6,
+                },
+            ],
+        );
     }
 }
