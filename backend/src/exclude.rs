@@ -1,15 +1,14 @@
-#[cfg(test)]
-mod test;
+pub fn get_slides_json(mdast: Node) -> Result<String, ParserError> {
+    let slides = get_slides(&mdast, "")?;
+    let x = serde_json::to_string(&slides)
+        .map_err(|_| ParserError::InvalidInput("invalid input!".to_string()))?;
+    return Ok(x);
+}
 
-use crate::errors::ParserError;
-use log::debug;
-use markdown::mdast::{List, Node, Paragraph, Text};
-use serde::Serialize;
-use serde_json;
-
-const REPEAT_TITLE: &str = "---";
-
-// Currently, blocks are strings, but they should later be a struct
+const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
+const EXCLUDE_LINE_MARKER: &str = "%";
+const EXCLUDE_LIST_MARKER: &str = "%l";
+const EXCLUDE_LIST_ITEM_MARKER: &str = "%i";
 
 fn process_list(list_node: &List) -> Option<List> {
     let mut new_list = List {
@@ -29,22 +28,16 @@ fn process_list(list_node: &List) -> Option<List> {
                     if let Some(Node::Text(t)) = first_child {
                         let first_line = t.value.lines().next();
                         if let Some(line) = first_line {
-                            if line.ends_with("%l") {
-                                // debug!("Excluding this entire list");
+                            if line.ends_with(EXCLUDE_LIST_MARKER) {
                                 return None;
                             }
-                            if line.ends_with("%i") {
-                                // debug!("Excluding this list item: {}", line);
+                            if line.ends_with(EXCLUDE_LIST_ITEM_MARKER) {
                                 continue 'list_items_loop;
                             }
                         }
                     }
                     let new_paragraph = process_paragraph(p);
                     if let Some(np) = new_paragraph {
-                        // debug!(
-                        //     "Processed Paragraph: {}",
-                        //     serde_json::to_string(&np).unwrap()
-                        // );
                         new_item.children.push(Node::Paragraph(np));
                     }
                 }
@@ -66,14 +59,14 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
             let first_line = lines.next();
             if let Some(line) = first_line {
                 // debug!("First line {}", line);
-                if line.ends_with("%p") {
+                if line.ends_with(EXCLUDE_PARAGRAPH_MARKER) {
                     // debug!("Excluding this paragraph: {}", line);
                     return None;
                 }
             }
             let mut content = String::new();
             for line in text.value.lines() {
-                if line.ends_with("%") {
+                if line.ends_with(EXCLUDE_LINE_MARKER) {
                     // debug!("Excluding this line: {}", line);
                     continue;
                 } else {
@@ -139,77 +132,13 @@ fn exclude_from_markdown(input_str: &str) -> Node {
     return mdast;
 }
 
-fn get_ast(input: &str) -> Node {
-    markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap()
-}
-
-#[derive(Debug, Serialize)]
-struct Slide {
-    title: Option<usize>,
-    content: Vec<usize>,
-    start_line: usize,
-}
-
-fn get_slides(mdast: &Node, input: &str) -> Result<Vec<Slide>, ParserError> {
-    // TODO: remove unwrap
-    let x = get_slides_(mdast, input).unwrap_or_else(|e| {
-        eprintln!("Error parsing slides: {:?}", e);
-        let v: Vec<Slide> = vec![];
-        return v;
-    });
-    return Ok(x);
-}
-
-fn get_slides_(mdast: &Node, input: &str) -> Result<Vec<Slide>, ParserError> {
-    let mut slides: Vec<Slide> = vec![];
-    let Some(children) = mdast.children() else {
-        return Ok(slides);
-    };
-    for (i, child) in children.iter().enumerate() {
-        let mut new_slide: Option<Slide> = None;
-        if let Node::Heading(heading) = child {
-            if heading.depth == 1 {
-                if let Node::Text(_) = &heading.children[0] {
-                    new_slide = Some(Slide {
-                        title: Some(i),
-                        content: vec![],
-                        start_line: heading.position.as_ref().unwrap().start.line,
-                    });
-                }
-            }
-        } else if let Node::ThematicBreak(n) = child {
-            let mut new_slide_title: Option<usize> = None;
-            let pos = n.position.as_ref().unwrap();
-            let new_slide_start_line = n.position.as_ref().unwrap().start.line;
-            if input[pos.start.offset..pos.end.offset].trim() == REPEAT_TITLE {
-                new_slide_title = slides[slides.len() - 1].title;
-            }
-            new_slide = Some(Slide {
-                title: new_slide_title,
-                content: vec![],
-                start_line: new_slide_start_line,
-            });
-        }
-        if let Some(slide) = new_slide {
-            slides.push(slide);
-            continue;
-        }
-        let slides_len = slides.len();
-        slides[slides_len - 1].content.push(i);
-    }
-    Ok(slides)
-}
-
-pub fn get_slides_json(mdast: Node) -> Result<String, ParserError> {
-    let slides = get_slides(&mdast, "")?;
-    let x = serde_json::to_string(&slides)
-        .map_err(|_| ParserError::InvalidInput("invalid input!".to_string()))?;
-    return Ok(x);
-}
-
-pub fn process_slides(input: &str) -> Vec<usize> {
-    let input_str = input.trim();
-    let root_ast = get_ast(input_str);
+pub fn _process_slides(root_ast: &Node, input_str: &str) -> Vec<usize> {
+    let start_millis = std::time::Instant::now();
+    let end_millis = std::time::Instant::now();
+    debug!(
+        "Processing took {} ms",
+        (end_millis - start_millis).as_millis()
+    );
     for c in root_ast.children().unwrap() {
         debug!("Child: {:?}", c);
     }
@@ -220,36 +149,50 @@ pub fn process_slides(input: &str) -> Vec<usize> {
         "Slides: {}",
         serde_json::to_string(&slides).unwrap_or_else(|_| "[]".to_string())
     );
+    let mut total_millis = 0;
     for s in &slides {
         let mut final_slide_markdown = "".to_string();
         if let Some(title) = s.title {
-            let title_offset_start = elements[title].position().unwrap().start.offset;
-            let title_offset_end = elements[title].position().unwrap().end.offset;
+            let title_position = elements[title]
+                .position()
+                .expect("Title should have a position");
+            let title_offset_start = title_position.start.offset;
+            let title_offset_end = title_position.end.offset;
             let title = &input_str[title_offset_start..title_offset_end];
             //debug!("Slide title: {}", title);
             final_slide_markdown = title.to_string();
         }
-        let offset_start = elements[s.content[0]].position().unwrap().start.offset;
-        let offset_end = elements[s.content[s.content.len() - 1]]
-            .position()
-            .unwrap()
-            .end
-            .offset;
-        let content = &input_str[offset_start..offset_end];
-        //debug!("Slide content: {}", content);
-        final_slide_markdown = final_slide_markdown.to_string() + "\n" + content;
+        if !s.content.is_empty() {
+            let offset_start = elements[s.content[0]]
+                .position()
+                .expect("Content should have a position")
+                .start
+                .offset;
+            let offset_end = elements[s.content[s.content.len() - 1]]
+                .position()
+                .expect("Content should have a position")
+                .end
+                .offset;
+            let content = &input_str[offset_start..offset_end];
+            //debug!("Slide content: {}", content);
+            final_slide_markdown = final_slide_markdown.to_string() + "\n" + content;
+        }
         debug!("Final slide markdown: \n{}", final_slide_markdown);
         let slide_ast = exclude_from_markdown(final_slide_markdown.as_str());
-        let slide_final_md = mdast_util_to_markdown::to_markdown(&slide_ast);
-        debug!(
-            "Slide markdown with exclusions: \n{}",
-            slide_final_md.unwrap()
-        );
+        let start_millis = std::time::Instant::now();
+        // let slide_final_md = mdast_util_to_markdown::to_markdown(&slide_ast);
+        let end_millis = std::time::Instant::now();
+        total_millis += end_millis.duration_since(start_millis).as_millis();
+        // debug!(
+        //     "Slide markdown with exclusions: \n{}",
+        //     slide_final_md.unwrap()
+        // );
         slides_start_lines.push(s.start_line);
     }
     debug!(
         "Slide line starts: {}",
         serde_json::to_string(slides_start_lines.as_slice()).unwrap()
     );
+    debug!("total to markdown time {} ", total_millis);
     return slides_start_lines;
 }

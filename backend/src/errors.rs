@@ -1,4 +1,5 @@
 use std::fmt;
+#[derive(Eq, PartialEq)]
 pub enum ParserError {
     InvalidInput(String),
     UnexpectedToken(String), // currently not used

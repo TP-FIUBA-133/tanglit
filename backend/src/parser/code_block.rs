@@ -1,4 +1,5 @@
 use markdown::mdast::Code;
+use markdown::unist::Position;
 use regex::Regex;
 
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
@@ -27,6 +28,7 @@ pub struct CodeBlock {
     pub code: String,
     pub tag: Option<String>,
     pub imports: Vec<String>,
+    pub position: Option<Position>,
 }
 
 impl CodeBlock {
@@ -35,23 +37,25 @@ impl CodeBlock {
         code: String,
         tag: Option<String>,
         imports: Vec<String>,
+        position: Option<Position>,
     ) -> Self {
         Self {
             language,
             code,
             tag,
             imports,
+            position,
         }
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(Language::Unknown, code, None, Vec::new())
+        Self::new(Language::Unknown, code, None, Vec::new(), None)
     }
 
     pub fn from_code_node(code_block: Code) -> Self {
         let language = Language::parse_language(&code_block.lang.unwrap_or_default());
         let (tag, imports) = Self::parse_metadata(&code_block.meta.unwrap_or_default());
-        Self::new(language, code_block.value, tag, imports)
+        Self::new(language, code_block.value, tag, imports, code_block.position)
     }
 
     fn parse_metadata(metadata: &str) -> (Option<String>, Vec<String>) {
