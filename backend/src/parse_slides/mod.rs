@@ -8,9 +8,9 @@ const REPEAT_TITLE: &str = "---";
 
 #[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct Slide {
-    title: Option<usize>,
-    content: Vec<usize>,
-    start_line: usize,
+    title: Option<usize>, // index of the title node in the AST
+    content: Vec<usize>,  // indices of the content node in the AST
+    start_line: usize,    // start line in the raw markdown
 }
 
 pub fn get_slides(mdast: &Node, input: &str) -> Vec<Slide> {
