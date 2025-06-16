@@ -14,12 +14,12 @@ pub struct Slide {
 }
 
 pub fn get_slides(mdast: &Node, input: &str) -> Vec<Slide> {
-    let mut slides: Vec<Slide> = vec![];
+    let mut slides = vec![];
     let Some(children) = mdast.children() else {
         return slides;
     };
     for (i, child) in children.iter().enumerate() {
-        let mut new_slide: Option<Slide> = None;
+        let mut new_slide = None;
         if let Node::Heading(heading) = child {
             if heading.depth == 1 {
                 if heading.children.is_empty() {
