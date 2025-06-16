@@ -14,7 +14,7 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<String>, ParserErro
     get_blocks_from_mdast(mdast)
 }
 
-fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
+pub fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
     markdown::to_mdast(input, &ParseOptions::mdx())
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
