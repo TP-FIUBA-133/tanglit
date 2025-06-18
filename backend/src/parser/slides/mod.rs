@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod test;
+mod tests;
 
 use markdown::mdast::Node;
 use serde::Serialize;

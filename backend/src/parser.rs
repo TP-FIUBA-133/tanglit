@@ -1,4 +1,5 @@
 pub mod code_block;
+mod slides;
 
 use crate::errors::ParserError;
 use code_block::CodeBlock;
