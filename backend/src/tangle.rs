@@ -1,4 +1,4 @@
-use crate::parser::code_block::CodeBlock;
+use crate::{errors::TangleError, parser::code_block::CodeBlock};
 
 pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     let mut tangle = String::new();
@@ -7,6 +7,48 @@ pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
         tangle.push('\n');
     }
     tangle
+}
+
+pub fn tangle_block(block: String, blocks: &[CodeBlock]) -> Result<String, TangleError> {
+    // Search block
+    let code_block = blocks
+        .iter()
+        .find(|b| b.tag.clone().unwrap_or_default() == block)
+        .ok_or(TangleError::BlockNotFound(block))?;
+
+    // Search imported blocks
+    let imported_blocks: Vec<CodeBlock> = blocks
+        .iter()
+        .filter(|b| {
+            code_block
+                .imports
+                .contains(&b.tag.clone().unwrap_or_default())
+        })
+        .cloned()
+        .collect();
+
+    // Tangle imports
+    let mut tangle = String::new();
+    for block in imported_blocks {
+        tangle.push_str(&block.code);
+        tangle.push('\n');
+    }
+
+    tangle.push('\n');
+
+    add_main_code_block(code_block, &mut tangle);
+
+    Ok(tangle)
+}
+
+// TODO: this should use a template depending on the language
+// TODO: handle indentation
+pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
+    tangle.push_str("int main() {\n");
+    tangle.push_str(&code_block.code);
+    tangle.push('\n');
+    tangle.push_str("    return 0;");
+    tangle.push_str("\n}\n");
 }
 
 #[cfg(test)]

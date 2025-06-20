@@ -3,7 +3,7 @@ use regex::Regex;
 
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Language {
     Unknown,
     Python,
@@ -22,6 +22,7 @@ impl Language {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct CodeBlock {
     pub language: Language,
     pub code: String,
