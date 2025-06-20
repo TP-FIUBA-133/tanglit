@@ -86,27 +86,6 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
     return Some(new_paragraph);
 }
 
-fn process_text(text: &Text) -> Option<Text> {
-    let mut new_text = Text {
-        value: String::new(),
-        position: None,
-    };
-    let mut line_start_offset = vec![0];
-    for (i, char) in text.value.char_indices() {
-        if (char == '\n') || (char == '\r') {
-            line_start_offset.push(i + 1);
-        }
-    }
-    line_start_offset.push(text.position.clone().unwrap().end.offset);
-    for (i, line) in text.value.lines().enumerate() {
-        if (line.ends_with(" %")) {
-            continue;
-        }
-        new_text.value.push_str(line);
-    }
-    return Some(new_text);
-}
-
 fn process_children(children: &Vec<Node>) -> Vec<Node> {
     let mut new_children: Vec<Node> = vec![];
     for child in children {
