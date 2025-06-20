@@ -1,9 +1,9 @@
 use backend::parser::input_to_mdast;
-use backend::{parser::parse_blocks_from_file, parser::slides::get_slides, tangle::tangle_blocks};
+use backend::{parser::parse_blocks_from_file, parser::slides::get_slides, tangle::tangle_block};
 use std::fs::write;
 
-const INPUT_FILE: &str = "./test_data/test_file.md";
-const OUTPUT_FILE: &str = "./test_data/output_file.rs";
+const INPUT_FILE: &str = "./test_data/test_file_2.md";
+const OUTPUT_FILE: &str = "./test_data/output_file_2.c";
 
 fn main() {
     let input = std::fs::read_to_string(INPUT_FILE).expect("Failed to read file");
@@ -20,7 +20,11 @@ fn main() {
     };
 
     // Tangle blocks
-    let output = tangle_blocks(blocks);
+    let Ok(output) = tangle_block(String::from("print"), &blocks)
+        .inspect_err(|e| println!("Error tangling blocks: {e}"))
+    else {
+        return;
+    };
 
     // Write the output to a file
     match write(OUTPUT_FILE, output) {

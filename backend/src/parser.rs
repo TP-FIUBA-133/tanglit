@@ -8,8 +8,6 @@ use markdown::{
     mdast::{Code, Node},
 };
 
-// TODO: We should read the file outside of this function
-// Currently, blocks are strings, but they should later be a struct
 pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserError> {
     // Read the file content
     let input = std::fs::read_to_string(file_path)
@@ -18,6 +16,8 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserE
     parse_input(input)
 }
 
+// TODO: We should return a HashMap instead of a Vec of CodeBlocks.
+// First we need to assing a default tag to each block.
 pub fn parse_input(input: String) -> Result<Vec<CodeBlock>, ParserError> {
     // Parse the input to an MDast tree
     let mdast = input_to_mdast(&input)?;
