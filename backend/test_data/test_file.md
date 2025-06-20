@@ -1,25 +1,23 @@
 ### Test file
 
-This file is to be used in the integration tests to extract and execute the code blocks contained within it.
+This test defines a custom function in one block and uses it in the main block by importing it.
 
-#### Rust Hello world!
+Define headers:
 
-Let's use our tangle functionality to extract the following code blocks into a single file for later execution.
-
-1. First, we define the main function, where the program execution begins:
-
-```Rust
-fn main() {
+```c headers
+#include <stdio.h>
 ```
 
-2. Next, we use the `println!` macro to print the string `"Hello, world!"`
+Define a helper function in its own block:
 
-```Rust
-   println!("Hello, world!");
-```
-
-3. Finally, we close the main function definition with `}`:
-
-```Rust
+```c helper
+void greet(const char* name) {
+    printf("Hello, %s!\n", name);
 }
+```
+
+Define main block `run`:
+
+```c use=[headers,helper] main_block
+    greet("Tangle User");
 ```
