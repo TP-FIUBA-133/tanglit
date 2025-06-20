@@ -40,7 +40,7 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
         .expect("Failed to convert to markdown");
     // Write the output to a file
     match write(Path::new(&exclude_args.output_file_path), output) {
-        Ok(_) => println!("Output written to {}", "output.md"),
+        Ok(_) => println!("Output written to {}", exclude_args.output_file_path),
         Err(e) => eprintln!("Error writing to file: {}", e),
     };
 }
