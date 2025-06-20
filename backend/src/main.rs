@@ -25,16 +25,15 @@ fn main() {
     };
 
     // Write the output to a file
-    let output_file_path =
-        resolve_output_file_path(&tangle_args.output_dir, &tangle_args.target_block);
+    let output_file_path = get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block);
     match write(&output_file_path, output) {
         Ok(_) => println!("Blocks written to {}", output_file_path.display()),
         Err(e) => println!("Error writing to file: {}", e),
     };
 }
 
-// TODO: We should resolve the output file path based on the language
-fn resolve_output_file_path(output_file_path: &str, main_block: &str) -> PathBuf {
+// TODO: We should get the output file path based on the language
+fn get_output_file_path(output_file_path: &str, main_block: &str) -> PathBuf {
     let output_file_path = Path::new(output_file_path);
     output_file_path.join(format!("{main_block}.c"))
 }
