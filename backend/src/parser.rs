@@ -1,4 +1,5 @@
 pub mod code_block;
+pub mod exclude;
 
 use crate::errors::ParserError;
 use code_block::CodeBlock;
