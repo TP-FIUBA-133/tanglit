@@ -46,7 +46,7 @@ pub fn get_slides(mdast: &Node, input: &str) -> Vec<Slide> {
                 TODO or "-------" or even "****" / "_ _ _" are all ThematicBreaks
             */
             let thematic_break_text = input[pos.start.offset..pos.end.offset].trim();
-            if thematic_break_text == REPEAT_TITLE && !slides.is_empty()
+            if thematic_break_text == REPEAT_TITLE && !slides.is_empty() {
                 new_slide_title = slides[slides.len() - 1].title;
             }
             new_slide = Some(Slide {
