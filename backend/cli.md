@@ -79,4 +79,4 @@ int main() {
 ## 📌 Tips
 
 - Code block tags (like `headers`, `helper`, or `main_block`) must be unique within the file.
-- You can import block using `use=[<BLOCK_TAG_1>,<BLOCK_TAG_2>]`.
+- You can import blocks using `use=[<BLOCK_TAG_1>,<BLOCK_TAG_2>]`.
