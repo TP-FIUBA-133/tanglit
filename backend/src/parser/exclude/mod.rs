@@ -9,6 +9,8 @@ fn get_ast(input: &str) -> Node {
 }
 
 const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
+const EXCLUDE_CODE_MARKER: &str = "%";
+
 const EXCLUDE_LINE_MARKER: &str = "%";
 const EXCLUDE_LIST_MARKER: &str = "%l";
 const EXCLUDE_LIST_ITEM_MARKER: &str = "%i";
@@ -102,7 +104,7 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
             }
             Node::Code(code) => {
                 if let Some(meta_str) = &code.meta {
-                    if meta_str.ends_with("%") {
+                    if meta_str.ends_with(EXCLUDE_CODE_MARKER) {
                         continue;
                     }
                 }
