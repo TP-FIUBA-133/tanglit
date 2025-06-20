@@ -127,7 +127,7 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
     new_children
 }
 
-fn exclude_from_markdown(input_str: &str) -> Node {
+pub fn exclude_from_markdown(input_str: &str) -> Node {
     let mut mdast = get_ast(input_str);
     let new_children = process_children(mdast.children().unwrap());
     if let Node::Root(r) = &mut mdast {
