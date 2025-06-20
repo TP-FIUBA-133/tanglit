@@ -1,11 +1,11 @@
 # Using the Backend CLI
 
-Use the `backend` CLI to tangle code blocks from your `.md` files.
+Use the `backend` CLI `tangle` command to tangle code blocks from your `.md` files.
 
-### ✅ Basic Usage
+### ✅ Tangle
 
 ```sh
-backend --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --target-block <TARGET_BLOCK>
+backend tangle --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --target-block <TARGET_BLOCK>
 ```
 
 ### 🔧 Options
