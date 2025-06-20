@@ -1,6 +1,6 @@
 pub mod code_block;
-pub mod slides;
 pub mod exclude;
+pub mod slides;
 
 use crate::errors::ParserError;
 use code_block::CodeBlock;
