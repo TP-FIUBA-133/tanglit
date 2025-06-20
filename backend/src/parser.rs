@@ -6,7 +6,6 @@ use markdown::{
     ParseOptions,
     mdast::{Code, Node},
 };
-use std::string::ParseError;
 
 // TODO: We should read the file outside of this function
 // Currently, blocks are strings, but they should later be a struct
@@ -16,20 +15,6 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserE
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
 
     parse_input(input)
-}
-
-pub fn get_code_blocks_start_lines(input: &str) -> Result<Vec<usize>, ParserError> {
-    let mut result = vec![];
-    let result1 = parse_input(input.to_string())?;
-    for cb in result1 {
-        result.push(
-            cb.position
-                .ok_or(ParserError::InvalidInput("Should have a position".to_string()))?
-                .start
-                .line,
-        );
-    }
-    Ok(result)
 }
 
 pub fn parse_input(input: String) -> Result<Vec<CodeBlock>, ParserError> {
