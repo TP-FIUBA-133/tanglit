@@ -5,8 +5,6 @@ pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     for block in blocks {
         tangle.push_str(&block.code);
         tangle.push('\n');
-        tangle.push_str(&block.code);
-        tangle.push('\n');
     }
     tangle
 }

@@ -1,7 +1,5 @@
 pub mod code_block;
 
-pub mod code_block;
-
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
@@ -9,9 +7,6 @@ use markdown::{
     mdast::{Code, Node},
 };
 
-// Currently, blocks are strings, but they should later be a struct
-pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserError> {
-    // Read the file content
 pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserError> {
     // Read the file content
     let input = std::fs::read_to_string(file_path)
