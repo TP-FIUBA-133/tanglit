@@ -12,7 +12,7 @@ pub struct Cli {
 pub enum Commands {
     // Tangle a code block from a markdown file
     Tangle(TangleArgs),
-    // Exclude marked parts from the markdown 
+    // Exclude marked parts from the markdown
     Exclude(ExcludeArgs),
 }
 
