@@ -55,7 +55,7 @@ Define main block `main_block`:
 To generate the full program by resolving all references, run:
 
 ```sh
-cargo run -- --input-file-path ./test_data/test_file.md --output-dir ./test_data --target-block main_block
+cargo run -- tangle --input-file-path ./test_data/test_file.md --output-dir ./test_data --target-block main_block
 ```
 
 This will create the file `main_block.c` inside `./test_data/` containing:
