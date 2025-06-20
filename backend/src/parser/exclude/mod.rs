@@ -1,6 +1,5 @@
 use log::debug;
 use markdown::mdast::{List, Node, Paragraph, Text};
-use markdown::unist::{Point, Position};
 
 #[cfg(test)]
 mod test;
@@ -27,7 +26,7 @@ fn process_list(list_node: &List) -> Option<List> {
             let mut new_item = list_item.clone();
             for child in list_item.children.iter() {
                 if let Node::Paragraph(p) = child {
-                    let first_child = p.children.iter().next();
+                    let first_child = p.children.first();
                     if let Some(Node::Text(t)) = first_child {
                         let first_line = t.value.lines().next();
                         if let Some(line) = first_line {
@@ -45,7 +44,7 @@ fn process_list(list_node: &List) -> Option<List> {
             new_list.children.push(Node::ListItem(new_item));
         }
     }
-    return Some(new_list);
+    Some(new_list)
 }
 
 fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
@@ -83,7 +82,7 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
         }
     }
 
-    return Some(new_paragraph);
+    Some(new_paragraph)
 }
 
 fn process_children(children: &Vec<Node>) -> Vec<Node> {
@@ -110,7 +109,7 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
                 new_children.push(child.clone());
             }
             Node::List(list) => {
-                let new_list = process_list(&list);
+                let new_list = process_list(list);
                 if let Some(nl) = new_list {
                     // debug!("Processed List: {:?}", nl);
                     new_children.push(Node::List(nl));
@@ -125,15 +124,14 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
             }
         }
     }
-    return new_children;
+    new_children
 }
 
 fn exclude_from_markdown(input_str: &str) -> Node {
-    let mut new_children: Vec<Node> = vec![];
     let mut mdast = get_ast(input_str);
-    new_children = process_children(mdast.children().unwrap());
+    let new_children = process_children(mdast.children().unwrap());
     if let Node::Root(r) = &mut mdast {
         r.children = new_children;
     }
-    return mdast;
+    mdast
 }
