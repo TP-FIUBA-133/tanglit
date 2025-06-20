@@ -22,10 +22,10 @@ backend --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --target-b
 
 ## 📄 Example Input File
 
-Here’s a simple example of a Markdown file with named code blocks:
+Here’s a simple example of a Markdown file with named code blocks. You can find it under `test_data/test_file.md`:
 
 ````markdown
-### Test file 3
+### Test file
 
 This test defines a custom function in one block and uses it in the main block by importing it.
 
@@ -43,11 +43,11 @@ void greet(const char* name) {
 }
 ```
 
-Define main block `run`:
-```c use=[headers,helper] run
+Define main block `main_block`:
+
+```c use=[headers,helper] main_block
     greet("Tangle User");
 ```
-
 ````
 
 ## 🧵 Tangling a Block
@@ -55,10 +55,10 @@ Define main block `run`:
 To generate the full program by resolving all references, run:
 
 ```sh
-cargo run --input-file-path example.md --output-dir ./out --target-block run
+cargo run -- --input-file-path ./test_data/test_file.md --output-dir ./test_data --target-block main_block
 ```
 
-This will create a file inside `./out/` containing:
+This will create the file `main_block.c` inside `./test_data/` containing:
 
 ````c
 #include <stdio.h>
@@ -78,5 +78,5 @@ int main() {
 
 ## 📌 Tips
 
-- Code block tags (like `header`, `main`, or `full_program`) must be unique within the file.
-- You can import block using `use=[block1,block2]`.
+- Code block tags (like `headers`, `helper`, or `main_block`) must be unique within the file.
+- You can import block using `use=[<BLOCK_TAG_1>,<BLOCK_TAG_2>]`.
