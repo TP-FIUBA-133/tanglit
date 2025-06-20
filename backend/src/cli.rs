@@ -1,11 +1,19 @@
-use clap::{Args, Parser};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 #[command(propagate_version = true)]
 pub struct Cli {
-    #[command(flatten)]
-    pub tangle_args: TangleArgs,
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Subcommand)]
+pub enum Commands {
+    // Tangle a code block from a markdown file
+    Tangle(TangleArgs),
+    // Exclude marked parts from the markdown 
+    Exclude(ExcludeArgs),
 }
 
 #[derive(Args)]
@@ -34,4 +42,24 @@ pub struct TangleArgs {
         env = "TARGET_BLOCK"
     )]
     pub target_block: String,
+}
+
+#[derive(Args)]
+pub struct ExcludeArgs {
+    #[arg(
+        long,
+        value_name = "INPUT_FILE_PATH",
+        help = "Path to the input markdown file.",
+        help_heading = "Tangle Args",
+        env = "INPUT_FILE_PATH"
+    )]
+    pub input_file_path: String,
+    #[arg(
+        long,
+        value_name = "OUTPUT_FILE_PATH",
+        help = "Path to the file where the output will be saved.",
+        help_heading = "Tangle Args",
+        env = "OUTPUT_DIR"
+    )]
+    pub output_file_path: String,
 }

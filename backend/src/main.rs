@@ -1,3 +1,5 @@
+use backend::cli::{Commands, ExcludeArgs, TangleArgs};
+use backend::parser::exclude::exclude_from_markdown;
 use backend::{cli::Cli, parser::parse_blocks_from_file, tangle::tangle_block};
 use clap::Parser;
 use std::{
@@ -5,19 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-fn main() {
-    let Cli { tangle_args } = Cli::parse();
-
-    let input = std::fs::read_to_string(INPUT_FILE).expect("Failed to read input file");
-    let ast_with_exclusions = exclude_from_markdown(input.as_str());
-    let output = mdast_util_to_markdown::to_markdown(&ast_with_exclusions)
-        .expect("Failed to convert to markdown");
-    // Write the output to a file
-    match write(OUTPUT_FILE, output) {
-        Ok(_) => println!("Output written to {}", OUTPUT_FILE),
-        Err(e) => eprintln!("Error writing to file: {}", e),
-    };
-
+fn handle_tangle_command(tangle_args: TangleArgs) {
     // Parse blocks from the input file
     let blocks = match parse_blocks_from_file(&tangle_args.input_file_path) {
         Ok(blocks) => blocks,
@@ -40,6 +30,33 @@ fn main() {
         Ok(_) => println!("Blocks written to {}", output_file_path.display()),
         Err(e) => println!("Error writing to file: {}", e),
     };
+}
+
+fn handle_exclude_command(exclude_args: ExcludeArgs) {
+    let input =
+        std::fs::read_to_string(&exclude_args.input_file_path).expect("Failed to read input file");
+    let ast_with_exclusions = exclude_from_markdown(input.as_str());
+    let output = mdast_util_to_markdown::to_markdown(&ast_with_exclusions)
+        .expect("Failed to convert to markdown");
+    // Write the output to a file
+    match write(Path::new(&exclude_args.output_file_path), output) {
+        Ok(_) => println!("Output written to {}", "output.md"),
+        Err(e) => eprintln!("Error writing to file: {}", e),
+    };
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Tangle(args) => {
+            handle_tangle_command(args);
+        }
+
+        Commands::Exclude(args) => {
+            handle_exclude_command(args);
+        }
+    }
 }
 
 // TODO: We should get the output file path based on the language
