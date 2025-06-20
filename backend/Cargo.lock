@@ -71,6 +71,7 @@ dependencies = [
  "markdown",
  "mdast_util_to_markdown",
  "regex",
+ "serde",
  "serde_json",
  "test-log",
 ]
