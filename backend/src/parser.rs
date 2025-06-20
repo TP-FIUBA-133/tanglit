@@ -1,4 +1,5 @@
 pub mod code_block;
+pub mod slides;
 pub mod exclude;
 
 use crate::errors::ParserError;
@@ -34,7 +35,7 @@ pub fn parse_input(input: String) -> Result<Vec<CodeBlock>, ParserError> {
     Ok(code_blocks)
 }
 
-fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
+pub fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
     markdown::to_mdast(input, &ParseOptions::mdx())
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
