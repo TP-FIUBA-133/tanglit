@@ -14,7 +14,7 @@ fn main() {
     // Write the output to a file
     match write(OUTPUT_FILE, output) {
         Ok(_) => println!("Output written to {}", OUTPUT_FILE),
-        Err(e) => println!("Error writing to file: {}", e),
+        Err(e) => eprintln!("Error writing to file: {}", e),
     };
 
     // Parse blocks from the input file
