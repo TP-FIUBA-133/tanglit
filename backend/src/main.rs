@@ -9,7 +9,7 @@ use std::{
 
 fn handle_tangle_command(tangle_args: TangleArgs) {
     // Parse blocks from the input file
-    let blocks = match parse_blocks_from_file(&tangle_args.input_file_path) {
+    let blocks = match parse_blocks_from_file(&tangle_args.general.input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
             println!("Error parsing blocks: {}", e);
@@ -33,8 +33,8 @@ fn handle_tangle_command(tangle_args: TangleArgs) {
 }
 
 fn handle_exclude_command(exclude_args: ExcludeArgs) {
-    let input =
-        std::fs::read_to_string(&exclude_args.input_file_path).expect("Failed to read input file");
+    let input = std::fs::read_to_string(&exclude_args.general.input_file_path)
+        .expect("Failed to read input file");
     let ast_with_exclusions = exclude_from_markdown(input.as_str());
     let output = mdast_util_to_markdown::to_markdown(&ast_with_exclusions)
         .expect("Failed to convert to markdown");

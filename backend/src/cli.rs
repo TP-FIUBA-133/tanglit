@@ -16,8 +16,8 @@ pub enum Commands {
     Exclude(ExcludeArgs),
 }
 
-#[derive(Args)]
-pub struct TangleArgs {
+#[derive(Args, Debug)]
+pub struct GeneralArgs {
     #[arg(
         long,
         value_name = "INPUT_FILE_PATH",
@@ -26,6 +26,12 @@ pub struct TangleArgs {
         env = "INPUT_FILE_PATH"
     )]
     pub input_file_path: String,
+}
+
+#[derive(Args)]
+pub struct TangleArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
     #[arg(
         long,
         value_name = "OUTPUT_DIR",
@@ -46,14 +52,8 @@ pub struct TangleArgs {
 
 #[derive(Args)]
 pub struct ExcludeArgs {
-    #[arg(
-        long,
-        value_name = "INPUT_FILE_PATH",
-        help = "Path to the input markdown file.",
-        help_heading = "Tangle Args",
-        env = "INPUT_FILE_PATH"
-    )]
-    pub input_file_path: String,
+    #[command(flatten)]
+    pub general: GeneralArgs,
     #[arg(
         long,
         value_name = "OUTPUT_FILE_PATH",
