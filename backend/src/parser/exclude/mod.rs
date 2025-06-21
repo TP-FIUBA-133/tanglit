@@ -1,6 +1,6 @@
 use crate::parser::parse_input;
 use log::debug;
-use markdown::mdast::{List, ListItem, Node, Paragraph, Text};
+use markdown::mdast::{Code, List, ListItem, Node, Paragraph, Text};
 
 #[cfg(test)]
 mod test;
@@ -37,6 +37,12 @@ impl ToNode for List {
         Node::List(self)
     }
 }
+impl ToNode for Code {
+    fn to_node(self) -> Node {
+        Node::Code(self)
+    }
+}
+
 
 fn get_ast(input: &str) -> Node {
     markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap()
@@ -160,6 +166,18 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
     Some(new_paragraph)
 }
 
+fn process_code(code: &Code) -> Option<Code> {
+    let Some(meta_str) = &code.meta else {
+        return Some(code.clone());
+    };
+
+    if meta_str.ends_with(EXCLUDE_CODE_MARKER) {
+        return None; // Exclude this code block
+    }
+
+    Some(code.clone())
+}
+
 fn process_children(children: &Vec<Node>) -> Vec<Node> {
     let mut new_children: Vec<Node> = vec![];
     for child in children {
@@ -175,12 +193,10 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
                 new_children.push(np.to_node());
             }
             Node::Code(code) => {
-                if let Some(meta_str) = &code.meta {
-                    if meta_str.ends_with(EXCLUDE_CODE_MARKER) {
-                        continue;
-                    }
-                }
-                new_children.push(child.clone());
+                let Some(new_code) = process_code(code) else {
+                    continue;
+                };
+                new_children.push(new_code.to_node());
             }
             Node::List(list) => {
                 let new_list = process_list(list);
