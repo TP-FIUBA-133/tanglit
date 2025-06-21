@@ -22,7 +22,7 @@ pub struct GeneralArgs {
         long,
         value_name = "INPUT_FILE_PATH",
         help = "Path to the input markdown file.",
-        help_heading = "Tangle Args",
+        help_heading = "General Args",
         env = "INPUT_FILE_PATH"
     )]
     pub input_file_path: String,
@@ -58,8 +58,8 @@ pub struct ExcludeArgs {
         long,
         value_name = "OUTPUT_FILE_PATH",
         help = "Path to the file where the output will be saved.",
-        help_heading = "Tangle Args",
-        env = "OUTPUT_DIR"
+        help_heading = "Exclude Args",
+        env = "OUTPUT_FILE_PATH"
     )]
     pub output_file_path: String,
 }
