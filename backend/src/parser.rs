@@ -1,14 +1,13 @@
 pub mod code_block;
 pub mod slides;
 
-use std::collections::HashMap;
-
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
     ParseOptions,
     mdast::{Code, Node},
 };
+use std::collections::HashMap;
 
 pub fn parse_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Read the file content

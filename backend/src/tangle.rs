@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::{errors::TangleError, parser::code_block::CodeBlock};
+use std::collections::HashMap;
 
 pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     let mut tangle = String::new();
