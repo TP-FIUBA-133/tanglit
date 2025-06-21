@@ -43,7 +43,6 @@ impl ToNode for Code {
     }
 }
 
-
 fn get_ast(input: &str) -> Node {
     markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap()
 }
@@ -183,14 +182,10 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
     for child in children {
         match child {
             Node::Paragraph(p) => {
-                debug!("Paragraph: {}", serde_json::to_string_pretty(&p).unwrap());
-                let new_paragraph = process_paragraph(p);
-                let Some(np) = new_paragraph else { continue };
-                debug!(
-                    "Processed Paragraph: {}",
-                    serde_json::to_string_pretty(&np).unwrap()
-                );
-                new_children.push(np.to_node());
+                let Some(new_paragraph) = process_paragraph(p) else {
+                    continue;
+                };
+                new_children.push(new_paragraph.to_node());
             }
             Node::Code(code) => {
                 let Some(new_code) = process_code(code) else {
@@ -199,11 +194,10 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
                 new_children.push(new_code.to_node());
             }
             Node::List(list) => {
-                let new_list = process_list(list);
-                let Some(nl) = new_list else {
+                let Some(new_list) = process_list(list) else {
                     continue;
                 };
-                new_children.push(nl.to_node());
+                new_children.push(new_list.to_node());
             }
             _ => {
                 // For all other nodes, push them as they are
