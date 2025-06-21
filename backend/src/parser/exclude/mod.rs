@@ -4,16 +4,15 @@ use markdown::mdast::{List, Node, Paragraph, Text};
 #[cfg(test)]
 mod test;
 
-fn get_ast(input: &str) -> Node {
-    markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap()
-}
-
-const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
 const EXCLUDE_CODE_MARKER: &str = "%";
-
 const EXCLUDE_LINE_MARKER: &str = "%";
 const EXCLUDE_LIST_MARKER: &str = "%l";
 const EXCLUDE_LIST_ITEM_MARKER: &str = "%i";
+const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
+
+fn get_ast(input: &str) -> Node {
+    markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap()
+}
 
 fn process_list(list_node: &List) -> Option<List> {
     let mut new_list = List {
