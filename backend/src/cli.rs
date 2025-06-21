@@ -10,9 +10,9 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    // Tangle a code block from a markdown file
+    #[command(about = "Tangle a specific code block from a markdown file and export to a file")]
     Tangle(TangleArgs),
-    // Exclude marked parts from the markdown
+    #[command(about = "Exclude parts with % markers from input markdown file")]
     Exclude(ExcludeArgs),
 }
 
