@@ -120,7 +120,7 @@ fn process_list(list_node: &List) -> Option<List> {
     Some(new_list)
 }
 
-fn exclude_lines_from_text(text: &Text) -> Text {
+fn process_text(text: &Text) -> Option<Text> {
     let mut content = String::new();
     for line in text.value.lines() {
         if line.ends_with(EXCLUDE_LINE_MARKER) {
@@ -129,10 +129,13 @@ fn exclude_lines_from_text(text: &Text) -> Text {
             content.push_str((line.to_string() + "\n").as_str());
         }
     }
-    Text {
+    if content.is_empty() {
+        return None;
+    }
+    Some(Text {
         value: content.trim().to_string(),
         position: None,
-    }
+    })
 }
 
 fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
@@ -144,11 +147,14 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
         return None; // Exclude the entire paragraph if the first line has the marker
     }
     for child in &paragraph.children {
-        let Node::Text(text) = child else { continue };
-        let new_text = exclude_lines_from_text(text);
-        if !new_text.value.is_empty() {
-            new_paragraph.children.push(new_text.to_node());
-        }
+        let Node::Text(text) = child else {
+            new_paragraph.children.push(child.clone());
+            continue;
+        };
+        let Some(new_text) = process_text(text) else {
+            continue; // Skip this text if it should be excluded
+        };
+        new_paragraph.children.push(new_text.to_node());
     }
 
     Some(new_paragraph)
