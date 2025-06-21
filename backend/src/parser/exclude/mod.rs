@@ -71,6 +71,26 @@ fn should_exclude_list(list_node: &List) -> bool {
     first_line_marker == Some(EXCLUDE_LIST_MARKER.into())
 }
 
+fn should_exclude_list_item(list_item: &ListItem) -> bool {
+    if list_item.children.is_empty() {
+        return false; // No children to process
+    }
+    let Node::Paragraph(p) = &list_item.children[0] else {
+        return false;
+    };
+    let item_marker = get_paragraph_first_line_marker(p);
+    item_marker == Some(EXCLUDE_LIST_ITEM_MARKER.into())
+}
+
+fn process_list_item(list_item: &ListItem) -> Option<ListItem> {
+    if should_exclude_list_item(list_item) {
+        return None;
+    }
+    let mut new_item = list_item.clone();
+    new_item.children = process_children(&list_item.children);
+    Some(new_item)
+}
+
 fn process_list(list_node: &List) -> Option<List> {
     let mut new_list = List {
         children: vec![],
@@ -88,19 +108,13 @@ fn process_list(list_node: &List) -> Option<List> {
         return None;
     }
 
-    'list_items_loop: for item in &list_node.children {
+    for item in &list_node.children {
         let Node::ListItem(list_item) = item else {
             panic!("Expected a ListItem");
         };
-        if let Node::Paragraph(p) = &list_item.children[0] {
-            let item_marker = get_paragraph_first_line_marker(p);
-            if item_marker == Some(EXCLUDE_LIST_ITEM_MARKER.into()) {
-                // Exclude this list item completely, no need to process the rest of its children
-                continue 'list_items_loop;
-            }
-        }
-        let mut new_item = list_item.clone();
-        new_item.children = process_children(&list_item.children);
+        let Some(new_item) = process_list_item(list_item) else {
+            continue; // Skip this item if it should be excluded
+        };
         new_list.children.push(new_item.to_node());
     }
     Some(new_list)
@@ -164,7 +178,9 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
             }
             Node::List(list) => {
                 let new_list = process_list(list);
-                let Some(nl) = new_list  else { continue; };
+                let Some(nl) = new_list else {
+                    continue;
+                };
                 new_children.push(nl.to_node());
             }
             _ => {
