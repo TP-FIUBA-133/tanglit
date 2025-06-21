@@ -1,4 +1,5 @@
 pub mod code_block;
+pub mod exclude;
 pub mod slides;
 
 use crate::errors::ParserError;

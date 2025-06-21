@@ -1,11 +1,11 @@
 # Using the Backend CLI
 
-Use the `backend` CLI to tangle code blocks from your `.md` files.
+Use the `backend` CLI `tangle` command to tangle code blocks from your `.md` files.
 
-### ✅ Basic Usage
+### ✅ Tangle
 
 ```sh
-backend --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --target-block <TARGET_BLOCK>
+backend tangle --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --target-block <TARGET_BLOCK>
 ```
 
 ### 🔧 Options
@@ -55,7 +55,7 @@ Define main block `main_block`:
 To generate the full program by resolving all references, run:
 
 ```sh
-cargo run -- --input-file-path ./test_data/test_file.md --output-dir ./test_data --target-block main_block
+cargo run -- tangle --input-file-path ./test_data/test_file.md --output-dir ./test_data --target-block main_block
 ```
 
 This will create the file `main_block.c` inside `./test_data/` containing:
