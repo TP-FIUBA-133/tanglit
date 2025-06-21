@@ -1,5 +1,7 @@
 use crate::parser::exclude::to_node::ToNode;
 use markdown::mdast::{Code, List, ListItem, Node, Paragraph, Text};
+use once_cell::sync::Lazy;
+use regex::Regex;
 
 #[cfg(test)]
 mod test;
@@ -10,6 +12,8 @@ const EXCLUDE_LINE_MARKER: &str = "%";
 const EXCLUDE_LIST_MARKER: &str = "%l";
 const EXCLUDE_LIST_ITEM_MARKER: &str = "%i";
 const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
+
+static MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
 
 pub fn exclude_from_markdown(input_str: &str) -> Node {
     let mut mdast = get_ast(input_str);
@@ -176,9 +180,7 @@ fn get_ast(input: &str) -> Node {
 fn get_paragraph_first_line_marker(paragraph: &Paragraph) -> Option<String> {
     if let Some(Node::Text(text)) = paragraph.children.first() {
         let first_line = text.value.lines().next()?;
-        let marker_regex =
-            regex::Regex::new(r"^.* (%[ipl]?)").expect("Failed to compile marker regex");
-        return Some(marker_regex.captures(first_line)?[1].to_string());
+        return Some(MARKER_REGEX.captures(first_line)?[1].to_string());
     }
     None
 }

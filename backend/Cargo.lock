@@ -70,6 +70,7 @@ dependencies = [
  "log",
  "markdown",
  "mdast_util_to_markdown",
+ "once_cell",
  "regex",
  "serde",
  "serde_json",
