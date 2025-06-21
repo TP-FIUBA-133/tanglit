@@ -57,12 +57,8 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
         if let Node::Text(text) = child {
             let mut lines = text.value.lines();
             let first_line = lines.next();
-            if let Some(line) = first_line {
-                // debug!("First line {}", line);
-                if line.ends_with(EXCLUDE_PARAGRAPH_MARKER) {
-                    // debug!("Excluding this paragraph: {}", line);
-                    return None;
-                }
+            if first_line?.ends_with(EXCLUDE_PARAGRAPH_MARKER) {
+                return None;
             }
             let mut content = String::new();
             for line in text.value.lines() {
