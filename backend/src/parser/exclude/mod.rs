@@ -136,7 +136,7 @@ fn should_exclude_list(list_node: &List) -> bool {
     };
 
     // Exclude the entire list if the first line of the first item has the marker
-    let first_line_marker = get_paragraph_first_line_marker(&p);
+    let first_line_marker = get_paragraph_first_line_marker(p);
     first_line_marker == Some(EXCLUDE_LIST_MARKER.into())
 }
 
@@ -175,12 +175,10 @@ fn get_ast(input: &str) -> Node {
 
 fn get_paragraph_first_line_marker(paragraph: &Paragraph) -> Option<String> {
     if let Some(Node::Text(text)) = paragraph.children.first() {
-        let Some(first_line) = text.value.lines().next() else {
-            return None;
-        };
+        let first_line = text.value.lines().next()?;
         let marker_regex =
             regex::Regex::new(r"^.* (%[ipl]?)").expect("Failed to compile marker regex");
-        return Some(marker_regex.captures(&first_line)?[1].to_string());
+        return Some(marker_regex.captures(first_line)?[1].to_string());
     }
     None
 }
