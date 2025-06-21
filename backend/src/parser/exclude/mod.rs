@@ -27,6 +27,23 @@ fn get_paragraph_first_line_marker(paragraph: &Paragraph) -> Option<String> {
     None
 }
 
+fn should_exclude_list(list_node: &List) -> bool {
+    let Node::ListItem(first_item) = &list_node.children[0] else {
+        panic!("Expected a ListItem")
+    };
+
+    if first_item.children.is_empty() {
+        return false;
+    }
+    let Node::Paragraph(p) = &first_item.children[0] else {
+        return false;
+    };
+
+    // Exclude the entire list if the first line of the first item has the marker
+    let first_line_marker = get_paragraph_first_line_marker(&p);
+    first_line_marker == Some(EXCLUDE_LIST_MARKER.into())
+}
+
 fn process_list(list_node: &List) -> Option<List> {
     let mut new_list = List {
         children: vec![],
@@ -35,21 +52,13 @@ fn process_list(list_node: &List) -> Option<List> {
         start: None,
         spread: false,
     };
+
     if list_node.children.is_empty() {
         return Some(new_list);
     }
-    // check the first line of the first item in the list for the EXCLUDE_LIST_MARKER
-    let Node::ListItem(first_item) = &list_node.children[0] else {
-        panic!("Expected a ListItem")
-    };
-    if !first_item.children.is_empty() {
-        if let Node::Paragraph(p) = &first_item.children[0] {
-            let first_line_marker = get_paragraph_first_line_marker(&p);
-            if first_line_marker == Some(EXCLUDE_LIST_MARKER.into()) {
-                // Exclude the entire list if the first line of the first item has the marker
-                return None;
-            }
-        }
+
+    if should_exclude_list(list_node) {
+        return None;
     }
 
     'list_items_loop: for item in &list_node.children {
