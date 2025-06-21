@@ -147,13 +147,12 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
             Node::Paragraph(p) => {
                 debug!("Paragraph: {}", serde_json::to_string_pretty(&p).unwrap());
                 let new_paragraph = process_paragraph(p);
-                if let Some(np) = new_paragraph {
-                    debug!(
-                        "Processed Paragraph: {}",
-                        serde_json::to_string_pretty(&np).unwrap()
-                    );
-                    new_children.push(np.to_node());
-                }
+                let Some(np) = new_paragraph else { continue };
+                debug!(
+                    "Processed Paragraph: {}",
+                    serde_json::to_string_pretty(&np).unwrap()
+                );
+                new_children.push(np.to_node());
             }
             Node::Code(code) => {
                 if let Some(meta_str) = &code.meta {
@@ -165,13 +164,8 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
             }
             Node::List(list) => {
                 let new_list = process_list(list);
-                if let Some(nl) = new_list {
-                    // debug!("Processed List: {:?}", nl);
-                    new_children.push(nl.to_node());
-                } else {
-                    // debug!("List was excluded");
-                    continue;
-                }
+                let Some(nl) = new_list  else { continue; };
+                new_children.push(nl.to_node());
             }
             _ => {
                 // For all other nodes, push them as they are
