@@ -1,6 +1,6 @@
 use crate::parser::parse_input;
 use log::debug;
-use markdown::mdast::{List, Node, Paragraph, Text};
+use markdown::mdast::{List, ListItem, Node, Paragraph, Text};
 
 #[cfg(test)]
 mod test;
@@ -10,6 +10,33 @@ const EXCLUDE_LINE_MARKER: &str = "%";
 const EXCLUDE_LIST_MARKER: &str = "%l";
 const EXCLUDE_LIST_ITEM_MARKER: &str = "%i";
 const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
+
+trait ToNode {
+    fn to_node(self) -> Node;
+}
+
+impl ToNode for Paragraph {
+    fn to_node(self) -> Node {
+        Node::Paragraph(self)
+    }
+}
+impl ToNode for Text {
+    fn to_node(self) -> Node {
+        Node::Text(self)
+    }
+}
+
+impl ToNode for ListItem {
+    fn to_node(self) -> Node {
+        Node::ListItem(self)
+    }
+}
+
+impl ToNode for List {
+    fn to_node(self) -> Node {
+        Node::List(self)
+    }
+}
 
 fn get_ast(input: &str) -> Node {
     markdown::to_mdast(input, &markdown::ParseOptions::mdx()).unwrap()
@@ -74,7 +101,7 @@ fn process_list(list_node: &List) -> Option<List> {
         }
         let mut new_item = list_item.clone();
         new_item.children = process_children(&list_item.children);
-        new_list.children.push(Node::ListItem(new_item));
+        new_list.children.push(new_item.to_node());
     }
     Some(new_list)
 }
@@ -106,7 +133,7 @@ fn process_paragraph(paragraph: &Paragraph) -> Option<Paragraph> {
         let Node::Text(text) = child else { continue };
         let new_text = exclude_lines_from_text(text);
         if !new_text.value.is_empty() {
-            new_paragraph.children.push(Node::Text(new_text));
+            new_paragraph.children.push(new_text.to_node());
         }
     }
 
@@ -125,7 +152,7 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
                         "Processed Paragraph: {}",
                         serde_json::to_string_pretty(&np).unwrap()
                     );
-                    new_children.push(Node::Paragraph(np));
+                    new_children.push(np.to_node());
                 }
             }
             Node::Code(code) => {
@@ -140,7 +167,7 @@ fn process_children(children: &Vec<Node>) -> Vec<Node> {
                 let new_list = process_list(list);
                 if let Some(nl) = new_list {
                     // debug!("Processed List: {:?}", nl);
-                    new_children.push(Node::List(nl));
+                    new_children.push(nl.to_node());
                 } else {
                     // debug!("List was excluded");
                     continue;
