@@ -1,47 +1,15 @@
-use crate::parser::parse_input;
-use log::debug;
+use crate::parser::exclude::to_node::ToNode;
 use markdown::mdast::{Code, List, ListItem, Node, Paragraph, Text};
 
 #[cfg(test)]
 mod test;
+mod to_node;
 
 const EXCLUDE_CODE_MARKER: &str = "%";
 const EXCLUDE_LINE_MARKER: &str = "%";
 const EXCLUDE_LIST_MARKER: &str = "%l";
 const EXCLUDE_LIST_ITEM_MARKER: &str = "%i";
 const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
-
-trait ToNode {
-    fn to_node(self) -> Node;
-}
-
-impl ToNode for Paragraph {
-    fn to_node(self) -> Node {
-        Node::Paragraph(self)
-    }
-}
-impl ToNode for Text {
-    fn to_node(self) -> Node {
-        Node::Text(self)
-    }
-}
-
-impl ToNode for ListItem {
-    fn to_node(self) -> Node {
-        Node::ListItem(self)
-    }
-}
-
-impl ToNode for List {
-    fn to_node(self) -> Node {
-        Node::List(self)
-    }
-}
-impl ToNode for Code {
-    fn to_node(self) -> Node {
-        Node::Code(self)
-    }
-}
 
 pub fn exclude_from_markdown(input_str: &str) -> Node {
     let mut mdast = get_ast(input_str);
