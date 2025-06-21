@@ -1,6 +1,8 @@
 pub mod code_block;
 pub mod slides;
 
+use std::collections::HashMap;
+
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
@@ -8,17 +10,18 @@ use markdown::{
     mdast::{Code, Node},
 };
 
-pub fn parse_blocks_from_file(file_path: &str) -> Result<Vec<CodeBlock>, ParserError> {
+pub fn parse_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Read the file content
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
 
-    parse_input(input)
+    parse_code_blocks(input)
 }
 
-// TODO: We should return a HashMap instead of a Vec of CodeBlocks.
-// First we need to assing a default tag to each block.
-pub fn parse_input(input: String) -> Result<Vec<CodeBlock>, ParserError> {
+/// Parses code blocks from a given input string
+/// Returns a HashMap where the key is the tag of the code block and the value is the CodeBlock struct
+/// If a code block does not have a tag, it will not be included in the map
+pub fn parse_code_blocks(input: String) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Parse the input to an MDast tree
     let mdast = input_to_mdast(&input)?;
 
@@ -26,9 +29,10 @@ pub fn parse_input(input: String) -> Result<Vec<CodeBlock>, ParserError> {
     let code_nodes = get_code_nodes_from_mdast(mdast)?;
 
     // Convert code nodes to CodeBlocks
-    let code_blocks = code_nodes
+    let code_blocks: HashMap<String, CodeBlock> = code_nodes
         .into_iter()
         .map(CodeBlock::from_code_node)
+        .filter_map(|cb| cb.tag.clone().map(|tag| (tag, cb)))
         .collect();
 
     Ok(code_blocks)
@@ -67,7 +71,7 @@ mod tests {
         No code blocks here.
         "#;
 
-        let blocks = parse_input(input.to_string()).unwrap();
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
 
         assert!(blocks.is_empty());
     }
@@ -76,34 +80,40 @@ mod tests {
     fn test_parse_input_block_and_text() {
         let input = r#"
         This is some text.
-        ```python
+        ```python hello
         print("Hello, world!")
         ```
         More text here.
         "#;
-        let blocks = parse_input(input.to_string()).unwrap();
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].code.trim(), r#"print("Hello, world!")"#);
+        assert_eq!(
+            blocks.get("hello").unwrap().code.trim(),
+            r#"print("Hello, world!")"#
+        );
     }
 
     #[test]
     fn test_parse_input_malformed_blocks() {
         let input = r#"
-        ```python
+        ```python hello_python
         print("Hello, world!")
         ```
-        ```Rust
+        ```Rust hello_rust
         fn main() {
             println!("Hello, world!");
         "#; // Missing closing backticks
 
-        let blocks = parse_input(input.to_string()).unwrap();
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 2);
-        assert_eq!(blocks[0].code.trim(), r#"print("Hello, world!")"#);
         assert_eq!(
-            blocks[1].code.trim(),
+            blocks.get("hello_python").unwrap().code.trim(),
+            r#"print("Hello, world!")"#
+        );
+        assert_eq!(
+            blocks.get("hello_rust").unwrap().code.trim(),
             r#"fn main() {
     println!("Hello, world!");"#
         );
@@ -112,25 +122,28 @@ mod tests {
     #[test]
     fn test_parse_input_multiple_blocks() {
         let input = r#"
-```python
+```python block_1
 print("Block 1")
 ```
-```javascript
+```javascript block_2
 console.log("Block 2");
 ```
-```Rust
+```Rust block_3
 fn main() {
     println!("Block 3");
 }
 ```"#;
 
-        let blocks = parse_input(input.to_string()).unwrap();
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 3);
-        assert_eq!(blocks[0].code, r#"print("Block 1")"#);
-        assert_eq!(blocks[1].code, r#"console.log("Block 2");"#);
+        assert_eq!(blocks.get("block_1").unwrap().code, r#"print("Block 1")"#);
         assert_eq!(
-            blocks[2].code,
+            blocks.get("block_2").unwrap().code,
+            r#"console.log("Block 2");"#
+        );
+        assert_eq!(
+            blocks.get("block_3").unwrap().code,
             r#"fn main() {
     println!("Block 3");
 }"#
@@ -144,15 +157,21 @@ fn main() {
 ```python use=[block1, block2] block3
 print("Hello, world!")
 ```"#;
-        let blocks = parse_input(input.to_string()).unwrap();
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
 
         assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].code.trim(), r#"print("Hello, world!")"#);
-        assert_eq!(blocks[0].tag, Some("block3".to_string()));
         assert_eq!(
-            blocks[0].imports,
+            blocks.get("block3").unwrap().code.trim(),
+            r#"print("Hello, world!")"#
+        );
+        assert_eq!(
+            blocks.get("block3").unwrap().tag,
+            Some("block3".to_string())
+        );
+        assert_eq!(
+            blocks.get("block3").unwrap().imports,
             vec!["block1".to_string(), "block2".to_string()]
         );
-        assert_eq!(blocks[0].language, Language::Python);
+        assert_eq!(blocks.get("block3").unwrap().language, Language::Python);
     }
 }
