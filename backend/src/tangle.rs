@@ -1,5 +1,6 @@
 use crate::{errors::TangleError, parser::code_block::CodeBlock};
-use std::collections::HashMap;
+use regex::Regex;
+use std::collections::{HashMap, HashSet};
 
 pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     let mut tangle = String::new();
@@ -12,12 +13,14 @@ pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
 
 pub fn tangle_block(
     target_block: &str,
-    blocks: HashMap<String, CodeBlock>,
+    mut blocks: HashMap<String, CodeBlock>,
 ) -> Result<String, TangleError> {
     // Get target_code_block
-    let target_code_block = blocks
-        .get(target_block)
+    let mut target_code_block = blocks
+        .remove(target_block)
         .ok_or(TangleError::BlockNotFound(target_block.into()))?;
+
+    resolve_macros(&mut target_code_block, &blocks)?;
 
     // Get imported blocks
     let imported_blocks: Vec<CodeBlock> = target_code_block
@@ -40,9 +43,45 @@ pub fn tangle_block(
         tangle.push('\n');
     }
 
-    add_main_code_block(target_code_block, &mut tangle);
+    add_main_code_block(&target_code_block, &mut tangle);
 
     Ok(tangle)
+}
+
+fn resolve_macros(
+    code_block: &mut CodeBlock,
+    blocks: &HashMap<String, CodeBlock>,
+) -> Result<(), TangleError> {
+    let re = Regex::new(r"@\[([a-zA-Z0-9_]+)\]").unwrap();
+
+    // Collect all referenced block names
+    let referenced_blocks: HashSet<_> = re
+        .captures_iter(&code_block.code)
+        .map(|caps| caps[1].to_string())
+        .collect();
+
+    // Check for missing blocks
+    let missing: Vec<_> = referenced_blocks
+        .iter()
+        .filter(|tag| !blocks.contains_key(*tag))
+        .collect();
+
+    if let Some(missing) = missing.first() {
+        return Err(TangleError::BlockNotFound(missing.to_string()));
+    }
+
+    // Replace imports with block content
+    let code_block_with_macros = re.replace_all(&code_block.code, |caps: &regex::Captures| {
+        blocks
+            .get(&caps[1])
+            .unwrap() // It is safe to unwrap here because we checked for missing blocks above
+            .code
+            .clone()
+    });
+
+    code_block.code = code_block_with_macros.into_owned();
+
+    Ok(())
 }
 
 // TODO: this should use a template depending on the language
