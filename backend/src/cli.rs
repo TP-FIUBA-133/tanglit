@@ -1,23 +1,37 @@
-use clap::{Args, Parser};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 #[command(propagate_version = true)]
 pub struct Cli {
-    #[command(flatten)]
-    pub tangle_args: TangleArgs,
+    #[command(subcommand)]
+    pub command: Commands,
 }
 
-#[derive(Args)]
-pub struct TangleArgs {
+#[derive(Subcommand)]
+pub enum Commands {
+    #[command(about = "Tangle a specific code block from a markdown file and export to a file")]
+    Tangle(TangleArgs),
+    #[command(about = "Exclude parts with % markers from input markdown file")]
+    Exclude(ExcludeArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct GeneralArgs {
     #[arg(
         long,
         value_name = "INPUT_FILE_PATH",
         help = "Path to the input markdown file.",
-        help_heading = "Tangle Args",
+        help_heading = "General Args",
         env = "INPUT_FILE_PATH"
     )]
     pub input_file_path: String,
+}
+
+#[derive(Args)]
+pub struct TangleArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
     #[arg(
         long,
         value_name = "OUTPUT_DIR",
@@ -34,4 +48,18 @@ pub struct TangleArgs {
         env = "TARGET_BLOCK"
     )]
     pub target_block: String,
+}
+
+#[derive(Args)]
+pub struct ExcludeArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_FILE_PATH",
+        help = "Path to the file where the output will be saved.",
+        help_heading = "Exclude Args",
+        env = "OUTPUT_FILE_PATH"
+    )]
+    pub output_file_path: String,
 }
