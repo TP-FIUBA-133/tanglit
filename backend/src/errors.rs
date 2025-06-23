@@ -24,12 +24,16 @@ impl fmt::Debug for ParserError {
 
 pub enum TangleError {
     BlockNotFound(String),
+    LanguageNotSupported,
 }
 
 impl fmt::Display for TangleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
+            TangleError::LanguageNotSupported => {
+                write!(f, "Programming language not supported for execution:")
+            }
         }
     }
 }
@@ -38,6 +42,9 @@ impl fmt::Debug for TangleError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
+            TangleError::LanguageNotSupported => {
+                write!(f, "Programming language not supported for execution")
+            }
         }
     }
 }

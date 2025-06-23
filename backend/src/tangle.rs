@@ -44,7 +44,7 @@ pub fn tangle_execute_block(block: &str, blocks: &[CodeBlock]) -> Result<String,
     let code_block = find_block_by_tag(blocks, block)?;
     let mut tangle = String::new();
 
-    add_main_code_block(code_block, &mut tangle);
+    add_executable_wrapper_block(code_block, &mut tangle)?;
     let tangle = add_imports(code_block, blocks, tangle);
 
     Ok(tangle)
@@ -62,13 +62,36 @@ pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleE
 
 // TODO: this should use a template depending on the language
 // TODO: handle indentation
-pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
+pub fn add_executable_wrapper_block(
+    code_block: &CodeBlock,
+    tangle: &mut String,
+) -> Result<(), TangleError> {
+    match code_block.language {
+        crate::parser::code_block::Language::Python => Ok(add_python_wrapper(code_block, tangle)),
+        crate::parser::code_block::Language::Rust => Ok(add_rust_wrapper(code_block, tangle)),
+        crate::parser::code_block::Language::C => Ok(add_c_wrapper(code_block, tangle)),
+        _ => {
+            return Err(TangleError::LanguageNotSupported);
+        }
+    }
+}
+
+fn add_python_wrapper(code_block: &CodeBlock, tangle: &str) {
+    todo!()
+}
+
+fn add_rust_wrapper(code_block: &CodeBlock, tangle: &str) {
+    todo!()
+}
+
+fn add_c_wrapper(code_block: &CodeBlock, tangle: &mut String) {
     tangle.push_str("int main() {\n");
     tangle.push_str(&code_block.code);
     tangle.push('\n');
     tangle.push_str("    return 0;");
     tangle.push_str("\n}\n");
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
