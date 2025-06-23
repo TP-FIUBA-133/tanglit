@@ -39,12 +39,22 @@ fn find_block_by_tag<'a, 'b>(
         .ok_or(TangleError::BlockNotFound(tag.into()))
 }
 
-pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
+pub fn tangle_execute_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
     // Search block
     let code_block = find_block_by_tag(blocks, block)?;
     let mut tangle = String::new();
 
     add_main_code_block(code_block, &mut tangle);
+    let tangle = add_imports(code_block, blocks, tangle);
+
+    Ok(tangle)
+}
+
+pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
+    // Search block
+    let code_block = find_block_by_tag(blocks, block)?;
+    let tangle = String::new();
+
     let tangle = add_imports(code_block, blocks, tangle);
 
     Ok(tangle)
@@ -59,7 +69,6 @@ pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
     tangle.push_str("    return 0;");
     tangle.push_str("\n}\n");
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

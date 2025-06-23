@@ -16,8 +16,17 @@ void greet(const char* name) {
 }
 ```
 
+execute a simple block:
+```c use=[headers] example
+int x = 2 + 3;
+printf("%d\n", x);
+```
+
 Define main block `run`:
 
 ```c use=[headers,helper] main_block
+int main() {
     greet("Tangle User");
+    return 0;
+}
 ```
