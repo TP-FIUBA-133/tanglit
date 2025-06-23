@@ -9,34 +9,43 @@ pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     tangle
 }
 
-pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
-    // Search block
-    let code_block = blocks
-        .iter()
-        .find(|b| b.tag.clone().unwrap_or_default() == block)
-        .ok_or(TangleError::BlockNotFound(block.into()))?;
-
+fn add_imports(block: &CodeBlock, blocks: &[CodeBlock], source_code: String) -> String {
     // Search imported blocks
     let imported_blocks: Vec<CodeBlock> = blocks
         .iter()
-        .filter(|b| {
-            code_block
-                .imports
-                .contains(&b.tag.clone().unwrap_or_default())
-        })
+        .filter(|b| block.imports.contains(&b.tag.clone().unwrap_or_default()))
         .cloned()
         .collect();
 
     // Tangle imports
-    let mut tangle = String::new();
+    let mut accum_block = String::new();
     for block in imported_blocks {
-        tangle.push_str(&block.code);
-        tangle.push('\n');
+        accum_block.push_str(&block.code);
+        accum_block.push('\n');
         // TODO: lines between blocks should be configurable
-        tangle.push('\n');
+        accum_block.push('\n');
     }
+    accum_block.push_str(&source_code);
+    accum_block
+}
+
+fn find_block_by_tag<'a, 'b>(
+    blocks: &'a [CodeBlock],
+    tag: &'b str,
+) -> Result<&'a CodeBlock, TangleError> {
+    blocks
+        .iter()
+        .find(|b| b.tag.clone().unwrap_or_default() == tag)
+        .ok_or(TangleError::BlockNotFound(tag.into()))
+}
+
+pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
+    // Search block
+    let code_block = find_block_by_tag(blocks, block)?;
+    let mut tangle = String::new();
 
     add_main_code_block(code_block, &mut tangle);
+    let tangle = add_imports(code_block, blocks, tangle);
 
     Ok(tangle)
 }
