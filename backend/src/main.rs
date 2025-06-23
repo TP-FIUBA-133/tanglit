@@ -1,7 +1,10 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::exclude::exclude_from_markdown;
+use backend::tangle as tg;
 use backend::{cli::Cli, parser::parse_blocks_from_file, tangle::tangle_block};
 use clap::Parser;
+use std::fs;
+use std::process::{Command, Stdio};
 use std::{
     fs::write,
     path::{Path, PathBuf},
@@ -52,9 +55,11 @@ fn main() {
         Commands::Tangle(args) => {
             handle_tangle_command(args);
         }
-
         Commands::Exclude(args) => {
             handle_exclude_command(args);
+        }
+        Commands::Execute(_) => {
+            todo!();
         }
     }
 }
