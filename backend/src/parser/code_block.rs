@@ -1,6 +1,8 @@
 use markdown::mdast::Code;
 use regex::Regex;
 
+use crate::errors::ParserError;
+
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
 #[derive(Debug, PartialEq, Clone)]
@@ -49,19 +51,20 @@ impl CodeBlock {
         Self::new(Language::Unknown, code, None, Vec::new())
     }
 
-    pub fn from_code_node(code_block: Code) -> Self {
+    pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
+        let (tag, imports) = Self::parse_metadata(code_block.clone())?;
         let language = Language::parse_language(&code_block.lang.unwrap_or_default());
-        let (tag, imports) = Self::parse_metadata(&code_block.meta.unwrap_or_default());
-        Self::new(language, code_block.value, tag, imports)
+        Ok(Self::new(language, code_block.value, tag, imports))
     }
 
-    fn parse_metadata(metadata: &str) -> (Option<String>, Vec<String>) {
+    fn parse_metadata(code_block: Code) -> Result<(Option<String>, Vec<String>), ParserError> {
+        let metadata = code_block.meta.unwrap_or_default();
         // Regex to capture `use=[...]`
         let use_re = Regex::new(USE_REGEX).expect("Failed to compile USE_REGEX");
 
         // Extract imports
         let imports: Vec<String> = use_re
-            .captures(metadata)
+            .captures(&metadata)
             .map(|caps| {
                 caps[1]
                     .split(',')
@@ -72,15 +75,26 @@ impl CodeBlock {
             .unwrap_or_default();
 
         // Remove the `use=[...]` part to get the block tag
-        let metadata_without_use = use_re.replace(metadata, "");
+        let metadata_without_use = use_re.replace(&metadata, "");
 
         // Take the first word that is not part of `use=` as the tag
-        let tag = metadata_without_use
+        let mut tag = metadata_without_use
             .split_whitespace()
             .next()
             .map(|s| s.to_string());
 
-        (tag, imports)
+        // If a code block does not have a tag, we use its position
+        if tag.is_none() {
+            let start_line = code_block
+                .position
+                .ok_or_else(|| ParserError::CodeBlockError("Block position not found".to_string()))?
+                .start
+                .line
+                .to_string();
+
+            tag = Some(start_line)
+        }
+        Ok((tag, imports))
     }
 }
 
@@ -90,8 +104,8 @@ mod tests {
 
     #[test]
     fn test_parse_metadata_with_use() {
-        let metadata = "use=[block1,block2] tag1";
-        let (tag, imports) = CodeBlock::parse_metadata(metadata);
+        let metadata = "use=[block1,block2] tag1".to_string();
+        let (tag, imports) = CodeBlock::parse_metadata(metadata).unwrap();
         assert_eq!(tag, Some("tag1".to_string()));
         assert_eq!(imports, vec!["block1".to_string(), "block2".to_string()]);
     }
