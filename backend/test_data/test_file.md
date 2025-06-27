@@ -22,6 +22,14 @@ int x = 2 + 3;
 printf("%d\n", x);
 ```
 
+execute a python block:
+```python monty
+a = 'SPAM'
+for i in range(4):
+    print(a)
+```
+
+
 Define main block `run`:
 
 ```c use=[headers,helper] main_block

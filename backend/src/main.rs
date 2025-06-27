@@ -3,8 +3,6 @@ use backend::parser::exclude::exclude_from_markdown;
 use backend::tangle as tg;
 use backend::{cli::Cli, parser::parse_blocks_from_file, tangle::tangle_block};
 use clap::Parser;
-use std::fs;
-use std::process::{Command, Stdio};
 use std::{
     fs::write,
     path::{Path, PathBuf},
@@ -65,43 +63,8 @@ fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
         return;
     };
 
-    // Step 1: Compile the C program
-    // Create a temporary directory in the current working directory
-    let current_dir = std::env::current_dir().expect("Failed to get current directory");
-    let tmp_dir = current_dir.join("tmp");
-    if !tmp_dir.exists() {
-        fs::create_dir_all(&tmp_dir).expect("Failed to create temp directory");
-    }
-
-    // Create the C file path using the target block name
-    let c_file = tmp_dir.join(format!("{}.c", execute_args.target_block));
-    let output_binary = tmp_dir.join(format!("{}", execute_args.target_block));
-
-    // Write the tangled output to the C file
-    fs::write(&c_file, output).expect("Failed to write C file");
-
-    // Compile the C program
-    let compile_status = Command::new("gcc")
-        .arg(&c_file)
-        .arg("-o")
-        .arg(&output_binary)
-        .status()
-        .expect("Failed to start gcc");
-
-    if !compile_status.success() {
-        eprintln!("Failed to compile C program.");
-        std::process::exit(1);
-    }
-
-    // Step 2: Run the compiled C binary and capture output
-    let output = Command::new(output_binary)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .expect("Failed to execute C program");
-
-    println!("C stdout:\n{}", String::from_utf8_lossy(&output.stdout));
-    eprintln!("C stderr:\n{}", String::from_utf8_lossy(&output.stderr));
+    println!("stdout:\n{}", String::from_utf8_lossy(&output.stdout));
+    eprintln!("stderr:\n{}", String::from_utf8_lossy(&output.stderr));
 }
 
 fn main() {
