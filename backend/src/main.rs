@@ -1,5 +1,6 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::exclude::exclude_from_markdown;
+use backend::tangle as tg;
 use backend::{cli::Cli, parser::parse_blocks_from_file, tangle::tangle_block};
 use clap::Parser;
 use std::{
@@ -45,6 +46,27 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
     };
 }
 
+fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
+    // Parse blocks from the input file
+    let blocks = match parse_blocks_from_file(&execute_args.general.input_file_path) {
+        Ok(blocks) => blocks,
+        Err(e) => {
+            println!("Error parsing blocks: {}", e);
+            return;
+        }
+    };
+
+    // Tangle blocks
+    let Ok(output) = tg::tangle_execute_block(&execute_args.target_block, &blocks)
+        .inspect_err(|e| println!("Error tangling blocks: {e}"))
+    else {
+        return;
+    };
+
+    println!("stdout:\n{}", String::from_utf8_lossy(&output.stdout));
+    eprintln!("stderr:\n{}", String::from_utf8_lossy(&output.stderr));
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -52,9 +74,11 @@ fn main() {
         Commands::Tangle(args) => {
             handle_tangle_command(args);
         }
-
         Commands::Exclude(args) => {
             handle_exclude_command(args);
+        }
+        Commands::Execute(args) => {
+            handle_execute_command(args);
         }
     }
 }
