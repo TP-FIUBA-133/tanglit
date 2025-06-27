@@ -14,6 +14,7 @@ pub enum Commands {
     Tangle(TangleArgs),
     #[command(about = "Exclude parts with % markers from input markdown file")]
     Exclude(ExcludeArgs),
+    #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
 }
 
@@ -72,8 +73,8 @@ pub struct ExecuteArgs {
     #[arg(
         long,
         value_name = "TARGET_BLOCK",
-        help = "Tag of the code block to tangle.",
-        help_heading = "Tangle Args",
+        help = "Tag of the code block to execute.",
+        help_heading = "Execute Args",
         env = "TARGET_BLOCK"
     )]
     pub target_block: String,
