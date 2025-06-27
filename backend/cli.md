@@ -1,6 +1,20 @@
 # Using the Backend CLI
 
-Use the `backend` CLI `tangle` command to tangle code blocks from your `.md` files.
+```
+Usage: backend <COMMAND>
+
+Commands:
+  tangle   Tangle a specific code block from a markdown file and export to a file
+  exclude  Exclude parts with % markers from input markdown file
+  execute  Execute a specific code block from a markdown file and read its output
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+Use the `backend` CLI `tangle` subcommand to tangle code blocks from your `.md` files. The `execute` subcommand allows you execute a given supported code block. The relevant build tools or interpreters must be available on your $PATH.
 
 ### ✅ Tangle
 
@@ -8,7 +22,7 @@ Use the `backend` CLI `tangle` command to tangle code blocks from your `.md` fil
 backend tangle --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --target-block <TARGET_BLOCK>
 ```
 
-### 🔧 Options
+#### 🔧 Options
 
 | Option                     | Description                                                                 |
 |---------------------------|-----------------------------------------------------------------------------|
@@ -19,6 +33,22 @@ backend tangle --input-file-path <INPUT_FILE_PATH> --output-dir <OUTPUT_DIR> --t
 | `-V`, `--version`         | Show the CLI version.                                                        |
 
 ---
+
+### ✅ Execute
+
+```sh
+backend execute --input-file-path <INPUT_FILE_PATH> --target-block <TARGET_BLOCK>
+```
+
+| Option                     | Description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| `--input-file-path`       | Path to the input Markdown file.                                            |
+| `--target-block`          | Name (tag) of the code block to execute.                                     |
+| `-h`, `--help`            | Show help message.                                                           |
+| `-V`, `--version`         | Show the CLI version.                                                        |
+
+---
+
 
 ## 📄 Example Input File
 
@@ -73,6 +103,12 @@ int main() {
 }
 
 ````
+
+## 💻 Executing a Block
+
+You can execute a given bare block of code in your markdown file using the `execute` subcommand and passing the name of the desired block. Interpreted languages are run as-is by the relevant interpreter found in your $PATH variable, while compiled languages like C often need a defined entry point. Blocks from these languages get wrapped in a `main` subroutine/function or equivalent notion and compiled before executing.  
+The standard output of the resulting program is captured and shown.
+
 
 ---
 
