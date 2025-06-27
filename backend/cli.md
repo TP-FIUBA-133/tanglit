@@ -49,6 +49,19 @@ backend execute --input-file-path <INPUT_FILE_PATH> --target-block <TARGET_BLOCK
 
 ---
 
+### Exclude
+
+```sh
+backend exclude --input-file-path <INPUT_FILE_PATH> --output-file-path <OUTPUT_FILE_PATH>
+```
+
+| Option                     | Description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| `--input-file-path`       | Path to the input Markdown file.                                            |
+| `--output-file-path`          | Path to the file where the output will be saved.                         |
+| `-h`, `--help`            | Show help message.                                                           |
+| `-V`, `--version`         | Show the CLI version.                                                        |
+
 
 ## 📄 Example Input File
 
@@ -111,6 +124,8 @@ The standard output of the resulting program is captured and shown.
 
 
 ---
+
+
 
 ## 📌 Tips
 
