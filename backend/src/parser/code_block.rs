@@ -1,9 +1,10 @@
 use markdown::mdast::Code;
 use regex::Regex;
+use serde::Serialize;
 
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub enum Language {
     Unknown,
     Python,
@@ -22,12 +23,13 @@ impl Language {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CodeBlock {
     pub language: Language,
     pub code: String,
     pub tag: Option<String>,
     pub imports: Vec<String>,
+    pub start_line: usize,
 }
 
 impl CodeBlock {
@@ -36,23 +38,35 @@ impl CodeBlock {
         code: String,
         tag: Option<String>,
         imports: Vec<String>,
+        start_line: usize,
     ) -> Self {
         Self {
             language,
             code,
             tag,
             imports,
+            start_line,
         }
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(Language::Unknown, code, None, Vec::new())
+        Self::new(Language::Unknown, code, None, Vec::new(), 0)
     }
 
     pub fn from_code_node(code_block: Code) -> Self {
         let language = Language::parse_language(&code_block.lang.unwrap_or_default());
         let (tag, imports) = Self::parse_metadata(&code_block.meta.unwrap_or_default());
-        Self::new(language, code_block.value, tag, imports)
+        Self::new(
+            language,
+            code_block.value,
+            tag,
+            imports,
+            code_block
+                .position
+                .expect("CodeBlock expected to have a position")
+                .start
+                .line,
+        )
     }
 
     fn parse_metadata(metadata: &str) -> (Option<String>, Vec<String>) {
