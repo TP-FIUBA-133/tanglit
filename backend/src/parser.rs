@@ -68,7 +68,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_input_no_blocks() {
+    fn test_parse_code_blocks_no_blocks() {
         let input = r#"
         This is just plain text.
         No code blocks here.
@@ -80,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_input_block_and_text() {
+    fn test_parse_code_blocks_block_and_text() {
         let input = r#"
         This is some text.
         ```python hello
@@ -98,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_input_malformed_blocks() {
+    fn test_parse_code_blocks_malformed_blocks() {
         let input = r#"
         ```python hello_python
         print("Hello, world!")
@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_input_multiple_blocks() {
+    fn test_parse_code_blocks_multiple_blocks() {
         let input = r#"
 ```python block_1
 print("Block 1")
@@ -173,5 +173,49 @@ print("Hello, world!")
             vec!["block1".to_string(), "block2".to_string()]
         );
         assert_eq!(blocks.get("block3").unwrap().language, Language::Python);
+    }
+
+    #[test]
+    fn test_parse_code_blocks_without_tag() {
+        let input = r#"
+```python
+print("Hello, world!")
+```"#;
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        assert_eq!(blocks.len(), 1);
+        let block = blocks.get("2").unwrap(); // Default tag based on line number
+        assert_eq!(block.code.trim(), r#"print("Hello, world!")"#);
+        assert_eq!(block.tag, "2".to_string());
+        assert!(block.imports.is_empty());
+        assert_eq!(block.language, Language::Python);
+    }
+
+    #[test]
+    fn test_parse_code_blocks_various_blocks() {
+        let input = r#"
+```python
+print("Hello, world!")
+```
+```javascript
+console.log("Hello, world!");
+```
+```Rust rust
+println!("Hello, world!");
+```"#;
+        let blocks = parse_code_blocks(input.to_string()).unwrap();
+
+        assert_eq!(blocks.len(), 3);
+        assert_eq!(
+            blocks.get("2").unwrap().code.trim(),
+            r#"print("Hello, world!")"#
+        );
+        assert_eq!(
+            blocks.get("5").unwrap().code.trim(),
+            r#"console.log("Hello, world!");"#
+        );
+        assert_eq!(
+            blocks.get("rust").unwrap().code.trim(),
+            r#"println!("Hello, world!");"#
+        );
     }
 }

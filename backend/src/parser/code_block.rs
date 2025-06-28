@@ -46,6 +46,8 @@ impl CodeBlock {
         Self::new(Language::Unknown, code, "".to_string(), Vec::new())
     }
 
+    /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
+    /// If the tag is not specified in the code block, it defaults to the line number of the code block.
     pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
         let language = Language::parse_language(&code_block.lang.unwrap_or_default());
         let (tag, imports) = Self::parse_metadata(&code_block.meta.unwrap_or_default());
@@ -97,8 +99,8 @@ mod tests {
 
     #[test]
     fn test_parse_metadata_with_use() {
-        let metadata = "use=[block1,block2] tag1".to_string();
-        let (tag, imports) = CodeBlock::parse_metadata(&metadata);
+        let metadata = "use=[block1,block2] tag1";
+        let (tag, imports) = CodeBlock::parse_metadata(metadata);
         assert_eq!(tag, Some("tag1".to_string()));
         assert_eq!(imports, vec!["block1".to_string(), "block2".to_string()]);
     }
