@@ -101,7 +101,7 @@ function handleFileChange(event) {
           class="editor"
         />
       </div>
-      <div class="exclusion_output">{{exclusion_output}}</div>
+      <div class="exclusion_output">{{ exclusion_output }}</div>
     </div>
     <div class="status-bar">
       <div class="buttons">
@@ -153,6 +153,7 @@ body {
   background-color: #00931f;
   height: 100vh;
 }
+
 .main-container {
   display: flex;
   flex-direction: row;
@@ -160,11 +161,13 @@ body {
   overflow: hidden;
   background-color: #ffffff;
 }
+
 .editor-wrapper {
   flex-grow: 1;
   overflow: hidden;
   margin: 0;
 }
+
 .exclusion_output {
   width: 50%;
   color: #5d8cec;
