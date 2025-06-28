@@ -1,7 +1,6 @@
 use backend::parser::code_block::CodeBlock;
 use backend::parser::input_to_mdast;
 use backend::parser::slides::Slide;
-use std::string::ParseError;
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
