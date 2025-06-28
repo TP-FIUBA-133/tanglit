@@ -1,51 +1,126 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import MarkdownEditor from "./MarkdownEditor.vue";
 
-const greetMsg = ref("");
-const name = ref("");
+const exclusion_output = ref("");
+const raw_markdown = ref("");
+const slides = ref<number[]>([]);
+const blocks = ref<number[]>([]);
 
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsg.value = await invoke("greet", { name: name.value });
+enum TANGLIT_COMMANDS {
+  exclude = "tanglit_exclude",
+  parse_slides = "tanglit_parse_slides",
+  parse_blocks = "tanglit_parse_blocks",
+}
+
+async function exclude(raw_markdown: string): Promise<string> {
+  return await invoke(TANGLIT_COMMANDS.exclude, { raw_markdown: raw_markdown });
+}
+
+async function parse_slides(raw_markdown: string): Promise<number[]> {
+  let rv = await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown: raw_markdown });
+  let v: number[] = [];
+  rv.forEach((item) => {
+    v.push(item.start_line);
+  });
+  return v;
+}
+
+async function parse_blocks(raw_markdown: string): Promise<number[]> {
+  let rv = await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown: raw_markdown });
+  let v: number[] = [];
+  rv.forEach((item) => {
+    v.push(item.start_line);
+  });
+  return v;
+}
+
+function load_sample_markdown() {
+  fetch("/src/assets/example.md")
+    .then((response) => response.text())
+    .then((text) => {
+      raw_markdown.value = text;
+      console.log("Sample markdown loaded.");
+    })
+    .catch((error) => {
+      console.error("Error loading sample markdown:", error);
+    });
+}
+
+const time_to_process = ref(0);
+
+watch(raw_markdown, async (newValue) => {
+  let start_time = performance.now();
+  try {
+    slides.value = await parse_slides(newValue);
+    exclusion_output.value = await exclude(newValue);
+    blocks.value = await parse_blocks(newValue);
+  } catch (e) {
+    alert("Error: " + e);
+  }
+  let end_time = performance.now();
+  time_to_process.value = Math.floor(end_time - start_time);
+});
+
+const fileInput = ref(null); // Template ref for the hidden input
+const selectedFileName = ref("No file chosen.");
+
+// This function is called when the custom button is clicked
+function triggerFileInput() {
+  fileInput.value.click(); // Programmatically clicks the hidden input
+}
+
+// This function is called when a file is selected in the dialog
+function handleFileChange(event) {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFileName.value = file.name;
+    console.log("Selected file:", file);
+    // You can now read the file or do whatever you need with it
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      raw_markdown.value = e.target.result; // Set the content of the editor
+    };
+    reader.readAsText(file); // Read the file as text
+    event.target.value = null; // Reset the input to allow re-selection of the same file
+  } else {
+    selectedFileName.value = "No file chosen.";
+  }
 }
 </script>
 
 <template>
   <main class="container">
-    <h1>Welcome to Tauri + Vue</h1>
-
-    <div class="row">
-      <a href="https://vitejs.dev" target="_blank">
-        <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-      </a>
-      <a href="https://tauri.app" target="_blank">
-        <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-      </a>
-      <a href="https://vuejs.org/" target="_blank">
-        <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-      </a>
+    <div class="main-container">
+      <div class="editor-wrapper">
+        <MarkdownEditor
+          v-model:raw_markdown="raw_markdown"
+          v-model:slide_lines="slides"
+          v-model:block_lines="blocks"
+          class="editor"
+        />
+      </div>
+      <div class="exclusion_output">{{exclusion_output}}</div>
     </div>
-    <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
-
-    <form class="row" @submit.prevent="greet">
-      <input id="greet-input" v-model="name" placeholder="Enter a name..." />
-      <button type="submit">Greet</button>
-    </form>
-    <p>{{ greetMsg }}</p>
+    <div class="status-bar">
+      <div class="buttons">
+        <div>
+          <button @click="triggerFileInput" class="custom-file-upload">Open</button>
+          <input type="file" ref="fileInput" @change="handleFileChange" style="display: none" accept=".md,.txt" />
+        </div>
+        <button title="Save">Save</button>
+        <button title="Load sample markdown" @click="load_sample_markdown">Sample markdown</button>
+        <button title="Export slides">Export slides</button>
+        <button title="Export to doc">Export doc</button>
+        <button title="Tangle code">Tangle code</button>
+      </div>
+      <div>Time to process: {{ time_to_process }} ms</div>
+    </div>
   </main>
 </template>
 
-<style scoped>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-</style>
-<style>
+<style lang="scss">
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -62,14 +137,76 @@ async function greet() {
   -webkit-text-size-adjust: 100%;
 }
 
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
 .container {
   margin: 0;
-  padding-top: 10vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  background-color: #00931f;
+  height: 100vh;
 }
+.main-container {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+.editor-wrapper {
+  flex-grow: 1;
+  overflow: hidden;
+  margin: 0;
+}
+.exclusion_output {
+  width: 50%;
+  color: #5d8cec;
+  background-color: #222;
+  white-space: pre-wrap;
+  text-align: left;
+  font-family: monospace;
+}
+
+.status-bar {
+  flex-shrink: 0; /* Prevents the status bar from shrinking */
+  padding: 4px 10px;
+  border: none;
+  margin: 0;
+  background-color: #29587e;
+  color: white;
+  font-family: sans-serif;
+  font-size: 12px;
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+}
+
+.buttons button {
+  background-color: #003974;
+  border-radius: 0;
+}
+
+/* .output-view {
+  white-space: pre-wrap;
+  text-align: left;
+  font-family: monospace;
+}
+*/
 
 .logo {
   height: 6em;
@@ -122,6 +259,7 @@ button {
 button:hover {
   border-color: #396cd8;
 }
+
 button:active {
   border-color: #396cd8;
   background-color: #e8e8e8;
@@ -130,10 +268,6 @@ button:active {
 input,
 button {
   outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -151,6 +285,7 @@ button {
     color: #ffffff;
     background-color: #0f0f0f98;
   }
+
   button:active {
     background-color: #0f0f0f69;
   }
