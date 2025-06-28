@@ -3,7 +3,6 @@ use backend::parser::input_to_mdast;
 use backend::parser::slides::Slide;
 use std::string::ParseError;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
     let rv = backend::parser::exclude::exclude_from_markdown(raw_markdown);
@@ -24,17 +23,10 @@ fn tanglit_parse_slides(raw_markdown: &str) -> Vec<Slide> {
     rv
 }
 
-// struct CodeInfo {
-//     pub language: String,
-//     pub code: String,
-//     pub tag: Option<String>,
-// pub imports: Vec<String>
-// }
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_parse_blocks(raw_markdown: &str) -> Vec<CodeBlock> {
     let mdast = input_to_mdast(raw_markdown).expect("Failed to parse input to mdast");
     let rv = backend::parser::parse_input(raw_markdown.to_string()).unwrap_or_else(|_| vec![]);
-
     rv
 }
 
