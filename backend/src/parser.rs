@@ -20,7 +20,7 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlo
 
 /// Parses code blocks from a given input string
 /// Returns a HashMap where the key is the tag of the code block and the value is the CodeBlock struct
-/// If a code block does not have a tag, it will not be included in the map
+/// If a code block does not have a tag, a default tag is assigned based on their line number in the input
 pub fn parse_code_blocks(input: String) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Parse the input to an MDast tree
     let mdast = input_to_mdast(&input)?;
@@ -29,13 +29,18 @@ pub fn parse_code_blocks(input: String) -> Result<HashMap<String, CodeBlock>, Pa
     let code_nodes = get_code_nodes_from_mdast(mdast)?;
 
     // Convert code nodes to CodeBlocks
-    let code_blocks: HashMap<String, CodeBlock> = code_nodes
+    let code_blocks: Vec<CodeBlock> = code_nodes
         .into_iter()
         .map(CodeBlock::from_code_node)
-        .filter_map(|cb| cb.tag.clone().map(|tag| (tag, cb)))
+        .collect::<Result<_, _>>()?;
+
+    // Create a HashMap from the code blocks
+    let code_block_map = code_blocks
+        .into_iter()
+        .map(|cb| (cb.tag.clone(), cb))
         .collect();
 
-    Ok(code_blocks)
+    Ok(code_block_map)
 }
 
 pub fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
@@ -52,8 +57,6 @@ fn get_code_nodes_from_mdast(mdast: Node) -> Result<Vec<Code>, ParserError> {
         if let Node::Code(code_block) = child {
             code_nodes.push(code_block.clone());
         }
-        // Not sure if nested code_nodes are supported
-        // code_nodes.extend(get_code_nodes_from_mdast(child.clone())?);
     }
     Ok(code_nodes)
 }
@@ -164,10 +167,7 @@ print("Hello, world!")
             blocks.get("block3").unwrap().code.trim(),
             r#"print("Hello, world!")"#
         );
-        assert_eq!(
-            blocks.get("block3").unwrap().tag,
-            Some("block3".to_string())
-        );
+        assert_eq!(blocks.get("block3").unwrap().tag, "block3".to_string());
         assert_eq!(
             blocks.get("block3").unwrap().imports,
             vec!["block1".to_string(), "block2".to_string()]
