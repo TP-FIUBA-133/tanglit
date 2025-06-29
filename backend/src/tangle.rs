@@ -2,6 +2,8 @@ use crate::{errors::TangleError, parser::code_block::CodeBlock};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 
+const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
+
 pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     let mut tangle = String::new();
     for block in blocks {
@@ -52,7 +54,8 @@ fn resolve_macros(
     code_block: &mut CodeBlock,
     blocks: &HashMap<String, CodeBlock>,
 ) -> Result<(), TangleError> {
-    let re = Regex::new(r"@\[([a-zA-Z0-9_]+)\]").unwrap();
+    let re = Regex::new(MACROS_REGEX)
+        .map_err(|e| TangleError::InternalError(format!("Failed to compile regex: {}", e)))?;
 
     // Collect all referenced block names
     let referenced_blocks: HashSet<_> = re
