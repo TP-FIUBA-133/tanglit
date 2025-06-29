@@ -73,7 +73,7 @@ function add_margin_glyph(myGlyphWidget: IGlyphMarginWidget) {
 }
 
 watch(slide_lines_mod, (newValue, oldValue) => {
-  if (!editor.value) return; // Ensure editor is mounted before proceeding
+  if (!editor.value) return;
   let editorInstance = editor.value;
 
   console.log("SLIDES");
