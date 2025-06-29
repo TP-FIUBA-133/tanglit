@@ -43,13 +43,17 @@ function RunBlockWidget() {
   return widgetNode;
 }
 
+function get_margin_glyph_id(line: number, _type: "slide" | "code"): string {
+  return "my.glyph.margin.widget." + _type + "." + line; // Unique ID for the widget
+}
+
 function add_margin_glyph(line: number, _type: "slide" | "code", extra) {
   if (!editor.value) return;
   const widgetNode = _type === "slide" ? SlideWidget(extra) : RunBlockWidget();
   // 2. Define the GLYPH MARGIN widget
   let myGlyphWidget = {
     getId: function () {
-      return "my.glyph.margin.widget." + _type + "." + line; // Unique ID for the widget
+      return get_margin_glyph_id(line, _type); // Unique ID for the widget
     },
     getDomNode: function () {
       return widgetNode;
@@ -73,7 +77,6 @@ watch(slide_lines_mod, (newValue, oldValue) => {
   if (!editor.value) return; // Ensure editor is mounted before proceeding
   let editorInstance = editor.value;
 
-
   console.log("SLIDES");
   console.log("newValue:", newValue, "oldValue:", oldValue);
   console.log("before: ", margin_glyphs);
@@ -83,7 +86,7 @@ watch(slide_lines_mod, (newValue, oldValue) => {
   oldValue?.forEach((line) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
-      const marginGlyph = margin_glyphs["my.glyph.margin.widget.slide." + line];
+      const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "slide")];
       editorInstance.removeGlyphMarginWidget(marginGlyph);
     }
   });
@@ -110,7 +113,7 @@ watch(block_lines_mod, (newValue, oldValue) => {
   oldValue?.forEach((line) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
-      const marginGlyph = margin_glyphs["my.glyph.margin.widget.code." + line];
+      const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "code")];
       editorInstance.removeGlyphMarginWidget(marginGlyph);
     }
   });
