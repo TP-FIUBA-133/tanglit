@@ -3,11 +3,15 @@ import { shallowRef, watch } from "vue";
 import VueMonacoEditor from "@guolao/vue-monaco-editor";
 import * as monaco from "monaco-editor";
 
+type ICodeEditor = monaco.editor.ICodeEditor;
+type IGlyphMarginWidget = monaco.editor.IGlyphMarginWidget;
+type IGlyphMarginWidgetPosition = monaco.editor.IGlyphMarginWidgetPosition;
+
 const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
 const block_lines_mod = defineModel<number[]>("block_lines");
 
-let margin_glyphs = {};
+let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
 
 const MONACO_EDITOR_OPTIONS = {
   automaticLayout: true,
@@ -16,8 +20,8 @@ const MONACO_EDITOR_OPTIONS = {
   glyphMargin: true,
 };
 
-const editor = shallowRef();
-const handleMount = (editorInstance) => (editor.value = editorInstance);
+const editor = shallowRef<ICodeEditor>();
+const handleMount = (editorInstance: ICodeEditor) => (editor.value = editorInstance);
 
 function SlideWidget(extra) {
   const widgetNode = document.createElement("div");
@@ -51,10 +55,11 @@ function add_margin_glyph(line: number, _type: "slide" | "code", extra) {
       return widgetNode;
     },
     // Use the corrected getPosition method
-    getPosition: function () {
+    getPosition: function (): IGlyphMarginWidgetPosition {
       return {
         range: new monaco.Range(line, 1, line, 1), // Use 'range' instead of 'lineNumber'
         lane: _type == "slide" ? monaco.editor.GlyphMarginLane.Center : monaco.editor.GlyphMarginLane.Right,
+        zIndex: 1000, // Ensure the widget appears above other content
       };
     },
   };
@@ -65,17 +70,21 @@ function add_margin_glyph(line: number, _type: "slide" | "code", extra) {
 }
 
 watch(slide_lines_mod, (newValue, oldValue) => {
+  if (!editor.value) return; // Ensure editor is mounted before proceeding
+  let editorInstance = editor.value;
+
+
   console.log("SLIDES");
   console.log("newValue:", newValue, "oldValue:", oldValue);
   console.log("before: ", margin_glyphs);
+
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
-  if (!editor.value) return; // Ensure editor is mounted before proceeding
   oldValue?.forEach((line) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
       const marginGlyph = margin_glyphs["my.glyph.margin.widget.slide." + line];
-      editor.value.removeGlyphMarginWidget(marginGlyph);
+      editorInstance.removeGlyphMarginWidget(marginGlyph);
     }
   });
   newValue?.forEach((line, idx) => {
@@ -89,6 +98,9 @@ watch(slide_lines_mod, (newValue, oldValue) => {
 });
 
 watch(block_lines_mod, (newValue, oldValue) => {
+  if (!editor.value) return; // Ensure editor is mounted before proceeding
+  let editorInstance = editor.value;
+
   console.log("BLOCKS");
   console.log("newValue:", newValue, "oldValue:", oldValue);
   console.log("before: ", margin_glyphs);
@@ -99,7 +111,7 @@ watch(block_lines_mod, (newValue, oldValue) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
       const marginGlyph = margin_glyphs["my.glyph.margin.widget.code." + line];
-      editor.value.removeGlyphMarginWidget(marginGlyph);
+      editorInstance.removeGlyphMarginWidget(marginGlyph);
     }
   });
   newValue?.forEach((line) => {
