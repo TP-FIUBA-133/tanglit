@@ -1,4 +1,5 @@
 use crate::{errors::TangleError, parser::code_block::CodeBlock};
+use std::collections::HashMap;
 
 pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     let mut tangle = String::new();
@@ -9,23 +10,26 @@ pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
     tangle
 }
 
-pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleError> {
-    // Search block
-    let code_block = blocks
-        .iter()
-        .find(|b| b.tag.clone().unwrap_or_default() == block)
-        .ok_or(TangleError::BlockNotFound(block.into()))?;
+pub fn tangle_block(
+    target_block: &str,
+    blocks: HashMap<String, CodeBlock>,
+) -> Result<String, TangleError> {
+    // Get target_code_block
+    let target_code_block = blocks
+        .get(target_block)
+        .ok_or(TangleError::BlockNotFound(target_block.into()))?;
 
-    // Search imported blocks
-    let imported_blocks: Vec<CodeBlock> = blocks
+    // Get imported blocks
+    let imported_blocks: Vec<CodeBlock> = target_code_block
+        .imports
         .iter()
-        .filter(|b| {
-            code_block
-                .imports
-                .contains(&b.tag.clone().unwrap_or_default())
+        .map(|import| {
+            blocks
+                .get(import)
+                .cloned()
+                .ok_or(TangleError::BlockNotFound(import.clone()))
         })
-        .cloned()
-        .collect();
+        .collect::<Result<Vec<_>, _>>()?;
 
     // Tangle imports
     let mut tangle = String::new();
@@ -36,7 +40,7 @@ pub fn tangle_block(block: &str, blocks: &[CodeBlock]) -> Result<String, TangleE
         tangle.push('\n');
     }
 
-    add_main_code_block(code_block, &mut tangle);
+    add_main_code_block(target_code_block, &mut tangle);
 
     Ok(tangle)
 }

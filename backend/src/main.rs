@@ -18,7 +18,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) {
     };
 
     // Tangle blocks
-    let Ok(output) = tangle_block(&tangle_args.target_block, &blocks)
+    let Ok(output) = tangle_block(&tangle_args.target_block, blocks)
         .inspect_err(|e| println!("Error tangling blocks: {e}"))
     else {
         return;
