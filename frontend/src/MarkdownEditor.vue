@@ -23,13 +23,10 @@ const MONACO_EDITOR_OPTIONS = {
 const editor = shallowRef<ICodeEditor>();
 const handleMount = (editorInstance: ICodeEditor) => (editor.value = editorInstance);
 
-function SlideWidget(extra) {
+function SlideWidget(slide_idx: number) {
   const widgetNode = document.createElement("div");
-  widgetNode.innerHTML = extra.slide_idx; // Use different glyphs for slides and code
+  widgetNode.innerHTML = slide_idx.toString();
   widgetNode.className = "slide-widget";
-  // widgetNode.onclick = () => {
-  //   alert("You rang the bell on line 4!");
-  // };
   return widgetNode;
 }
 
