@@ -23,37 +23,14 @@ const MONACO_EDITOR_OPTIONS = {
 const editor = shallowRef<ICodeEditor>();
 const handleMount = (editorInstance: ICodeEditor) => (editor.value = editorInstance);
 
-function SlideWidget(slide_idx: number) {
-  const widgetNode = document.createElement("div");
-  widgetNode.innerHTML = slide_idx.toString();
-  widgetNode.className = "slide-widget";
-  return widgetNode;
-}
-
-function RunBlockWidget() {
-  const widgetNode = document.createElement("div");
-  widgetNode.innerHTML = "<button>▶</button>"; // Use different glyphs for slides and code
-  widgetNode.className = "run-block-widget";
-  widgetNode.onclick = () => {
-    alert("This should run the block of code!");
-  };
-  return widgetNode;
-}
-
-function get_margin_glyph_id(line: number, _type: "slide" | "code"): string {
-  return "my.glyph.margin.widget." + _type + "." + line; // Unique ID for the widget
-}
-
-function add_margin_glyph(line: number, _type: "slide" | "code", extra) {
-  if (!editor.value) return;
-  const widgetNode = _type === "slide" ? SlideWidget(extra) : RunBlockWidget();
+function makeGlyphWidget(line: number, widget_id: string, widget_dom: HTMLElement): IGlyphMarginWidget {
   // 2. Define the GLYPH MARGIN widget
   let myGlyphWidget = {
     getId: function () {
-      return get_margin_glyph_id(line, _type); // Unique ID for the widget
+      return widget_id; // Unique ID for the widget
     },
     getDomNode: function () {
-      return widgetNode;
+      return widget_dom;
     },
     // Use the corrected getPosition method
     getPosition: function (): IGlyphMarginWidgetPosition {
@@ -64,9 +41,36 @@ function add_margin_glyph(line: number, _type: "slide" | "code", extra) {
       };
     },
   };
+  return myGlyphWidget;
+}
+
+function SlideWidget(line: number, slide_idx: number): IGlyphMarginWidget {
+  const widgetNode = document.createElement("div");
+  widgetNode.innerHTML = slide_idx.toString();
+  widgetNode.className = "slide-widget";
+  return makeGlyphWidget(line, get_margin_glyph_id(line, "slide"), widgetNode);
+}
+
+function RunBlockWidget(line: number): IGlyphMarginWidget {
+  const widgetNode = document.createElement("div");
+  widgetNode.innerHTML = "<button>▶</button>"; // Use different glyphs for slides and code
+  widgetNode.className = "run-block-widget";
+  widgetNode.onclick = () => {
+    alert("This should run the block of code!");
+  };
+  return makeGlyphWidget(line, get_margin_glyph_id(line, "slide"), widgetNode);
+}
+
+function get_margin_glyph_id(line: number, _type: "slide" | "code"): string {
+  return "my.glyph.margin.widget." + _type + "." + line; // Unique ID for the widget
+}
+
+function add_margin_glyph(myGlyphWidget: IGlyphMarginWidget) {
+  if (!editor.value) return;
+  let editorInstance = editor.value;
 
   // 3. Add the widget using the correct method
-  editor.value.addGlyphMarginWidget(myGlyphWidget);
+  editorInstance.addGlyphMarginWidget(myGlyphWidget);
   margin_glyphs[myGlyphWidget.getId()] = myGlyphWidget;
 }
 
@@ -91,7 +95,7 @@ watch(slide_lines_mod, (newValue, oldValue) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!oldLines.has(line)) {
       // Add the margin glyph only if it doesn't already exist
-      add_margin_glyph(line, "slide", { slide_idx: idx + 1 }); // Pass the slide index as extra data
+      add_margin_glyph(SlideWidget(line, idx + 1)); // Pass the slide index as extra data
     }
   });
   console.log("after: ", margin_glyphs);
@@ -118,7 +122,7 @@ watch(block_lines_mod, (newValue, oldValue) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!oldLines.has(line)) {
       // Add the margin glyph only if it doesn't already exist
-      add_margin_glyph(line, "code");
+      add_margin_glyph(RunBlockWidget(line)); // Pass the slide index as extra data
     }
   });
   console.log("after: ", margin_glyphs);
