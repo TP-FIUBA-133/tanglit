@@ -100,7 +100,7 @@ watch(slide_lines_mod, (newValue, oldValue) => {
 });
 
 watch(block_lines_mod, (newValue, oldValue) => {
-  if (!editor.value) return; // Ensure editor is mounted before proceeding
+  if (!editor.value) return;
   let editorInstance = editor.value;
 
   console.log("BLOCKS");
@@ -108,7 +108,7 @@ watch(block_lines_mod, (newValue, oldValue) => {
   console.log("before: ", margin_glyphs);
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
-  if (!editor.value) return; // Ensure editor is mounted before proceeding
+
   oldValue?.forEach((line) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
