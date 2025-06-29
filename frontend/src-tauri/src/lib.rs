@@ -1,6 +1,7 @@
 use backend::parser::code_block::CodeBlock;
 use backend::parser::input_to_mdast;
 use backend::parser::slides::Slide;
+use std::collections::HashMap;
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
@@ -25,7 +26,10 @@ fn tanglit_parse_slides(raw_markdown: &str) -> Vec<Slide> {
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_parse_blocks(raw_markdown: &str) -> Vec<CodeBlock> {
     let mdast = input_to_mdast(raw_markdown).expect("Failed to parse input to mdast");
-    let rv = backend::parser::parse_input(raw_markdown.to_string()).unwrap_or_else(|_| vec![]);
+    let rv = backend::parser::parse_code_blocks(raw_markdown.to_string())
+        .unwrap_or_else(|_| HashMap::new())
+        .iter()
+        .map(|a| (a.1.clone())).collect();
     rv
 }
 
