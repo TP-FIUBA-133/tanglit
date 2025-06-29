@@ -125,6 +125,8 @@ watch(block_lines_mod, (newValue, oldValue) => {
 </template>
 
 <style>
+
+/* stylelint-disable-next-line no-unused-selectors */
 .slide-widget {
   color: orange;
   font-size: 0.875rem;
