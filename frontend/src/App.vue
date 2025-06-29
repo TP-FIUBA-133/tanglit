@@ -196,13 +196,6 @@ body {
   border-radius: 0;
 }
 
-/* .output-view {
-  white-space: pre-wrap;
-  text-align: left;
-  font-family: monospace;
-}
-*/
-
 .logo {
   height: 6em;
   padding: 1.5em;
