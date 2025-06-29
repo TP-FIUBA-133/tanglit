@@ -125,7 +125,6 @@ watch(block_lines_mod, (newValue, oldValue) => {
 </template>
 
 <style>
-
 .slide-widget {
   color: orange;
   font-size: 0.875rem;
