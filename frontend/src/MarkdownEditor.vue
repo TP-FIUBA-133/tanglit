@@ -62,7 +62,7 @@ function add_margin_glyph(line: number, _type: "slide" | "code", extra) {
     getPosition: function (): IGlyphMarginWidgetPosition {
       return {
         range: new monaco.Range(line, 1, line, 1), // Use 'range' instead of 'lineNumber'
-        lane: _type == "slide" ? monaco.editor.GlyphMarginLane.Center : monaco.editor.GlyphMarginLane.Right,
+        lane: monaco.editor.GlyphMarginLane.Center,
         zIndex: 1000, // Ensure the widget appears above other content
       };
     },
