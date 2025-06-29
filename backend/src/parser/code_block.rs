@@ -57,12 +57,11 @@ impl CodeBlock {
 
     /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
     /// If the tag is not specified in the code block, it defaults to the line number of the code block.
-    pub fn from_code_node(code_block: &Code) -> Result<Self, ParserError> {
-        let language = Language::parse_language(code_block.lang.as_deref().unwrap_or_default());
-        let (tag, imports) = Self::parse_metadata(code_block.meta.as_deref().unwrap_or_default());
+    pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
+        let language = Language::parse_language(code_block.lang.unwrap_or_default().as_str());
+        let (tag, imports) = Self::parse_metadata(code_block.meta.unwrap_or_default().as_str());
         let start_line = code_block
             .position
-            .as_ref()
             .ok_or_else(|| ParserError::CodeBlockError("Block position not found".to_string()))?
             .start
             .line;
@@ -73,7 +72,7 @@ impl CodeBlock {
 
         Ok(Self::new(
             language,
-            code_block.value.clone(),
+            code_block.value,
             tag,
             imports,
             start_line,
