@@ -35,7 +35,13 @@ pub struct CodeBlock {
 }
 
 impl CodeBlock {
-    pub fn new(language: Language, code: String, tag: String, imports: Vec<String>,start_line: usize, ) -> Self {
+    pub fn new(
+        language: Language,
+        code: String,
+        tag: String,
+        imports: Vec<String>,
+        start_line: usize,
+    ) -> Self {
         Self {
             language,
             code,
