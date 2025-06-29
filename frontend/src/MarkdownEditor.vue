@@ -24,15 +24,13 @@ const editor = shallowRef<ICodeEditor>();
 const handleMount = (editorInstance: ICodeEditor) => (editor.value = editorInstance);
 
 function makeGlyphWidget(line: number, widget_id: string, widget_dom: HTMLElement): IGlyphMarginWidget {
-  // 2. Define the GLYPH MARGIN widget
-  let myGlyphWidget = {
+  return {
     getId: function () {
-      return widget_id; // Unique ID for the widget
+      return widget_id;
     },
     getDomNode: function () {
       return widget_dom;
     },
-    // Use the corrected getPosition method
     getPosition: function (): IGlyphMarginWidgetPosition {
       return {
         range: new monaco.Range(line, 1, line, 1), // Use 'range' instead of 'lineNumber'
@@ -41,7 +39,6 @@ function makeGlyphWidget(line: number, widget_id: string, widget_dom: HTMLElemen
       };
     },
   };
-  return myGlyphWidget;
 }
 
 function SlideWidget(line: number, slide_idx: number): IGlyphMarginWidget {
@@ -142,7 +139,6 @@ watch(block_lines_mod, (newValue, oldValue) => {
 .slide-widget {
   color: orange;
   font-size: 0.875rem;
-  //background-color: red;
   text-align: center;
   line-height: 19px;
   align-content: center;
