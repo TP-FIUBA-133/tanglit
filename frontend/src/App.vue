@@ -64,18 +64,26 @@ function triggerFileInput() {
 }
 
 // This function is called when a file is selected in the dialog
-function handleFileChange(event) {
-  const file = event.target.files[0];
+function handleFileChange(event: Event) {
+  const input_element = event.target as HTMLInputElement;
+  const file = input_element?.files?.[0]; // Get the first selected file
   if (file) {
     selectedFileName.value = file.name;
     console.log("Selected file:", file);
     // You can now read the file or do whatever you need with it
     const reader = new FileReader();
     reader.onload = (e) => {
-      raw_markdown.value = e.target.result; // Set the content of the editor
+      const result = e.target?.result;
+      if (typeof result === "string") {
+        raw_markdown.value = result; // Set the content of the editor only if defined
+      }
+    };
+    reader.onerror = (e) => {
+      console.error("Error reading file:", e);
+      alert("Error reading file: " + e);
     };
     reader.readAsText(file); // Read the file as text
-    event.target.value = null; // Reset the input to allow re-selection of the same file
+    input_element.value = ""; // Reset the input to allow re-selection of the same file
   } else {
     selectedFileName.value = "No file chosen.";
   }
