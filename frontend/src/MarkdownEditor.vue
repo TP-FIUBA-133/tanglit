@@ -58,7 +58,7 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.onclick = () => {
     alert("This should run the block of code!");
   };
-  return makeGlyphWidget(line, get_margin_glyph_id(line, "slide"), widgetNode);
+  return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
 
 function get_margin_glyph_id(line: number, _type: "slide" | "code"): string {
