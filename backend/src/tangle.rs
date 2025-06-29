@@ -50,6 +50,7 @@ pub fn tangle_block(
     Ok(tangle)
 }
 
+/// Resolves macros in a code block by replacing them with the content of the referenced blocks.
 fn resolve_macros(
     code_block: &mut CodeBlock,
     blocks: &HashMap<String, CodeBlock>,
