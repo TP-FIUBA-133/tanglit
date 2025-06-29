@@ -1,6 +1,8 @@
 use markdown::mdast::Code;
 use regex::Regex;
 
+use crate::errors::ParserError;
+
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
 #[derive(Debug, PartialEq, Clone)]
@@ -26,17 +28,12 @@ impl Language {
 pub struct CodeBlock {
     pub language: Language,
     pub code: String,
-    pub tag: Option<String>,
+    pub tag: String,
     pub imports: Vec<String>,
 }
 
 impl CodeBlock {
-    pub fn new(
-        language: Language,
-        code: String,
-        tag: Option<String>,
-        imports: Vec<String>,
-    ) -> Self {
+    pub fn new(language: Language, code: String, tag: String, imports: Vec<String>) -> Self {
         Self {
             language,
             code,
@@ -46,13 +43,25 @@ impl CodeBlock {
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(Language::Unknown, code, None, Vec::new())
+        Self::new(Language::Unknown, code, "".to_string(), Vec::new())
     }
 
-    pub fn from_code_node(code_block: Code) -> Self {
+    /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
+    /// If the tag is not specified in the code block, it defaults to the line number of the code block.
+    pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
         let language = Language::parse_language(&code_block.lang.unwrap_or_default());
         let (tag, imports) = Self::parse_metadata(&code_block.meta.unwrap_or_default());
-        Self::new(language, code_block.value, tag, imports)
+        let tag = match tag {
+            Some(t) => t,
+            None => code_block
+                .position
+                .ok_or_else(|| ParserError::CodeBlockError("Block position not found".to_string()))?
+                .start
+                .line
+                .to_string(),
+        };
+
+        Ok(Self::new(language, code_block.value, tag, imports))
     }
 
     fn parse_metadata(metadata: &str) -> (Option<String>, Vec<String>) {
