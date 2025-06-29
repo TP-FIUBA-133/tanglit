@@ -55,11 +55,14 @@ watch(raw_markdown, async (newValue) => {
   time_to_process.value = Math.floor(end_time - start_time);
 });
 
-const fileInput = ref(null); // Template ref for the hidden input
+const fileInput = ref<HTMLInputElement | null>(null); // Template ref for the hidden input
 const selectedFileName = ref("No file chosen.");
 
 // This function is called when the custom button is clicked
 function triggerFileInput() {
+  if (!fileInput.value) {
+    return;
+  }
   fileInput.value.click(); // Programmatically clicks the hidden input
 }
 
