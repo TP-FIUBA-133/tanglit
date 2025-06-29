@@ -99,6 +99,8 @@ pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
 
 #[cfg(test)]
 mod tests {
+    use crate::parser::code_block::Language;
+
     use super::*;
 
     #[test]
@@ -121,5 +123,100 @@ mod tests {
         )];
         let tangle = tangle_blocks(blocks);
         assert_eq!(tangle, "print('Hello, world!')\n");
+    }
+
+    #[test]
+    fn test_tangle_block_with_imports() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new(
+                Language::Python,
+                "print('Hello, world!')".to_string(),
+                "main".to_string(),
+                vec!["helper".to_string()],
+            ),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Language::Python,
+                "print('Helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+            ),
+        );
+
+        let tangle = tangle_block("main", blocks).unwrap();
+        assert_eq!(
+            tangle,
+            "print('Helper function')\n\nint main() {\nprint('Hello, world!')\n    return 0;\n}\n"
+        );
+    }
+
+    #[test]
+    fn test_tangle_block_with_missing_import() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new(
+                Language::Python,
+                "print('Hello, world!')".to_string(),
+                "main".to_string(),
+                vec!["helper".to_string()],
+            ),
+        );
+        let result = tangle_block("main", blocks);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TangleError::BlockNotFound("helper".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_macros() {
+        let mut blocks = HashMap::new();
+        let mut main = CodeBlock::new(
+            Language::Python,
+            "@[helper]\nprint('Hello, world!')".to_string(),
+            "main".to_string(),
+            vec![],
+        );
+        blocks.insert("main".to_string(), main.clone());
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Language::Python,
+                "print('Helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+            ),
+        );
+
+        let result = resolve_macros(&mut main, &blocks);
+        assert!(result.is_ok());
+        assert_eq!(
+            main.code,
+            "print('Helper function')\nprint('Hello, world!')".to_string()
+        );
+    }
+
+    #[test]
+    fn test_resolve_macros_with_missing_block() {
+        let mut blocks = HashMap::new();
+        let mut main = CodeBlock::new(
+            Language::Python,
+            "@[helper]\nprint('Hello, world!')".to_string(),
+            "main".to_string(),
+            vec![],
+        );
+        blocks.insert("main".to_string(), main.clone());
+        let result = resolve_macros(&mut main, &blocks);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TangleError::BlockNotFound("helper".to_string())
+        );
     }
 }

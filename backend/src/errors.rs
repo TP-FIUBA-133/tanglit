@@ -22,6 +22,7 @@ impl fmt::Debug for ParserError {
     }
 }
 
+#[derive(PartialEq)]
 pub enum TangleError {
     BlockNotFound(String),
     InternalError(String),
