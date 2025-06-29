@@ -68,8 +68,6 @@ function get_margin_glyph_id(line: number, _type: "slide" | "code"): string {
 function add_margin_glyph(myGlyphWidget: IGlyphMarginWidget) {
   if (!editor.value) return;
   let editorInstance = editor.value;
-
-  // 3. Add the widget using the correct method
   editorInstance.addGlyphMarginWidget(myGlyphWidget);
   margin_glyphs[myGlyphWidget.getId()] = myGlyphWidget;
 }
