@@ -15,25 +15,17 @@ enum TANGLIT_COMMANDS {
 }
 
 async function exclude(raw_markdown: string): Promise<string> {
-  return await invoke(TANGLIT_COMMANDS.exclude, { raw_markdown: raw_markdown });
+  return await invoke(TANGLIT_COMMANDS.exclude, { raw_markdown });
 }
 
 async function parse_slides(raw_markdown: string): Promise<number[]> {
-  let rv = await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown: raw_markdown });
-  let v: number[] = [];
-  rv.forEach((item) => {
-    v.push(item.start_line);
-  });
-  return v;
+  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{ start_line: number }>;
+  return rv.map((item) => item.start_line);
 }
 
 async function parse_blocks(raw_markdown: string): Promise<number[]> {
-  let rv = await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown: raw_markdown });
-  let v: number[] = [];
-  rv.forEach((item) => {
-    v.push(item.start_line);
-  });
-  return v;
+  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{ start_line: number }>;
+  return rv.map((item) => item.start_line);
 }
 
 function load_sample_markdown() {
