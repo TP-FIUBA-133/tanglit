@@ -51,7 +51,7 @@ pub fn tangle_block(
 
     if add_wrapper {
         if target_code_block.language == crate::parser::code_block::Language::C {
-            add_main_code_block(target_code_block, &mut tangle);
+            add_main_code_block(&target_code_block, &mut tangle);
         } else {
             tangle.push_str(&target_code_block.code);
         }
@@ -112,9 +112,8 @@ pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::code_block::Language;
-
     use super::*;
+    use crate::parser::code_block::Language;
 
     #[test]
     fn test_tangle_blocks() {
@@ -160,10 +159,13 @@ mod tests {
             ),
         );
 
-        let tangle = tangle_block("main", blocks).unwrap();
+        let tangle = tangle_block("main", blocks, false).unwrap();
         assert_eq!(
             tangle,
-            "print('Helper function')\n\nint main() {\nprint('Hello, world!')\n    return 0;\n}\n"
+            (
+                "print('Helper function')\n\nprint('Hello, world!')".to_string(),
+                Language::Python
+            )
         );
     }
 
@@ -179,7 +181,7 @@ mod tests {
                 vec!["helper".to_string()],
             ),
         );
-        let result = tangle_block("main", blocks);
+        let result = tangle_block("main", blocks, false);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
