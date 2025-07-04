@@ -87,8 +87,8 @@ fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
         }
     };
 
-    println!("C stdout:\n{}", String::from_utf8_lossy(&handles.stdout));
-    eprintln!("C stderr:\n{}", String::from_utf8_lossy(&handles.stderr));
+    println!("stdout:\n{}", String::from_utf8_lossy(&handles.stdout));
+    eprintln!("stderr:\n{}", String::from_utf8_lossy(&handles.stderr));
 }
 
 fn main() {

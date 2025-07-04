@@ -18,11 +18,11 @@ pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<s
         Language::Python => "py",
         _ => "txt",
     };
-    let c_file = tmp_dir.join(format!("{}.{}", name, ext));
+    let source_file = tmp_dir.join(format!("{}.{}", name, ext));
 
     // Write the tangled output to the C file
-    write(&c_file, contents)?;
-    io::Result::Ok(c_file)
+    write(&source_file, contents)?;
+    io::Result::Ok(source_file)
 }
 
 /// Runs a binary file and captures its output.
