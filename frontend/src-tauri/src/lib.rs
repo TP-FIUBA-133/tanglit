@@ -2,6 +2,7 @@ use backend::parser::code_block::CodeBlock;
 use backend::parser::input_to_mdast;
 use backend::parser::slides::Slide;
 use std::collections::HashMap;
+use std::fs;
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
@@ -29,8 +30,18 @@ fn tanglit_parse_blocks(raw_markdown: &str) -> Vec<CodeBlock> {
     let rv = backend::parser::parse_code_blocks(raw_markdown.to_string())
         .unwrap_or_else(|_| HashMap::new())
         .iter()
-        .map(|a| (a.1.clone())).collect();
+        .map(|a| (a.1.clone()))
+        .collect();
     rv
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> String {
+    // write raw_markdown to a file
+    let data = raw_markdown;
+    let file_name = "/home/chris/output.md";
+    fs::write(file_name, data).map_err(|e| format!("Error writing file: {}", e));
+    backend::execution::execute(file_name, block_name)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -40,7 +51,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             tanglit_exclude,
             tanglit_parse_slides,
-            tanglit_parse_blocks
+            tanglit_parse_blocks,
+            tanglit_execute_block
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
