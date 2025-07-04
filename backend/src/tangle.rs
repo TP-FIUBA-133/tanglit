@@ -147,6 +147,7 @@ mod tests {
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
+                0,
             ),
         );
         blocks.insert(
@@ -156,6 +157,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
             ),
         );
 
@@ -179,6 +181,7 @@ mod tests {
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
+                0,
             ),
         );
         let result = tangle_block("main", blocks, false);
@@ -197,6 +200,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -206,6 +210,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
             ),
         );
 
@@ -225,6 +230,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         let result = resolve_macros(&mut main, &blocks);
@@ -246,6 +252,7 @@ mod tests {
                     "#include <stdio.h>\n".to_string(),
                     "imports".to_string(),
                     vec![],
+                    0,
                 ),
             ),
             (
@@ -255,6 +262,7 @@ mod tests {
                     "printf(\"Hello, world!\");".to_string(),
                     "main_block".to_string(),
                     vec!["imports".to_string()],
+                    0,
                 ),
             ),
         ]);
@@ -285,6 +293,7 @@ printf("Hello, world!");
                     "#include <stdio.h>\n".to_string(),
                     "imports".to_string(),
                     vec![],
+                    0,
                 ),
             ),
             (
@@ -299,6 +308,7 @@ printf("Hello, world!");
                     .to_string(),
                     "main_block".to_string(),
                     vec!["imports".to_string()],
+                    0,
                 ),
             ),
         ]);
@@ -330,6 +340,7 @@ printf("Hello, world!");
                 "print('monty python')\n".to_string(),
                 "main".to_string(),
                 vec![],
+                0,
             ),
         )]);
         let tangle = tangle_block("main", blocks, true);
