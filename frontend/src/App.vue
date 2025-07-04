@@ -7,7 +7,8 @@ const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const blocks = ref<number[]>([]);
-
+const all_blocks = ref([]);
+const block_output = ref<string>("");
 enum TANGLIT_COMMANDS {
   exclude = "tanglit_exclude",
   parse_slides = "tanglit_parse_slides",
@@ -25,7 +26,14 @@ async function parse_slides(raw_markdown: string): Promise<number[]> {
 
 async function parse_blocks(raw_markdown: string): Promise<number[]> {
   let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{ start_line: number }>;
+  all_blocks.value = rv;
   return rv.map((item) => item.start_line);
+}
+
+async function execute_block(raw_markdown: string, block_name): Promise<string> {
+  let rv = (await invoke("tanglit_execute_block", { raw_markdown, block_name}));
+  console.log("The output is: ", rv);
+  return rv;
 }
 
 function load_sample_markdown() {
@@ -91,6 +99,29 @@ function handleFileChange(event: Event) {
     selectedFileName.value = "No file chosen.";
   }
 }
+
+async function run_block(line: number) {
+  console.log("Run block at line:", line);
+  // find the corresponding block name
+  console.log("all blocks: ", all_blocks.value);
+  for(let i = 0; i < all_blocks.value.length; i++) {
+    const block = all_blocks.value[i];
+    console.log("BLOCKKK ", block);
+    console.log("block start line: ", block.start_line);
+    console.log("line: ", line);
+    console.log("is it equal?: ", block.start_line == line);
+    if (block.start_line == line) {
+      console.log("Found block:", block);
+      console.log("Found block:", block.tag);
+
+      // Here you can execute the block or do whatever you need with it
+      block_output.value = await execute_block(raw_markdown.value, block.tag);
+
+      break;
+    }
+  }
+}
+
 </script>
 
 <template>
@@ -98,13 +129,17 @@ function handleFileChange(event: Event) {
     <div class="main-container">
       <div class="editor-wrapper">
         <MarkdownEditor
+            @run-block="run_block"
           v-model:raw_markdown="raw_markdown"
           v-model:slide_lines="slides"
           v-model:block_lines="blocks"
           class="editor"
         />
       </div>
-      <div class="exclusion_output">{{ exclusion_output }}</div>
+      <div>
+        <div class="exclusion_output">{{ exclusion_output }}</div>
+        <div class="block-output">Block output:{{block_output}}</div>
+      </div>
     </div>
     <div class="status-bar">
       <div class="buttons">
@@ -146,7 +181,12 @@ body {
   padding: 0;
   height: 100%;
 }
-
+.block-output {
+  font-family: monospace;
+  background-color: black;
+  color: white;
+  white-space: pre-wrap;
+}
 .container {
   margin: 0;
   display: flex;

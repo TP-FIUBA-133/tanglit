@@ -12,7 +12,7 @@ const slide_lines_mod = defineModel<number[]>("slide_lines");
 const block_lines_mod = defineModel<number[]>("block_lines");
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
-
+const emit = defineEmits(["run-block"]);
 const MONACO_EDITOR_OPTIONS = {
   automaticLayout: true,
   formatOnType: true,
@@ -53,7 +53,8 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.innerHTML = "<button>▶</button>"; // Use different glyphs for slides and code
   widgetNode.className = "run-block-widget";
   widgetNode.onclick = () => {
-    alert("This should run the block of code!");
+    // emit an event to run the block
+    emit("run-block",  line );
   };
   return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
