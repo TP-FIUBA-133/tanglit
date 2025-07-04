@@ -1,7 +1,6 @@
 use markdown::mdast::Code;
 use regex::Regex;
 use serde::Serialize;
-
 use crate::errors::ParserError;
 
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";

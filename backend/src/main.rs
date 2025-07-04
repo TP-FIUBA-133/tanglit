@@ -1,8 +1,7 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
-use backend::execution::write_file;
 use backend::parser::code_block::Language;
 use backend::parser::exclude::exclude_from_markdown;
-use backend::{cli::Cli, parser::parse_blocks_from_file, tangle::tangle_block};
+use backend::{cli::Cli, execution, parser::parse_blocks_from_file, tangle::tangle_block};
 use clap::Parser;
 use std::{
     fs::write,
@@ -49,46 +48,10 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
 }
 
 fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
-    // Parse blocks from the input file
-    let blocks = match parse_blocks_from_file(&execute_args.general.input_file_path) {
-        Ok(blocks) => blocks,
-        Err(e) => {
-            println!("Error parsing blocks: {}", e);
-            return;
-        }
-    };
-
-    // Tangle blocks
-    let Ok((output, lang)) = tangle_block(&execute_args.target_block, blocks, true)
-        .inspect_err(|e| println!("Error tangling blocks: {e}"))
-    else {
-        return;
-    };
-
-    // Write the output to a file
-    let Ok(block_file_path) =
-        write_file(output, &execute_args.target_block, &lang).inspect_err(|e| {
-            println!("Error writing to file: {e}");
-        })
-    else {
-        return;
-    };
-
-    let handles = match lang {
-        backend::parser::code_block::Language::C => {
-            backend::execution::execute_c_file(block_file_path)
-        }
-        backend::parser::code_block::Language::Python => {
-            backend::execution::execute_python_file(block_file_path)
-        }
-        _ => {
-            println!("Unsupported language");
-            return;
-        }
-    };
-
-    println!("stdout:\n{}", String::from_utf8_lossy(&handles.stdout));
-    eprintln!("stderr:\n{}", String::from_utf8_lossy(&handles.stderr));
+    let _ = execution::execute(
+        &execute_args.general.input_file_path,
+        &execute_args.target_block,
+    );
 }
 
 fn main() {
