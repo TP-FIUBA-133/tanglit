@@ -138,7 +138,8 @@ async function run_block(line: number) {
       </div>
       <div>
         <div class="exclusion_output">{{ exclusion_output }}</div>
-        <div class="block-output">Block output:{{block_output}}</div>
+        <div class="block-output">Block output:</div>
+          <div class="block-output">{{block_output}}</div>
       </div>
     </div>
     <div class="status-bar">
@@ -212,7 +213,7 @@ body {
 }
 
 .exclusion_output {
-  width: 50%;
+  width: 100%;
   color: #5d8cec;
   background-color: #222;
   white-space: pre-wrap;
