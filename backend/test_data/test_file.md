@@ -27,3 +27,20 @@ Define main block `run`:
 ```c use=[headers,helper] main_block
     greet("Tangle User");
 ```
+
+---
+
+You can also import blocks using macros inside the code block:
+
+Define a variable:
+
+```c config
+const char* language = "C";
+```
+
+Import and use the variable using a macro:
+
+```c variable_user use=[headers]
+    @[config]
+    printf("This program is written in %s.\n", language);
+```
