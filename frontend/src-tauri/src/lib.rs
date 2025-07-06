@@ -39,7 +39,7 @@ fn tanglit_parse_blocks(raw_markdown: &str) -> Vec<CodeBlock> {
 fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> String {
     // write raw_markdown to a file
     let data = raw_markdown;
-    let file_name = "/home/chris/output.md";
+    let file_name = "output.md";
     fs::write(file_name, data).map_err(|e| format!("Error writing file: {}", e));
     backend::execution::execute(file_name, block_name)
 }
