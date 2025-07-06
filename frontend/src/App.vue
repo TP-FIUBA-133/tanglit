@@ -31,7 +31,7 @@ async function parse_blocks(raw_markdown: string): Promise<number[]> {
 }
 
 async function execute_block(raw_markdown: string, block_name): Promise<string> {
-  let rv = (await invoke("tanglit_execute_block", { raw_markdown, block_name}));
+  let rv = await invoke("tanglit_execute_block", { raw_markdown, block_name });
   return rv;
 }
 
@@ -101,7 +101,7 @@ function handleFileChange(event: Event) {
 async function run_block(line: number) {
   console.log("Run block at line:", line);
   // find the corresponding block name
-  for(let i = 0; i < all_blocks.value.length; i++) {
+  for (let i = 0; i < all_blocks.value.length; i++) {
     const block = all_blocks.value[i];
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
@@ -110,7 +110,6 @@ async function run_block(line: number) {
     }
   }
 }
-
 </script>
 
 <template>
@@ -118,7 +117,7 @@ async function run_block(line: number) {
     <div class="main-container">
       <div class="editor-wrapper">
         <MarkdownEditor
-            @run-block="run_block"
+          @run-block="run_block"
           v-model:raw_markdown="raw_markdown"
           v-model:slide_lines="slides"
           v-model:block_lines="blocks"
@@ -128,7 +127,7 @@ async function run_block(line: number) {
       <div>
         <div class="exclusion_output">{{ exclusion_output }}</div>
         <div class="block-output">Block output:</div>
-          <div class="block-output">{{block_output}}</div>
+        <div class="block-output">{{ block_output }}</div>
       </div>
     </div>
     <div class="status-bar">

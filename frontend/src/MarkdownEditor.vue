@@ -54,7 +54,7 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.className = "run-block-widget";
   widgetNode.onclick = () => {
     // emit an event to run the block
-    emit("run-block",  line );
+    emit("run-block", line);
   };
   return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
@@ -73,7 +73,6 @@ function add_margin_glyph(myGlyphWidget: IGlyphMarginWidget) {
 watch(slide_lines_mod, (newValue, oldValue) => {
   if (!editor.value) return;
   let editorInstance = editor.value;
-
 
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
