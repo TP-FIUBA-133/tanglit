@@ -1,6 +1,7 @@
-use crate::parser::code_block::Language;
+use crate::parser::code_block::{CodeBlock, Language};
 use crate::tangle::tangle_block;
-use crate::util::parse_code_blocks_from_file;
+use std::collections::HashMap;
+use std::hash::Hash;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};
@@ -79,14 +80,13 @@ pub fn execute_python_file(source_file_path: PathBuf) -> Output {
 pub struct ExecutionResult {
     pub stdout: String,
     pub stderr: String,
-    exit_code: i32,
+    pub exit_code: i32,
 }
 
-pub fn execute(input_file_path: &str, target_block: &str) -> Result<ExecutionResult, String> {
-    // Parse blocks from the input file
-    let blocks = parse_code_blocks_from_file(input_file_path)
-        .map_err(|e| format!("Error parsing blocks: {}", e))?;
-
+pub fn execute(
+    blocks: HashMap<String, CodeBlock>,
+    target_block: &str,
+) -> Result<ExecutionResult, String> {
     // Tangle blocks
     let (output, lang) = tangle_block(target_block, blocks, true)
         .map_err(|e| format!("Error tangling blocks: {e}"))?;
