@@ -1,14 +1,14 @@
 use crate::parser::code_block::Language;
 use crate::parser::parse_blocks_from_file;
 use crate::tangle::tangle_block;
-use std::fs;
+use std::{env, fs};
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{fs::write, path::PathBuf};
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
 pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
-    let current_dir = PathBuf::from("/home/chris");
+    let current_dir = env::current_dir()?;
     let tmp_dir = current_dir.join("tmp");
     if !tmp_dir.exists() {
         fs::create_dir_all(&tmp_dir)?;
