@@ -8,7 +8,7 @@ mod tests {
     fn check_returned_slides(input: &str, expected_slides: Vec<Slide>) {
         let input_str = input.trim();
         let root_ast = parse_from_string(input_str).expect("Input expected to be ok");
-        let slides = get_slides(&root_ast, input_str);
+        let slides = parse_slides_from_ast(&root_ast, input_str);
         assert_eq!(slides, expected_slides);
     }
 
