@@ -2,7 +2,7 @@ use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::code_block::Language;
 use backend::parser::exclude::exclude_from_ast;
 use backend::parser::parse_from_file;
-use backend::util::{ast_to_markdown, parse_code_blocks_from_file};
+use backend::util::{ast_to_markdown, read_file_and_parse_blocks};
 use backend::{cli::Cli, execution, tangle::tangle_block};
 use clap::Parser;
 use std::{
@@ -12,7 +12,7 @@ use std::{
 
 fn handle_tangle_command(tangle_args: TangleArgs) {
     // Parse blocks from the input file
-    let blocks = match parse_code_blocks_from_file(&tangle_args.general.input_file_path) {
+    let blocks = match read_file_and_parse_blocks(&tangle_args.general.input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
             eprintln!("Error parsing blocks: {}", e);
@@ -52,7 +52,7 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
 fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
     let input_file_path = execute_args.general.input_file_path;
 
-    let blocks = match parse_code_blocks_from_file(&input_file_path) {
+    let blocks = match read_file_and_parse_blocks(&input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
             eprintln!("Error parsing blocks: {}", e);
