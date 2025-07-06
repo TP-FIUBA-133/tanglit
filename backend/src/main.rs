@@ -15,24 +15,25 @@ fn handle_tangle_command(tangle_args: TangleArgs) {
     let blocks = match parse_code_blocks_from_file(&tangle_args.general.input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
-            println!("Error parsing blocks: {}", e);
+            eprintln!("Error parsing blocks: {}", e);
             return;
         }
     };
 
     // Tangle blocks
-    let Ok((output, lang)) = tangle_block(&tangle_args.target_block, blocks, true)
-        .inspect_err(|e| println!("Error tangling blocks: {e}"))
-    else {
-        return;
+    let (output, lang) = match tangle_block(&tangle_args.target_block, blocks, true) {
+        Ok((output, lang)) => (output, lang),
+        Err(e) => {
+            eprintln!("Error tangling blocks: {}", e);
+            return;
+        }
     };
-
     // Write the output to a file
     let output_file_path =
         get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
     match write(&output_file_path, output) {
         Ok(_) => println!("Blocks written to {}", output_file_path.display()),
-        Err(e) => println!("Error writing to file: {}", e),
+        Err(e) => eprintln!("Error writing to file: {}", e),
     };
 }
 
