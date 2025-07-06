@@ -5,8 +5,8 @@ pub mod slides;
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
-    ParseOptions,
     mdast::{Code, Node},
+    ParseOptions,
 };
 use std::collections::HashMap;
 
@@ -14,19 +14,16 @@ pub fn parse_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlo
     // Read the file content
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
-
-    parse_code_blocks(input)
+    let mdast = input_to_mdast(&input)?;
+    parse_code_blocks_from_ast(&mdast)
 }
 
 /// Parses code blocks from a given input string
 /// Returns a HashMap where the key is the tag of the code block and the value is the CodeBlock struct
 /// If a code block does not have a tag, a default tag is assigned based on their line number in the input
-pub fn parse_code_blocks(input: String) -> Result<HashMap<String, CodeBlock>, ParserError> {
-    // Parse the input to an MDast tree
-    let mdast = input_to_mdast(&input)?;
-
+pub fn parse_code_blocks_from_ast(mdast: &Node) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Extract code nodes from the tree
-    let code_nodes = get_code_nodes_from_mdast(mdast)?;
+    let code_nodes = get_code_nodes_from_mdast(&mdast)?;
 
     // Convert code nodes to CodeBlocks
     let code_blocks: Vec<CodeBlock> = code_nodes
@@ -48,7 +45,7 @@ pub fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
-fn get_code_nodes_from_mdast(mdast: Node) -> Result<Vec<Code>, ParserError> {
+fn get_code_nodes_from_mdast(mdast: &Node) -> Result<Vec<Code>, ParserError> {
     let mut code_nodes = Vec::new();
     let Some(children) = mdast.children() else {
         return Ok(code_nodes);
@@ -67,6 +64,13 @@ mod tests {
 
     use super::*;
 
+    fn parse_code_blocks_from_string(
+        input: &str,
+    ) -> Result<HashMap<String, CodeBlock>, ParserError> {
+        let mdast = input_to_mdast(input)?;
+        parse_code_blocks_from_ast(&mdast)
+    }
+
     #[test]
     fn test_parse_code_blocks_no_blocks() {
         let input = r#"
@@ -74,7 +78,7 @@ mod tests {
         No code blocks here.
         "#;
 
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
 
         assert!(blocks.is_empty());
     }
@@ -88,7 +92,7 @@ mod tests {
         ```
         More text here.
         "#;
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
 
         assert_eq!(blocks.len(), 1);
         assert_eq!(
@@ -108,7 +112,7 @@ mod tests {
             println!("Hello, world!");
         "#; // Missing closing backticks
 
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
 
         assert_eq!(blocks.len(), 2);
         assert_eq!(
@@ -137,7 +141,7 @@ fn main() {
 }
 ```"#;
 
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
 
         assert_eq!(blocks.len(), 3);
         assert_eq!(blocks.get("block_1").unwrap().code, r#"print("Block 1")"#);
@@ -150,7 +154,7 @@ fn main() {
             r#"fn main() {
     println!("Block 3");
 }"#
-            .trim()
+                .trim()
         );
     }
 
@@ -160,7 +164,7 @@ fn main() {
 ```python use=[block1, block2] block3
 print("Hello, world!")
 ```"#;
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
 
         assert_eq!(blocks.len(), 1);
         assert_eq!(
@@ -181,7 +185,7 @@ print("Hello, world!")
 ```python
 print("Hello, world!")
 ```"#;
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
         assert_eq!(blocks.len(), 1);
         let block = blocks.get("2").unwrap(); // Default tag based on line number
         assert_eq!(block.code.trim(), r#"print("Hello, world!")"#);
@@ -202,7 +206,7 @@ console.log("Hello, world!");
 ```Rust rust
 println!("Hello, world!");
 ```"#;
-        let blocks = parse_code_blocks(input.to_string()).unwrap();
+        let blocks = parse_code_blocks_from_string(input).unwrap();
 
         assert_eq!(blocks.len(), 3);
         assert_eq!(
