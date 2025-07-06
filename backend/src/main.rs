@@ -48,12 +48,15 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
 }
 
 fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
-    if let Err(e) = execution::execute(
+    match execution::execute(
         &execute_args.general.input_file_path,
         &execute_args.target_block,
     ) {
-        eprintln!("Error executing block: {}", e);
-        std::process::exit(1);
+        Err(e) => {
+            eprintln!("Error executing block: {}", e);
+            std::process::exit(1);
+        }
+        Ok(output) => println!("{}", output),
     }
 }
 
