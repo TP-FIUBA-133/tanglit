@@ -5,8 +5,8 @@ pub mod slides;
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
-    mdast::{Code, Node},
     ParseOptions,
+    mdast::{Code, Node},
 };
 use std::collections::HashMap;
 
@@ -20,7 +20,6 @@ pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
     parse_from_string(&input)
 }
-
 
 pub fn parse_code_blocks_from_file(
     file_path: &str,
