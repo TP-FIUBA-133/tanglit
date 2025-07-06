@@ -10,11 +10,22 @@ use markdown::{
 };
 use std::collections::HashMap;
 
-pub fn parse_code_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlock>, ParserError> {
-    // Read the file content
+pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
+    markdown::to_mdast(input, &ParseOptions::mdx())
+        .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
+}
+
+pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
-    let mdast = parse_from_string(&input)?;
+    parse_from_string(&input)
+}
+
+
+pub fn parse_code_blocks_from_file(
+    file_path: &str,
+) -> Result<HashMap<String, CodeBlock>, ParserError> {
+    let mdast = parse_from_file(file_path)?;
     parse_code_blocks_from_ast(&mdast)
 }
 
@@ -38,11 +49,6 @@ pub fn parse_code_blocks_from_ast(mdast: &Node) -> Result<HashMap<String, CodeBl
         .collect();
 
     Ok(code_block_map)
-}
-
-pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
-    markdown::to_mdast(input, &ParseOptions::mdx())
-        .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
 fn get_code_nodes_from_mdast(mdast: &Node) -> Result<Vec<Code>, ParserError> {
@@ -154,7 +160,7 @@ fn main() {
             r#"fn main() {
     println!("Block 3");
 }"#
-                .trim()
+            .trim()
         );
     }
 
