@@ -74,9 +74,6 @@ watch(slide_lines_mod, (newValue, oldValue) => {
   if (!editor.value) return;
   let editorInstance = editor.value;
 
-  console.log("SLIDES");
-  console.log("newValue:", newValue, "oldValue:", oldValue);
-  console.log("before: ", margin_glyphs);
 
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
@@ -94,16 +91,12 @@ watch(slide_lines_mod, (newValue, oldValue) => {
       add_margin_glyph(SlideWidget(line, idx + 1)); // Pass the slide index as extra data
     }
   });
-  console.log("after: ", margin_glyphs);
 });
 
 watch(block_lines_mod, (newValue, oldValue) => {
   if (!editor.value) return;
   let editorInstance = editor.value;
 
-  console.log("BLOCKS");
-  console.log("newValue:", newValue, "oldValue:", oldValue);
-  console.log("before: ", margin_glyphs);
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
 
@@ -121,7 +114,6 @@ watch(block_lines_mod, (newValue, oldValue) => {
       add_margin_glyph(RunBlockWidget(line)); // Pass the slide index as extra data
     }
   });
-  console.log("after: ", margin_glyphs);
 });
 </script>
 

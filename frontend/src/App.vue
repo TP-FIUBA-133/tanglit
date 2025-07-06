@@ -32,7 +32,6 @@ async function parse_blocks(raw_markdown: string): Promise<number[]> {
 
 async function execute_block(raw_markdown: string, block_name): Promise<string> {
   let rv = (await invoke("tanglit_execute_block", { raw_markdown, block_name}));
-  console.log("The output is: ", rv);
   return rv;
 }
 
@@ -80,7 +79,6 @@ function handleFileChange(event: Event) {
   const file = input_element?.files?.[0]; // Get the first selected file
   if (file) {
     selectedFileName.value = file.name;
-    console.log("Selected file:", file);
     // You can now read the file or do whatever you need with it
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -103,20 +101,11 @@ function handleFileChange(event: Event) {
 async function run_block(line: number) {
   console.log("Run block at line:", line);
   // find the corresponding block name
-  console.log("all blocks: ", all_blocks.value);
   for(let i = 0; i < all_blocks.value.length; i++) {
     const block = all_blocks.value[i];
-    console.log("BLOCKKK ", block);
-    console.log("block start line: ", block.start_line);
-    console.log("line: ", line);
-    console.log("is it equal?: ", block.start_line == line);
     if (block.start_line == line) {
-      console.log("Found block:", block);
-      console.log("Found block:", block.tag);
-
       // Here you can execute the block or do whatever you need with it
       block_output.value = await execute_block(raw_markdown.value, block.tag);
-
       break;
     }
   }
