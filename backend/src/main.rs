@@ -1,7 +1,7 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::code_block::Language;
 use backend::parser::exclude::exclude_from_markdown;
-use backend::{cli::Cli, execution, parser::parse_blocks_from_file, tangle::tangle_block};
+use backend::{cli::Cli, execution, parser::parse_code_blocks_from_file, tangle::tangle_block};
 use clap::Parser;
 use std::{
     fs::write,
@@ -10,7 +10,7 @@ use std::{
 
 fn handle_tangle_command(tangle_args: TangleArgs) {
     // Parse blocks from the input file
-    let blocks = match parse_blocks_from_file(&tangle_args.general.input_file_path) {
+    let blocks = match parse_code_blocks_from_file(&tangle_args.general.input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
             println!("Error parsing blocks: {}", e);

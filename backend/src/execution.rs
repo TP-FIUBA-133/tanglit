@@ -1,5 +1,5 @@
 use crate::parser::code_block::Language;
-use crate::parser::parse_blocks_from_file;
+use crate::parser::parse_code_blocks_from_file;
 use crate::tangle::tangle_block;
 use std::io;
 use std::process::{Command, Output, Stdio};
@@ -78,7 +78,7 @@ pub fn execute_python_file(source_file_path: PathBuf) -> Output {
 
 pub fn execute(input_file_path: &str, target_block: &str) -> String {
     // Parse blocks from the input file
-    let blocks = match parse_blocks_from_file(input_file_path) {
+    let blocks = match parse_code_blocks_from_file(input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
             println!("Error parsing blocks: {}", e);

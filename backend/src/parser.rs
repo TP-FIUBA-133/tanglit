@@ -10,7 +10,7 @@ use markdown::{
 };
 use std::collections::HashMap;
 
-pub fn parse_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlock>, ParserError> {
+pub fn parse_code_blocks_from_file(file_path: &str) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Read the file content
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
