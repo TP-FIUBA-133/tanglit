@@ -3,11 +3,11 @@ use super::*;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::input_to_mdast;
+    use crate::parser::parse_from_string;
 
     fn check_returned_slides(input: &str, expected_slides: Vec<Slide>) {
         let input_str = input.trim();
-        let root_ast = input_to_mdast(input_str).expect("Input expected to be ok");
+        let root_ast = parse_from_string(input_str).expect("Input expected to be ok");
         let slides = get_slides(&root_ast, input_str);
         assert_eq!(slides, expected_slides);
     }

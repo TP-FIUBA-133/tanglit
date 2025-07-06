@@ -14,7 +14,7 @@ pub fn parse_code_blocks_from_file(file_path: &str) -> Result<HashMap<String, Co
     // Read the file content
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
-    let mdast = input_to_mdast(&input)?;
+    let mdast = parse_from_string(&input)?;
     parse_code_blocks_from_ast(&mdast)
 }
 
@@ -40,7 +40,7 @@ pub fn parse_code_blocks_from_ast(mdast: &Node) -> Result<HashMap<String, CodeBl
     Ok(code_block_map)
 }
 
-pub fn input_to_mdast(input: &str) -> Result<Node, ParserError> {
+pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
     markdown::to_mdast(input, &ParseOptions::mdx())
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
@@ -67,7 +67,7 @@ mod tests {
     fn parse_code_blocks_from_string(
         input: &str,
     ) -> Result<HashMap<String, CodeBlock>, ParserError> {
-        let mdast = input_to_mdast(input)?;
+        let mdast = parse_from_string(input)?;
         parse_code_blocks_from_ast(&mdast)
     }
 

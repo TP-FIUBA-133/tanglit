@@ -1,5 +1,5 @@
 use crate::parser::exclude::to_node::ToNode;
-use crate::parser::input_to_mdast;
+use crate::parser::parse_from_string;
 use markdown::mdast::{Code, List, ListItem, Node, Paragraph, Text};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -17,7 +17,7 @@ const EXCLUDE_PARAGRAPH_MARKER: &str = "%p";
 static MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
 
 pub fn exclude_from_markdown(input_str: &str) -> Node {
-    let mut mdast = input_to_mdast(input_str).expect("Failed to parse input to mdast");
+    let mut mdast = parse_from_string(input_str).expect("Failed to parse input to mdast");
     let new_children = process_children(mdast.children().unwrap());
     if let Node::Root(r) = &mut mdast {
         r.children = new_children;
