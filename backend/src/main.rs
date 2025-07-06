@@ -49,10 +49,21 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
 }
 
 fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
-    let _ = execution::execute(
+    let result = execution::execute(
         &execute_args.general.input_file_path,
         &execute_args.target_block,
     );
+
+    let ex_result = match result {
+        Ok(res) => res,
+        Err(e) => {
+            eprintln!("Error executing block: {}", e);
+            return;
+        }
+    };
+
+    println!("Stdout: {}", ex_result.stdout);
+    eprintln!("Stderr: {}", ex_result.stderr);
 }
 
 fn main() {

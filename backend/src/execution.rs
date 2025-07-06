@@ -77,8 +77,8 @@ pub fn execute_python_file(source_file_path: PathBuf) -> Output {
 // }
 
 pub struct ExecutionResult {
-    stdout: String,
-    stderr: String,
+    pub stdout: String,
+    pub stderr: String,
     exit_code: i32,
 }
 
@@ -107,9 +107,6 @@ pub fn execute(input_file_path: &str, target_block: &str) -> Result<ExecutionRes
 
     let ex_stdout = String::from_utf8_lossy(&handles.stdout);
     let ex_stderr = String::from_utf8_lossy(&handles.stderr);
-
-    println!("stdout:\n{}", ex_stdout);
-    eprintln!("stderr:\n{}", ex_stderr);
 
     Ok(ExecutionResult {
         stdout: ex_stdout.to_string(),
