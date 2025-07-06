@@ -1,7 +1,8 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::code_block::Language;
-use backend::parser::exclude::exclude_from_markdown;
-use backend::util::parse_code_blocks_from_file;
+use backend::parser::exclude::exclude_from_ast;
+use backend::parser::parse_from_file;
+use backend::util::{ast_to_markdown, parse_code_blocks_from_file};
 use backend::{cli::Cli, execution, tangle::tangle_block};
 use clap::Parser;
 use std::{
@@ -36,11 +37,10 @@ fn handle_tangle_command(tangle_args: TangleArgs) {
 }
 
 fn handle_exclude_command(exclude_args: ExcludeArgs) {
-    let input = std::fs::read_to_string(&exclude_args.general.input_file_path)
-        .expect("Failed to read input file");
-    let ast_with_exclusions = exclude_from_markdown(input.as_str());
-    let output = mdast_util_to_markdown::to_markdown(&ast_with_exclusions)
-        .expect("Failed to convert to markdown");
+    let input_file_path = exclude_args.general.input_file_path;
+    let ast = parse_from_file(input_file_path.trim()).expect("Failed to parse");
+    let ast_with_exclusions = exclude_from_ast(&ast);
+    let output = ast_to_markdown(&ast_with_exclusions);
     // Write the output to a file
     match write(Path::new(&exclude_args.output_file_path), output) {
         Ok(_) => println!("Output written to {}", exclude_args.output_file_path),
