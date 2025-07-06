@@ -76,29 +76,18 @@ pub fn execute_python_file(source_file_path: PathBuf) -> Output {
 //     todo!()
 // }
 
-pub fn execute(input_file_path: &str, target_block: &str) -> String {
+pub fn execute(input_file_path: &str, target_block: &str) -> Result<String, String> {
     // Parse blocks from the input file
-    let blocks = match parse_code_blocks_from_file(input_file_path) {
-        Ok(blocks) => blocks,
-        Err(e) => {
-            println!("Error parsing blocks: {}", e);
-            return "Error".to_string();
-        }
-    };
+    let blocks = parse_code_blocks_from_file(input_file_path)
+        .map_err(|e| format!("Error parsing blocks: {}", e))?;
 
     // Tangle blocks
-    let Ok((output, lang)) = tangle_block(target_block, blocks, true)
-        .inspect_err(|e| println!("Error tangling blocks: {e}"))
-    else {
-        return "Error".to_string();
-    };
+    let (output, lang) = tangle_block(target_block, blocks, true)
+        .map_err(|e| format!("Error tangling blocks: {e}"))?;
 
     // Write the output to a file
-    let Ok(block_file_path) = write_file(output, target_block, &lang).inspect_err(|e| {
-        println!("Error writing to file: {e}");
-    }) else {
-        return "Error".to_string();
-    };
+    let block_file_path = write_file(output, target_block, &lang)
+        .map_err(|e| format!("Error writing to file: {e}"))?;
 
     let handles = match lang {
         crate::parser::code_block::Language::C => crate::execution::execute_c_file(block_file_path),
@@ -106,8 +95,7 @@ pub fn execute(input_file_path: &str, target_block: &str) -> String {
             crate::execution::execute_python_file(block_file_path)
         }
         _ => {
-            println!("Unsupported language");
-            return "Error".to_string();
+            return Err("Unsupported language".to_string());
         }
     };
 
