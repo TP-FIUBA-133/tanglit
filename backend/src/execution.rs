@@ -1,9 +1,9 @@
 use crate::parser::code_block::Language;
 use crate::parser::parse_blocks_from_file;
 use crate::tangle::tangle_block;
-use std::{env, fs};
 use std::io;
 use std::process::{Command, Output, Stdio};
+use std::{env, fs};
 use std::{fs::write, path::PathBuf};
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
