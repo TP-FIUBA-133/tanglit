@@ -21,13 +21,6 @@ pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
     parse_from_string(&input)
 }
 
-pub fn parse_code_blocks_from_file(
-    file_path: &str,
-) -> Result<HashMap<String, CodeBlock>, ParserError> {
-    let mdast = parse_from_file(file_path)?;
-    parse_code_blocks_from_ast(&mdast)
-}
-
 /// Parses code blocks from a given input string
 /// Returns a HashMap where the key is the tag of the code block and the value is the CodeBlock struct
 /// If a code block does not have a tag, a default tag is assigned based on their line number in the input

@@ -1,7 +1,8 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::code_block::Language;
 use backend::parser::exclude::exclude_from_markdown;
-use backend::{cli::Cli, execution, parser::parse_code_blocks_from_file, tangle::tangle_block};
+use backend::util::parse_code_blocks_from_file;
+use backend::{cli::Cli, execution, tangle::tangle_block};
 use clap::Parser;
 use std::{
     fs::write,

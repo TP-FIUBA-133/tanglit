@@ -1,6 +1,6 @@
 use crate::parser::code_block::Language;
-use crate::parser::parse_code_blocks_from_file;
 use crate::tangle::tangle_block;
+use crate::util::parse_code_blocks_from_file;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};
