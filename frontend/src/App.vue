@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { invoke } from "@tauri-apps/api/core";
+import {ref, watch} from "vue";
+import {invoke} from "@tauri-apps/api/core";
 import MarkdownEditor from "./MarkdownEditor.vue";
 
 const exclusion_output = ref("");
@@ -9,42 +9,39 @@ const slides = ref<number[]>([]);
 const blocks = ref<number[]>([]);
 const all_blocks = ref([]);
 const block_output = ref<string>("");
+
 enum TANGLIT_COMMANDS {
   exclude = "tanglit_exclude",
-  parse_slides = "tanglit_parse_slides",
-  parse_blocks = "tanglit_parse_blocks",
+  parse_blocks_and_slides = "tanglit_parse_blocks_and_slides",
+  execute_block = "tanglit_execute_block",
 }
 
 async function exclude(raw_markdown: string): Promise<string> {
-  return await invoke(TANGLIT_COMMANDS.exclude, { raw_markdown });
+  return await invoke(TANGLIT_COMMANDS.exclude, {raw_markdown});
 }
 
-async function parse_slides(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{ start_line: number }>;
-  return rv.map((item) => item.start_line);
+async function parse_blocks_and_slides(raw_markdown: string): Promise<any> {
+  let {blocks, slides} = await invoke(TANGLIT_COMMANDS.parse_blocks_and_slides, {raw_markdown}).catch((e) => {
+    console.error("Error parsing: ", e);
+    return {blocks_info: {}, slides_info: []};
+  });
+  return {blocks_info: blocks, slides_info: slides};
 }
 
-async function parse_blocks(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{ start_line: number }>;
-  all_blocks.value = rv;
-  return rv.map((item) => item.start_line);
-}
-
-async function execute_block(raw_markdown: string, block_name): Promise<string> {
-  let rv = await invoke("tanglit_execute_block", { raw_markdown, block_name });
-  return rv;
+async function execute_block(raw_markdown: string, block_tag: string): Promise<any> {
+  return await invoke("tanglit_execute_block", {raw_markdown, block_tag});
 }
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
-    .then((response) => response.text())
-    .then((text) => {
-      raw_markdown.value = text;
-      console.log("Sample markdown loaded.");
-    })
-    .catch((error) => {
-      console.error("Error loading sample markdown:", error);
-    });
+      .then((response) => response.text())
+      .then((text) => {
+        raw_markdown.value = text;
+        console.log("Sample markdown loaded.");
+      })
+      .catch((error) => {
+        console.error("Error loading sample markdown:", error);
+      });
 }
 
 const time_to_process = ref(0);
@@ -52,9 +49,16 @@ const time_to_process = ref(0);
 watch(raw_markdown, async (newValue) => {
   let start_time = performance.now();
   try {
-    slides.value = await parse_slides(newValue);
+
+    let {blocks_info, slides_info} = await parse_blocks_and_slides(newValue);
+
+    slides.value = slides_info.map((item) => item.start_line);
+    console.log("Blocks info:", blocks_info);
+    blocks.value = blocks_info.map((item) => item.start_line);
+    all_blocks.value = blocks_info;
+
     exclusion_output.value = await exclude(newValue);
-    blocks.value = await parse_blocks(newValue);
+
   } catch (e) {
     alert("Error: " + e);
   }
@@ -117,11 +121,11 @@ async function run_block(line: number) {
     <div class="main-container">
       <div class="editor-wrapper">
         <MarkdownEditor
-          @run-block="run_block"
-          v-model:raw_markdown="raw_markdown"
-          v-model:slide_lines="slides"
-          v-model:block_lines="blocks"
-          class="editor"
+            @run-block="run_block"
+            v-model:raw_markdown="raw_markdown"
+            v-model:slide_lines="slides"
+            v-model:block_lines="blocks"
+            class="editor"
         />
       </div>
       <div>
@@ -134,7 +138,7 @@ async function run_block(line: number) {
       <div class="buttons">
         <div>
           <button @click="triggerFileInput" class="custom-file-upload">Open</button>
-          <input type="file" ref="fileInput" @change="handleFileChange" style="display: none" accept=".md,.txt" />
+          <input type="file" ref="fileInput" @change="handleFileChange" style="display: none" accept=".md,.txt"/>
         </div>
         <button title="Save">Save</button>
         <button title="Load sample markdown" @click="load_sample_markdown">Sample markdown</button>
@@ -170,12 +174,14 @@ body {
   padding: 0;
   height: 100%;
 }
+
 .block-output {
   font-family: monospace;
   background-color: black;
   color: white;
   white-space: pre-wrap;
 }
+
 .container {
   margin: 0;
   display: flex;
