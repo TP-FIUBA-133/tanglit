@@ -40,8 +40,8 @@ pub fn parse_blocks_and_slides(raw_markdown: &str) -> Result<TanglitInfo, String
     let ast = parser::parse_from_string(raw_markdown).map_err(|e| e.to_string())?;
     let blocks = parser::parse_code_blocks_from_ast(&ast)
         .map_err(|e| e.to_string())?
-        .iter()
-        .map(|(_, block)| block.clone())
+        .values()
+        .cloned()
         .collect();
     let slides = parser::slides::parse_slides_from_ast(&ast, raw_markdown);
     Ok(TanglitInfo { blocks, slides })

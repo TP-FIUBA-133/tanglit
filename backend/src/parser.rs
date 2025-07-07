@@ -22,7 +22,7 @@ pub fn ast_to_markdown(ast: &Node) -> Result<String, String> {
         rule: '-',
         ..default_options
     };
-    mdast_util_to_markdown::to_markdown_with_options(&ast, &options)
+    mdast_util_to_markdown::to_markdown_with_options(ast, &options)
         .map_err(|e| format!("Error converting AST to markdown: {}", e))
 }
 
