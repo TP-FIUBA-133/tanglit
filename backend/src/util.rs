@@ -10,7 +10,3 @@ pub fn read_file_and_parse_blocks(
     let mdast = parse_from_file(file_path)?;
     parse_code_blocks_from_ast(&mdast)
 }
-
-pub fn ast_to_markdown(ast: &Node) -> String {
-    mdast_util_to_markdown::to_markdown(&ast).expect("Failed to convert to markdown")
-}

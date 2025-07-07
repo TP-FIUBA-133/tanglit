@@ -15,6 +15,10 @@ pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
+pub fn ast_to_markdown(ast: &Node) -> String {
+    mdast_util_to_markdown::to_markdown(&ast).expect("Failed to convert to markdown")
+}
+
 pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
     let input = std::fs::read_to_string(file_path)
         .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
