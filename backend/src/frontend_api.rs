@@ -30,25 +30,25 @@ use crate::parser::ast_to_markdown;
 use crate::parser::code_block::CodeBlock;
 use std::collections::HashMap;
 
-struct TanglitInfo {
-    blocks: HashMap<String, CodeBlock>,
-    slides: Vec<parser::slides::Slide>,
+pub struct TanglitInfo {
+    pub blocks: HashMap<String, CodeBlock>,
+    pub slides: Vec<parser::slides::Slide>,
 }
 
-fn parse_blocks_and_slides(raw_markdown: &str) -> Result<TanglitInfo, String> {
+pub fn parse_blocks_and_slides(raw_markdown: &str) -> Result<TanglitInfo, String> {
     let ast = parser::parse_from_string(raw_markdown).map_err(|e| e.to_string())?;
     let blocks = parser::parse_code_blocks_from_ast(&ast).map_err(|e| e.to_string())?;
     let slides = parser::slides::parse_slides_from_ast(&ast, raw_markdown);
     Ok(TanglitInfo { blocks, slides })
 }
 
-fn execute_block(raw_markdown: &str, block_tag: &str) -> Result<ExecutionResult, String> {
+pub fn execute_block(raw_markdown: &str, block_tag: &str) -> Result<ExecutionResult, String> {
     let ast = parser::parse_from_string(raw_markdown).map_err(|e| e.to_string())?;
     let blocks = parser::parse_code_blocks_from_ast(&ast).map_err(|e| e.to_string())?;
     execute(blocks, block_tag)
 }
 
-fn exclude(raw_markdown: &str) -> Result<String, String> {
+pub fn exclude(raw_markdown: &str) -> Result<String, String> {
     let ast = parser::parse_from_string(raw_markdown).map_err(|e| e.to_string())?;
     let ast_with_exclusions = parser::exclude::exclude_from_ast(&ast);
     Ok(ast_to_markdown(&ast_with_exclusions))
