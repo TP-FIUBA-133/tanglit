@@ -24,7 +24,7 @@
 //!
 //! These functions are intended to be called by the frontend to interact with Tanglit's parsing and execution logic.
 
-use crate::execution::{execute, ExecutionResult};
+use crate::execution::{ExecutionResult, execute};
 use crate::parser;
 use crate::parser::ast_to_markdown;
 use crate::parser::code_block::CodeBlock;

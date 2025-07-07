@@ -5,8 +5,8 @@ pub mod slides;
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
-    mdast::{Code, Node},
     ParseOptions,
+    mdast::{Code, Node},
 };
 use std::collections::HashMap;
 
