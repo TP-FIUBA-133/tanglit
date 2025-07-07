@@ -1,7 +1,9 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::parser::code_block::Language;
-use backend::parser::exclude::exclude_from_markdown;
-use backend::{cli::Cli, execution, parser::parse_blocks_from_file, tangle::tangle_block};
+use backend::parser::exclude::exclude_from_ast;
+use backend::parser::{ast_to_markdown, parse_from_file};
+use backend::util::read_file_and_parse_blocks;
+use backend::{cli::Cli, execution, tangle::tangle_block};
 use clap::Parser;
 use std::{
     fs::write,
@@ -10,36 +12,42 @@ use std::{
 
 fn handle_tangle_command(tangle_args: TangleArgs) {
     // Parse blocks from the input file
-    let blocks = match parse_blocks_from_file(&tangle_args.general.input_file_path) {
+    let blocks = match read_file_and_parse_blocks(&tangle_args.general.input_file_path) {
         Ok(blocks) => blocks,
         Err(e) => {
-            println!("Error parsing blocks: {}", e);
+            eprintln!("Error parsing blocks: {}", e);
             return;
         }
     };
 
     // Tangle blocks
-    let Ok((output, lang)) = tangle_block(&tangle_args.target_block, blocks, true)
-        .inspect_err(|e| println!("Error tangling blocks: {e}"))
-    else {
-        return;
+    let (output, lang) = match tangle_block(&tangle_args.target_block, blocks, true) {
+        Ok((output, lang)) => (output, lang),
+        Err(e) => {
+            eprintln!("Error tangling blocks: {}", e);
+            return;
+        }
     };
-
     // Write the output to a file
     let output_file_path =
         get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
     match write(&output_file_path, output) {
         Ok(_) => println!("Blocks written to {}", output_file_path.display()),
-        Err(e) => println!("Error writing to file: {}", e),
+        Err(e) => eprintln!("Error writing to file: {}", e),
     };
 }
 
 fn handle_exclude_command(exclude_args: ExcludeArgs) {
-    let input = std::fs::read_to_string(&exclude_args.general.input_file_path)
-        .expect("Failed to read input file");
-    let ast_with_exclusions = exclude_from_markdown(input.as_str());
-    let output = mdast_util_to_markdown::to_markdown(&ast_with_exclusions)
-        .expect("Failed to convert to markdown");
+    let input_file_path = exclude_args.general.input_file_path;
+    let ast = parse_from_file(input_file_path.trim()).expect("Failed to parse");
+    let ast_with_exclusions = exclude_from_ast(&ast);
+    let output = match ast_to_markdown(&ast_with_exclusions) {
+        Ok(output) => output,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
     // Write the output to a file
     match write(Path::new(&exclude_args.output_file_path), output) {
         Ok(_) => println!("Output written to {}", exclude_args.output_file_path),
@@ -48,10 +56,28 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
 }
 
 fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
-    let _ = execution::execute(
-        &execute_args.general.input_file_path,
-        &execute_args.target_block,
-    );
+    let input_file_path = execute_args.general.input_file_path;
+
+    let blocks = match read_file_and_parse_blocks(&input_file_path) {
+        Ok(blocks) => blocks,
+        Err(e) => {
+            eprintln!("Error parsing blocks: {}", e);
+            return;
+        }
+    };
+
+    let result = execution::execute(blocks, &execute_args.target_block);
+
+    let ex_result = match result {
+        Ok(res) => res,
+        Err(e) => {
+            eprintln!("Error executing block: {}", e);
+            return;
+        }
+    };
+
+    println!("Stdout: {}", ex_result.stdout);
+    eprintln!("Stderr: {}", ex_result.stderr);
 }
 
 fn main() {

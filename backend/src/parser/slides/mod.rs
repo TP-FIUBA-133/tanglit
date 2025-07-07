@@ -13,7 +13,7 @@ pub struct Slide {
     start_line: usize,    // start line in the raw markdown
 }
 
-pub fn get_slides(mdast: &Node, input: &str) -> Vec<Slide> {
+pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
     let mut slides = vec![];
     let Some(children) = mdast.children() else {
         return slides;

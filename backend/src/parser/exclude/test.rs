@@ -3,7 +3,13 @@ use super::*;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parser::parse_from_string;
     use std::path::Path;
+
+    fn exclude_from_markdown(input: &str) -> Node {
+        let mdast = parse_from_string(input).expect("Failed to parse markdown");
+        exclude_from_ast(&mdast)
+    }
 
     fn test_exclusions_file(file: &str) {
         let file_path = Path::new(file!()); // "tests/my_test.rs"
