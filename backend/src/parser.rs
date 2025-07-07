@@ -5,8 +5,8 @@ pub mod slides;
 use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
-    ParseOptions,
     mdast::{Code, Node},
+    ParseOptions,
 };
 use std::collections::HashMap;
 
@@ -15,8 +15,15 @@ pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
-pub fn ast_to_markdown(ast: &Node) -> String {
-    mdast_util_to_markdown::to_markdown(ast).expect("Failed to convert to markdown")
+pub fn ast_to_markdown(ast: &Node) -> Result<String, String> {
+    let default_options = mdast_util_to_markdown::Options::default();
+    let options = mdast_util_to_markdown::Options {
+        bullet: '-',
+        rule: '-',
+        ..default_options
+    };
+    mdast_util_to_markdown::to_markdown_with_options(&ast, &options)
+        .map_err(|e| format!("Error converting AST to markdown: {}", e))
 }
 
 pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {

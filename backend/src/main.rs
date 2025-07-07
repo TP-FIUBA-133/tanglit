@@ -41,7 +41,13 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
     let input_file_path = exclude_args.general.input_file_path;
     let ast = parse_from_file(input_file_path.trim()).expect("Failed to parse");
     let ast_with_exclusions = exclude_from_ast(&ast);
-    let output = ast_to_markdown(&ast_with_exclusions);
+    let output = match ast_to_markdown(&ast_with_exclusions) {
+        Ok(output) => output,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
     // Write the output to a file
     match write(Path::new(&exclude_args.output_file_path), output) {
         Ok(_) => println!("Output written to {}", exclude_args.output_file_path),

@@ -5,6 +5,7 @@ use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};
 use std::{fs::write, path::PathBuf};
+use serde::Serialize;
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
 pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
@@ -76,6 +77,7 @@ pub fn execute_python_file(source_file_path: PathBuf) -> Output {
 //     todo!()
 // }
 
+#[derive(Serialize)]
 pub struct ExecutionResult {
     pub stdout: String,
     pub stderr: String,
