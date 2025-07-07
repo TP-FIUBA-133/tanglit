@@ -1,6 +1,7 @@
-use crate::parser::code_block::Language;
-use crate::parser::parse_blocks_from_file;
+use crate::parser::code_block::{CodeBlock, Language};
 use crate::tangle::tangle_block;
+use serde::Serialize;
+use std::collections::HashMap;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};
@@ -76,29 +77,24 @@ pub fn execute_python_file(source_file_path: PathBuf) -> Output {
 //     todo!()
 // }
 
-pub fn execute(input_file_path: &str, target_block: &str) -> String {
-    // Parse blocks from the input file
-    let blocks = match parse_blocks_from_file(input_file_path) {
-        Ok(blocks) => blocks,
-        Err(e) => {
-            println!("Error parsing blocks: {}", e);
-            return "Error".to_string();
-        }
-    };
+#[derive(Serialize)]
+pub struct ExecutionResult {
+    pub stdout: String,
+    pub stderr: String,
+    pub exit_code: i32,
+}
 
+pub fn execute(
+    blocks: HashMap<String, CodeBlock>,
+    target_block: &str,
+) -> Result<ExecutionResult, String> {
     // Tangle blocks
-    let Ok((output, lang)) = tangle_block(target_block, blocks, true)
-        .inspect_err(|e| println!("Error tangling blocks: {e}"))
-    else {
-        return "Error".to_string();
-    };
+    let (output, lang) = tangle_block(target_block, blocks, true)
+        .map_err(|e| format!("Error tangling blocks: {e}"))?;
 
     // Write the output to a file
-    let Ok(block_file_path) = write_file(output, target_block, &lang).inspect_err(|e| {
-        println!("Error writing to file: {e}");
-    }) else {
-        return "Error".to_string();
-    };
+    let block_file_path = write_file(output, target_block, &lang)
+        .map_err(|e| format!("Error writing to file: {e}"))?;
 
     let handles = match lang {
         crate::parser::code_block::Language::C => crate::execution::execute_c_file(block_file_path),
@@ -106,14 +102,18 @@ pub fn execute(input_file_path: &str, target_block: &str) -> String {
             crate::execution::execute_python_file(block_file_path)
         }
         _ => {
-            println!("Unsupported language");
-            return "Error".to_string();
+            return Err("Unsupported language".to_string());
         }
     };
 
-    println!("stdout:\n{}", String::from_utf8_lossy(&handles.stdout));
-    eprintln!("stderr:\n{}", String::from_utf8_lossy(&handles.stderr));
-    String::from_utf8_lossy(&handles.stdout).to_string()
+    let ex_stdout = String::from_utf8_lossy(&handles.stdout);
+    let ex_stderr = String::from_utf8_lossy(&handles.stderr);
+
+    Ok(ExecutionResult {
+        stdout: ex_stdout.to_string(),
+        stderr: ex_stderr.to_string(),
+        exit_code: handles.status.code().unwrap_or(1),
+    })
 }
 
 //TODO: tests (probably require mocking or to be integration type tests)
