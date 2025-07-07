@@ -1,7 +1,6 @@
 use crate::parser::code_block::{CodeBlock, Language};
 use crate::tangle::tangle_block;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};

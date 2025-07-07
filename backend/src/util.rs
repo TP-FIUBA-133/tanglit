@@ -1,7 +1,6 @@
 use crate::errors::ParserError;
 use crate::parser::code_block::CodeBlock;
 use crate::parser::{parse_code_blocks_from_ast, parse_from_file};
-use markdown::mdast::Node;
 use std::collections::HashMap;
 
 pub fn read_file_and_parse_blocks(
