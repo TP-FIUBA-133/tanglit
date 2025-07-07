@@ -16,7 +16,7 @@ pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
 }
 
 pub fn ast_to_markdown(ast: &Node) -> String {
-    mdast_util_to_markdown::to_markdown(&ast).expect("Failed to convert to markdown")
+    mdast_util_to_markdown::to_markdown(ast).expect("Failed to convert to markdown")
 }
 
 pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
@@ -30,7 +30,7 @@ pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
 /// If a code block does not have a tag, a default tag is assigned based on their line number in the input
 pub fn parse_code_blocks_from_ast(mdast: &Node) -> Result<HashMap<String, CodeBlock>, ParserError> {
     // Extract code nodes from the tree
-    let code_nodes = get_code_nodes_from_mdast(&mdast)?;
+    let code_nodes = get_code_nodes_from_mdast(mdast)?;
 
     // Convert code nodes to CodeBlocks
     let code_blocks: Vec<CodeBlock> = code_nodes
