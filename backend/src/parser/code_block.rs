@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::errors::ParserError;
 use markdown::mdast::Code;
 use regex::Regex;
@@ -7,7 +9,7 @@ const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
 #[derive(Debug, PartialEq, Clone, Serialize)]
 pub enum Language {
-    Unknown,
+    Unknown(String),
     Python,
     Rust,
     C,
@@ -19,7 +21,18 @@ impl Language {
             "python" => Language::Python,
             "rust" => Language::Rust,
             "c" => Language::C,
-            _ => Language::Unknown,
+            other => Language::Unknown(other.to_string()),
+        }
+    }
+}
+
+impl fmt::Display for Language {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Language::Python => write!(f, "Python"),
+            Language::Rust => write!(f, "Rust"),
+            Language::C => write!(f, "C"),
+            Language::Unknown(lang) => write!(f, "{}", lang),
         }
     }
 }
@@ -51,7 +64,13 @@ impl CodeBlock {
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(Language::Unknown, code, "".to_string(), Vec::new(), 0)
+        Self::new(
+            Language::Unknown("".to_string()),
+            code,
+            "".to_string(),
+            Vec::new(),
+            0,
+        )
     }
 
     /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
