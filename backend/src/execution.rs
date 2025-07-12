@@ -1,31 +1,14 @@
 use crate::errors::ExecutionError;
+use crate::execution;
 use crate::parser::code_block::Language;
 use crate::parser::parse_blocks_from_file;
 use crate::tangle::tangle_block;
+use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};
-use std::{fmt, io};
 use std::{fs::write, path::PathBuf};
 
-pub struct ExecutionOutput {
-    pub stdout: String,
-    pub stderr: String,
-}
-
-impl fmt::Display for ExecutionOutput {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.stderr.is_empty() {
-            write!(f, "{}", self.stdout)
-        } else {
-            write!(f, "STDERR:\n{}", self.stderr)
-        }
-    }
-}
-
-pub fn execute(
-    input_file_path: &str,
-    target_block: &str,
-) -> Result<ExecutionOutput, ExecutionError> {
+pub fn execute(input_file_path: &str, target_block: &str) -> Result<Output, ExecutionError> {
     // Parse blocks from the input file
     let blocks = parse_blocks_from_file(input_file_path)?;
 
@@ -36,19 +19,12 @@ pub fn execute(
     let block_file_path = write_file(output, target_block, &lang)
         .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
 
-    let handles = match lang {
-        crate::parser::code_block::Language::C => crate::execution::execute_c_file(block_file_path),
-        crate::parser::code_block::Language::Python => {
-            crate::execution::execute_python_file(block_file_path)
-        }
+    let output = match lang {
+        Language::C => execution::execute_c_file(block_file_path),
+        Language::Python => execution::execute_python_file(block_file_path),
         other => {
             return Err(ExecutionError::UnsupportedLanguage(other.to_string()));
         }
-    };
-
-    let output = ExecutionOutput {
-        stdout: String::from_utf8_lossy(&handles.stdout).to_string(),
-        stderr: String::from_utf8_lossy(&handles.stderr).to_string(),
     };
 
     Ok(output)

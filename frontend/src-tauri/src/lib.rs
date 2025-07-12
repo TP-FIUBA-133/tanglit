@@ -43,7 +43,7 @@ fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> String {
     fs::write(file_name, data).map_err(|e| format!("Error writing file: {}", e)); // TODO: handle error properly
 
     match backend::execution::execute(file_name, block_name) {
-        Ok(output) => output.to_string(),
+        Ok(output) => format!("{output:?}"),
         Err(e) => format!("Error executing block: {}", e),
     }
 }

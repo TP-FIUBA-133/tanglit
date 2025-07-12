@@ -56,7 +56,7 @@ fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
             eprintln!("Error executing block: {}", e);
             std::process::exit(1);
         }
-        Ok(output) => println!("{}", output),
+        Ok(output) => println!("{output:?}"),
     }
 }
 
