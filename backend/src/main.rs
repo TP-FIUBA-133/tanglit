@@ -56,28 +56,16 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) {
 }
 
 fn handle_execute_command(execute_args: backend::cli::ExecuteArgs) {
-    let input_file_path = execute_args.general.input_file_path;
-
-    let blocks = match read_file_and_parse_blocks(&input_file_path) {
-        Ok(blocks) => blocks,
-        Err(e) => {
-            eprintln!("Error parsing blocks: {}", e);
-            return;
-        }
-    };
-
-    let result = execution::execute(blocks, &execute_args.target_block);
-
-    let ex_result = match result {
-        Ok(res) => res,
+    match execution::execute(
+        &execute_args.general.input_file_path,
+        &execute_args.target_block,
+    ) {
         Err(e) => {
             eprintln!("Error executing block: {}", e);
-            return;
+            std::process::exit(1);
         }
-    };
-
-    println!("Stdout: {}", ex_result.stdout);
-    eprintln!("Stderr: {}", ex_result.stderr);
+        Ok(output) => println!("{output:?}"),
+    }
 }
 
 fn main() {
