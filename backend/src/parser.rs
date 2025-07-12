@@ -15,15 +15,16 @@ pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
-pub fn ast_to_markdown(ast: &Node) -> Result<String, String> {
+pub fn ast_to_markdown(ast: &Node) -> Result<String, ParserError> {
     let default_options = mdast_util_to_markdown::Options::default();
     let options = mdast_util_to_markdown::Options {
         bullet: '-',
         rule: '-',
         ..default_options
     };
-    mdast_util_to_markdown::to_markdown_with_options(ast, &options)
-        .map_err(|e| format!("Error converting AST to markdown: {}", e))
+    mdast_util_to_markdown::to_markdown_with_options(ast, &options).map_err(|e| {
+        ParserError::ConversionError(format!("Error converting AST to markdown: {}", e))
+    })
 }
 
 pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
