@@ -7,6 +7,7 @@ use code_block::CodeBlock;
 use markdown::{
     ParseOptions,
     mdast::{Code, Node},
+    to_html,
 };
 use std::collections::HashMap;
 
@@ -23,8 +24,12 @@ pub fn ast_to_markdown(ast: &Node) -> Result<String, ParserError> {
         ..default_options
     };
     mdast_util_to_markdown::to_markdown_with_options(ast, &options).map_err(|e| {
-        ParserError::ConversionError(format!("Error converting AST to markdown: {}", e))
+        ParserError::AstConversionError(format!("Error converting AST to markdown: {}", e))
     })
+}
+
+pub fn markdown_to_html(input: &str) -> String {
+    to_html(input)
 }
 
 pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {

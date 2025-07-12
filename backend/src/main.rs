@@ -1,9 +1,10 @@
-use backend::cli::{Commands, ExcludeArgs, TangleArgs};
+use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleArgs};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
+use backend::generate_pdf::generate_pdf;
 use backend::parser::code_block::Language;
 use backend::parser::exclude::exclude_from_ast;
-use backend::parser::{ast_to_markdown, parse_from_file};
+use backend::parser::{ast_to_markdown, markdown_to_html, parse_from_file};
 use backend::util::read_file_and_parse_blocks;
 use backend::{cli::Cli, execution, tangle::tangle_block};
 use clap::Parser;
@@ -35,7 +36,7 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) -> Result<String, Execution
     // Write the output to a file
     match write(Path::new(&exclude_args.output_file_path), output) {
         Ok(_) => Ok(format!(
-            "Blocks written to {}",
+            "Output written to {}",
             exclude_args.output_file_path
         )),
         Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
@@ -58,6 +59,22 @@ fn handle_execute_command(
     ))
 }
 
+fn handle_generate_pdf_command(
+    generate_pdf_args: GeneratePDFArgs,
+) -> Result<String, ExecutionError> {
+    let input_file_path = generate_pdf_args.general.input_file_path;
+    let ast = parse_from_file(input_file_path.trim()).expect("Failed to parse");
+    let ast_with_exclusions = exclude_from_ast(&ast);
+    let markdown_with_exclusions = ast_to_markdown(&ast_with_exclusions)?;
+    let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
+    generate_pdf(&html_with_exclusions, &generate_pdf_args.output_file_path);
+
+    Ok(format!(
+        "✅ PDF saved to {}",
+        &generate_pdf_args.output_file_path
+    ))
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -65,6 +82,7 @@ fn main() {
         Commands::Tangle(args) => handle_tangle_command(args),
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
+        Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
     };
     match result {
         Ok(message) => println!("{}", message),
