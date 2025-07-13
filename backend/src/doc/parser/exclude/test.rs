@@ -3,7 +3,7 @@ use super::*;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::parse_from_string;
+    use crate::doc::parser::parse_from_string;
     use std::path::Path;
 
     fn exclude_from_markdown(input: &str) -> Node {

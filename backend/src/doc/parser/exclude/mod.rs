@@ -1,4 +1,4 @@
-use crate::parser::exclude::to_node::ToNode;
+use crate::doc::parser::exclude::to_node::ToNode;
 use markdown::mdast::{Code, List, ListItem, Node, Paragraph, Text};
 use once_cell::sync::Lazy;
 use regex::Regex;
