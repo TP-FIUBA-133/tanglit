@@ -1,7 +1,7 @@
 use crate::errors::ExecutionError;
 use crate::execution;
 use crate::parser::code_block::Language;
-use crate::parser::parse_blocks_from_file;
+use crate::parser::{parse_code_blocks_from_ast, parse_from_file};
 use crate::tangle::tangle_block;
 use std::io;
 use std::process::{Command, Output, Stdio};
@@ -9,8 +9,8 @@ use std::{env, fs};
 use std::{fs::write, path::PathBuf};
 
 pub fn execute(input_file_path: &str, target_block: &str) -> Result<Output, ExecutionError> {
-    // Parse blocks from the input file
-    let blocks = parse_blocks_from_file(input_file_path)?;
+    let ast = parse_from_file(input_file_path)?;
+    let blocks = parse_code_blocks_from_ast(&ast)?;
 
     // Tangle blocks
     let (output, lang) = tangle_block(target_block, blocks, true)?;
