@@ -1,6 +1,6 @@
-pub(crate) mod code_block;
-pub(crate) mod exclude;
-pub(crate) mod slides;
+pub mod code_block;
+pub mod exclude;
+pub mod slides;
 
 use code_block::CodeBlock;
 use markdown::{
