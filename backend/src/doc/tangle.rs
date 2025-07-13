@@ -1,19 +1,32 @@
-use crate::{
-    errors::TangleError,
-    parser::code_block::{CodeBlock, Language},
-};
+use crate::doc::parser::code_block::{CodeBlock, Language};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
+use std::fmt;
 
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 
-pub fn tangle_blocks(blocks: Vec<CodeBlock>) -> String {
-    let mut tangle = String::new();
-    for block in blocks {
-        tangle.push_str(&block.code);
-        tangle.push('\n');
+#[derive(PartialEq)]
+pub enum TangleError {
+    BlockNotFound(String),
+    InternalError(String),
+}
+
+impl fmt::Display for TangleError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
+            TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+        }
     }
-    tangle
+}
+
+impl fmt::Debug for TangleError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
+            TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+        }
+    }
 }
 
 pub fn tangle_block(
@@ -50,7 +63,7 @@ pub fn tangle_block(
     }
 
     if add_wrapper {
-        if target_code_block.language == crate::parser::code_block::Language::C {
+        if target_code_block.language == Language::C {
             add_main_code_block(&target_code_block, &mut tangle);
         } else {
             tangle.push_str(&target_code_block.code);
@@ -113,29 +126,7 @@ pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::code_block::Language;
-
-    #[test]
-    fn test_tangle_blocks() {
-        let blocks = vec![
-            CodeBlock::new_with_code("print('Hello, world!')".to_string()),
-            CodeBlock::new_with_code("console.log('Hello, world!')".to_string()),
-        ];
-        let tangle = tangle_blocks(blocks);
-        assert_eq!(
-            tangle,
-            "print('Hello, world!')\nconsole.log('Hello, world!')\n"
-        );
-    }
-
-    #[test]
-    fn test_tangle_blocks_single() {
-        let blocks = vec![CodeBlock::new_with_code(
-            "print('Hello, world!')".to_string(),
-        )];
-        let tangle = tangle_blocks(blocks);
-        assert_eq!(tangle, "print('Hello, world!')\n");
-    }
+    use crate::doc::parser::code_block::Language;
 
     #[test]
     fn test_tangle_block_with_imports() {
