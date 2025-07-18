@@ -3,7 +3,8 @@ use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::parser::code_block::Language;
 use backend::parser::exclude::exclude_from_ast;
-use backend::parser::{ast_to_markdown, parse_from_file};
+use backend::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_file};
+use backend::tangle::{get_codeblock, tangle_codeblock};
 use backend::util::read_file_and_parse_blocks;
 use backend::{cli::Cli, execution, tangle::tangle_block};
 use clap::Parser;
@@ -14,9 +15,30 @@ use std::{
 
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
     // Parse blocks from the input file
-    let blocks = read_file_and_parse_blocks(&tangle_args.general.input_file_path)?;
+    let blocks = match read_file_and_parse_blocks(&tangle_args.general.input_file_path) {
+        Ok(blocks) => blocks,
+        Err(e) => {
+            return Err(ExecutionError::ParseError(e));
+        }
+    };
+
+    let block = match get_codeblock(&tangle_args.target_block, &blocks) {
+        Ok(block) => block,
+        Err(e) => {
+            return Err(ExecutionError::TangleError(e));
+        }
+    };
+
     // Tangle blocks
-    let (output, lang) = tangle_block(&tangle_args.target_block, blocks, true)?;
+    let output = match tangle_codeblock(&block, &blocks) {
+        Ok(output) => output,
+        Err(e) => {
+            return Err(ExecutionError::TangleError(e));
+        }
+    };
+
+    let lang = block.language;
+
     // Write the output to a file
     let output_file_path =
         get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
@@ -45,10 +67,12 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) -> Result<String, Execution
 fn handle_execute_command(
     execute_args: backend::cli::ExecuteArgs,
 ) -> Result<String, ExecutionError> {
-    let output = execution::execute(
-        &execute_args.general.input_file_path,
-        &execute_args.target_block,
-    )?;
+    // Parse blocks from the input file
+    let ast = parse_from_file(&execute_args.general.input_file_path)?;
+    let blocks = parse_code_blocks_from_ast(&ast).map_err(ExecutionError::ParseError)?;
+
+    let output = execution::execute(blocks, &execute_args.target_block)?;
+
     Ok(format!(
         "Output of block {}:\n{}\nstderr: {}\nexit code: {}",
         execute_args.target_block,
