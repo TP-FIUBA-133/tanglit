@@ -2,9 +2,8 @@ mod error;
 mod parser;
 mod tangle;
 
-pub use crate::doc::error::DocError;
 use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
-pub use crate::doc::tangle::TangleError;
+pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
 pub use parser::code_block::{CodeBlock, Language};
@@ -13,6 +12,7 @@ pub use parser::slides::Slide;
 use parser::slides::parse_slides_from_ast;
 use std::collections::HashMap;
 pub use tangle::CodeBlocksDoc;
+pub use tangle::TangleError;
 use tangle::from_codeblocks;
 
 pub struct TanglitDoc {

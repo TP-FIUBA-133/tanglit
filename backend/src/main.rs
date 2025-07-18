@@ -1,5 +1,5 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
-use backend::doc::{DocError, Language, TanglitDoc};
+use backend::doc::{DocError, Language, TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
@@ -12,12 +12,21 @@ use std::{
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
     let input_file_path = tangle_args.general.input_file_path;
     let doc = TanglitDoc::new_from_file(&input_file_path)?;
+
     // Tangle the document
     let blocks = doc.tangle()?;
-    let (output, lang) = blocks
-        .tangle_block(&tangle_args.target_block, true)
-        .map_err(DocError::TangleError)?;
+    let block = blocks
+        .get_block(&tangle_args.target_block)
+        .ok_or(ExecutionError::from(DocError::from(
+            TangleError::BlockNotFound(tangle_args.target_block.clone()),
+        )))?;
+    let output = blocks
+        .tangle_block(&tangle_args.target_block)
+        .map_err(DocError::from)?;
 
+    let lang = block.language.clone();
+
+    // Write the output to a file
     let output_file_path =
         get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
     match write(&output_file_path, output) {
