@@ -2,7 +2,8 @@ use std::fmt;
 pub enum ParserError {
     InvalidInput(String),
     CodeBlockError(String),
-    ConversionError(String),
+    AstConversionError(String),
+    HtmlConversionError(String),
 }
 
 impl fmt::Display for ParserError {
@@ -10,8 +11,11 @@ impl fmt::Display for ParserError {
         match self {
             ParserError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             ParserError::CodeBlockError(msg) => write!(f, "Error parsing Code Block: {}", msg),
-            ParserError::ConversionError(msg) => {
+            ParserError::AstConversionError(msg) => {
                 write!(f, "Error converting AST back to markdown: {}", msg)
+            }
+            ParserError::HtmlConversionError(msg) => {
+                write!(f, "Error converting markdown to HTML: {}", msg)
             }
         }
     }
@@ -22,8 +26,11 @@ impl fmt::Debug for ParserError {
         match self {
             ParserError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             ParserError::CodeBlockError(msg) => write!(f, "Error parsing Code Block: {}", msg),
-            ParserError::ConversionError(msg) => {
+            ParserError::AstConversionError(msg) => {
                 write!(f, "Error converting AST back to markdown: {}", msg)
+            }
+            ParserError::HtmlConversionError(msg) => {
+                write!(f, "Error converting markdown to HTML: {}", msg)
             }
         }
     }
