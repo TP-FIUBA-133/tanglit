@@ -4,12 +4,14 @@ pub mod slides;
 
 use crate::errors::ParserError;
 use code_block::CodeBlock;
+use comrak::{Plugins, markdown_to_html_with_plugins, plugins::syntect::SyntectAdapterBuilder};
 use markdown::{
     ParseOptions,
     mdast::{Code, Node},
-    to_html,
 };
 use std::collections::HashMap;
+
+const VSCODE_MARKDOWN_CSS: &str = include_str!("../vscode-markdown.css");
 
 pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
     markdown::to_mdast(input, &ParseOptions::mdx())
@@ -29,7 +31,37 @@ pub fn ast_to_markdown(ast: &Node) -> Result<String, ParserError> {
 }
 
 pub fn markdown_to_html(input: &str) -> String {
-    to_html(input)
+    // InspiredGitHub
+    // Solarized (dark)
+    // Solarized (light)
+    // base16-eighties.dark
+    // base16-mocha.dark
+    // base16-ocean.dark
+    // base16-ocean.light
+    let adapter = SyntectAdapterBuilder::new()
+        .theme("base16-ocean.light")
+        .build();
+
+    let mut options = comrak::Options::default();
+    options.extension.strikethrough = true;
+    options.extension.table = true;
+    options.extension.tagfilter = true;
+    options.extension.tasklist = true;
+    options.extension.autolink = true;
+    options.extension.footnotes = true;
+    options.extension.header_ids = Some("user-content-".to_string()); // mimics GitHub's prefix
+    options.render.github_pre_lang = true;
+
+    let mut plugins = Plugins::default();
+
+    plugins.render.codefence_syntax_highlighter = Some(&adapter);
+
+    // markdown_to_html_with_plugins(input, &options, &plugins)
+    let inner_html = markdown_to_html_with_plugins(input, &options, &plugins);
+    format!(
+        r#"<style>{}</style><div class="markdown-body">{}</div>"#,
+        VSCODE_MARKDOWN_CSS, inner_html
+    )
 }
 
 pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
