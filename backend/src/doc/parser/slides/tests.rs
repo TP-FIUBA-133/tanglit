@@ -3,7 +3,7 @@ use super::*;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::parse_from_string;
+    use crate::doc::parser::parse_from_string;
 
     fn check_returned_slides(input: &str, expected_slides: Vec<Slide>) {
         let input_str = input.trim();
