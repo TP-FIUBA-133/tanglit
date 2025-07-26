@@ -24,5 +24,5 @@ pub fn generate_pdf(html: &str, output_file_path: &str) {
         }))
         .unwrap();
     std::fs::write(output_file_path, pdf_data).unwrap();
-    std::fs::remove_file(temp_file).unwrap(); // Clean up temp file
+    // std::fs::remove_file(temp_file).unwrap(); // Clean up temp file
 }

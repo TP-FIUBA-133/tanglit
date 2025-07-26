@@ -67,8 +67,29 @@ fn handle_generate_pdf_command(
     let ast_with_exclusions = exclude_from_ast(&ast);
     let markdown_with_exclusions = ast_to_markdown(&ast_with_exclusions)?;
     let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
-    generate_pdf(&html_with_exclusions, &generate_pdf_args.output_file_path);
+    let slide = format!("<section>{}</section>", html_with_exclusions);
 
+    let slide = format!(
+        r#"<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/white.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        {}
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js"></script>
+    <script>Reveal.initialize();</script>
+  </body>
+</html>"#,
+        slide
+    );
+    generate_pdf(&slide, &generate_pdf_args.output_file_path);
     Ok(format!(
         "✅ PDF saved to {}",
         &generate_pdf_args.output_file_path
