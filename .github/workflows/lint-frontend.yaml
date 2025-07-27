@@ -71,7 +71,7 @@ jobs:
 
       - name: Run cargo clippy
         working-directory: ./frontend/src-tauri
-        run: make lint
+        run: cargo clippy -- -D warnings
 
       - name: Run cargo fmt
         working-directory: ./frontend/src-tauri
