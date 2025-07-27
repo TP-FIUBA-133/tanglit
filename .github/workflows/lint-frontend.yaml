@@ -1,4 +1,4 @@
-name: "Lint Vue Project"
+name: "Lint Frontend"
 
 on:
   pull_request:
@@ -13,7 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  lint_vue:
+    name: Lint Vue Project
     runs-on: ubuntu-latest
 
     steps:
@@ -36,3 +37,28 @@ jobs:
       - name: Check code format
         run: npx prettier --check src
         working-directory: ./frontend
+
+  lint_rust:
+    name: Lint Rust Interface
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Rustup toolchain install
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Run cargo check
+        working-directory: ./frontend/src-tauri
+        run: cargo check
+
+      - name: Run cargo clippy
+        working-directory: ./frontend/src-tauri
+        run: make lint
+
+      - name: Run cargo fmt
+        working-directory: ./frontend/src-tauri
+        run: cargo fmt -- --check
