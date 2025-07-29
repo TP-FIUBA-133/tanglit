@@ -2,13 +2,43 @@ pub mod code_block;
 pub mod exclude;
 pub mod slides;
 
-use crate::errors::ParserError;
 use code_block::CodeBlock;
 use markdown::{
     ParseOptions,
     mdast::{Code, Node},
 };
 use std::collections::HashMap;
+use std::fmt;
+
+pub enum ParserError {
+    InvalidInput(String),
+    CodeBlockError(String),
+    ConversionError(String),
+}
+
+impl fmt::Display for ParserError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParserError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
+            ParserError::CodeBlockError(msg) => write!(f, "Error parsing Code Block: {}", msg),
+            ParserError::ConversionError(msg) => {
+                write!(f, "Error converting AST back to markdown: {}", msg)
+            }
+        }
+    }
+}
+
+impl fmt::Debug for ParserError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParserError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
+            ParserError::CodeBlockError(msg) => write!(f, "Error parsing Code Block: {}", msg),
+            ParserError::ConversionError(msg) => {
+                write!(f, "Error converting AST back to markdown: {}", msg)
+            }
+        }
+    }
+}
 
 pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
     markdown::to_mdast(input, &ParseOptions::mdx())
@@ -25,12 +55,6 @@ pub fn ast_to_markdown(ast: &Node) -> Result<String, ParserError> {
     mdast_util_to_markdown::to_markdown_with_options(ast, &options).map_err(|e| {
         ParserError::ConversionError(format!("Error converting AST to markdown: {}", e))
     })
-}
-
-pub fn parse_from_file(file_path: &str) -> Result<Node, ParserError> {
-    let input = std::fs::read_to_string(file_path)
-        .map_err(|e| ParserError::InvalidInput(format!("Failed to read file: {}", e)))?;
-    parse_from_string(&input)
 }
 
 /// Parses code blocks from a given input string
@@ -70,7 +94,7 @@ fn get_code_nodes_from_mdast(mdast: &Node) -> Result<Vec<Code>, ParserError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::code_block::Language;
+    use crate::doc::parser::code_block::Language;
 
     use super::*;
 

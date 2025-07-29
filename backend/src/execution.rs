@@ -1,19 +1,15 @@
+use crate::doc::Language;
+use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
 use crate::execution;
-use crate::parser::code_block::Language;
-use crate::parser::{parse_code_blocks_from_ast, parse_from_file};
-use crate::tangle::tangle_block;
 use std::io;
 use std::process::{Command, Output, Stdio};
 use std::{env, fs};
 use std::{fs::write, path::PathBuf};
 
-pub fn execute(input_file_path: &str, target_block: &str) -> Result<Output, ExecutionError> {
-    let ast = parse_from_file(input_file_path)?;
-    let blocks = parse_code_blocks_from_ast(&ast)?;
-
+pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
     // Tangle blocks
-    let (output, lang) = tangle_block(target_block, blocks, true)?;
+    let (output, lang) = doc.tangle_block(target_block, true)?;
 
     // Write the output to a file
     let block_file_path = write_file(output, target_block, &lang)
