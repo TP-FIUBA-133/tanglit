@@ -1,6 +1,6 @@
 use crate::{
     errors::TangleError,
-    parser::code_block::{CodeBlock, Language},
+    parser::code_block::{CodeBlock},
 };
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
@@ -8,10 +8,20 @@ use std::collections::{HashMap, HashSet};
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 type Graph = HashMap<String, HashSet<String>>;
 
-pub fn check_dependencies( target_block: &str, blocks: HashMap<String, CodeBlock>) {
-    let blocks_graph = 
-        build_graph_from_target(target_block, &blocks);
+pub fn check_dependencies(
+    target_block: &str,
+    blocks: &HashMap<String, CodeBlock>,
+) -> Result<(), TangleError> {
+    // Propaga error si falla construir el grafo
+    let graph = build_graph_from_target(target_block, blocks)?;
+
+    // Si detecta ciclo, devuelve error específico
+    has_cycle(&graph)?;
+
+    // Si todo OK, devuelve unit ()
+    Ok(())
 }
+
 
 fn build_graph_from_target(
     target_block: &str,
@@ -59,4 +69,47 @@ fn build_dependency_graph(
     }
 
     Ok(())
+}
+
+
+
+#[derive(PartialEq, Clone)]
+enum State {
+    NotVisited,
+    Visiting,
+    Visited,
+}
+
+fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError> {
+    let mut state = HashMap::new();
+
+    for node in graph.keys() {
+        if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited {
+            if dfs(node, graph, &mut state) {
+                return Err(TangleError::CycleDetected());
+            }
+        }
+    }
+    Ok(())
+}
+
+fn dfs(
+    node: &String,
+    graph: &HashMap<String, HashSet<String>>,
+    state: &mut HashMap<String, State>,
+) -> bool {
+    state.insert(node.clone(), State::Visiting);
+
+    for neighbor in graph.get(node).unwrap_or(&HashSet::new()) {
+        let neighbor_state = state.get(neighbor).unwrap_or(&State::NotVisited).clone();
+
+        match neighbor_state {
+            State::Visiting => return true,
+            State::NotVisited if dfs(neighbor, graph, state) => return true,
+            _ => (),
+        }
+    }
+
+    state.insert(node.clone(), State::Visited);
+    false
 }
