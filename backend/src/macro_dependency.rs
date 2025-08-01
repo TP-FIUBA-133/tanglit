@@ -123,3 +123,79 @@ fn check_cycle_dfs(
     state.insert(node.clone(), State::Visited);
     false
 }
+
+
+///// Tests
+/// 
+/// #[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::{HashMap, HashSet};
+
+    fn set(items: &[&str]) -> HashSet<String> {
+        items.iter().cloned().map(String::from).collect()
+    }
+
+    #[test]
+    fn no_cycle_empty_graph() {
+        let graph: HashMap<String, HashSet<String>> = HashMap::new();
+        assert_eq!(has_cycle(&graph), Ok(()));
+    }
+
+    #[test]
+    fn no_cycle_single_node() {
+        let mut graph = HashMap::new();
+        graph.insert("A".to_string(), HashSet::new());
+        assert_eq!(has_cycle(&graph), Ok(()));
+    }
+
+    #[test]
+    fn no_cycle_linear_graph() {
+        let mut graph = HashMap::new();
+        graph.insert("A".to_string(), set(&["B"]));
+        graph.insert("B".to_string(), set(&["C"]));
+        graph.insert("C".to_string(), HashSet::new());
+        assert_eq!(has_cycle(&graph), Ok(()));
+    }
+
+    #[test]
+    fn cycle_self_loop() {
+        let mut graph = HashMap::new();
+        graph.insert("A".to_string(), set(&["A"]));
+        assert_eq!(has_cycle(&graph), Err(TangleError::CycleDetected()));
+    }
+
+    #[test]
+    fn cycle_three_nodes() {
+        let mut graph = HashMap::new();
+        graph.insert("A".to_string(), set(&["B"]));
+        graph.insert("B".to_string(), set(&["C"]));
+        graph.insert("C".to_string(), set(&["A"]));
+        assert_eq!(has_cycle(&graph), Err(TangleError::CycleDetected()));
+    }
+
+    #[test]
+    fn disconnected_graph_with_one_cycle() {
+        let mut graph = HashMap::new();
+        graph.insert("A".to_string(), set(&["B"]));
+        graph.insert("B".to_string(), set(&["C"]));
+        graph.insert("C".to_string(), set(&["A"])); // ciclo aquí
+
+        graph.insert("X".to_string(), set(&["Y"]));
+        graph.insert("Y".to_string(), HashSet::new()); // sin ciclo
+
+        assert_eq!(has_cycle(&graph), Err(TangleError::CycleDetected()));
+    }
+
+    #[test]
+    fn disconnected_graph_no_cycle() {
+        let mut graph = HashMap::new();
+        graph.insert("A".to_string(), set(&["B"]));
+        graph.insert("B".to_string(), HashSet::new());
+
+        graph.insert("X".to_string(), set(&["Y"]));
+        graph.insert("Y".to_string(), HashSet::new());
+
+        assert_eq!(has_cycle(&graph), Ok(()));
+    }
+}
