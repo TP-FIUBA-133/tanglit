@@ -8,14 +8,25 @@ use std::collections::{HashMap, HashSet};
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 type Graph = HashMap<String, HashSet<String>>;
 
+#[derive(PartialEq, Clone)]
+enum State {
+    NotVisited,
+    Visiting,
+    Visited,
+}
+
+// check_dependencies verifica las dependencias de un bloque objetivo
+// y devuelve un error si falta algún bloque nombrado en una macro o si hay un ciclo 
+// en las dependencias.
+// Si todo está bien, devuelve Ok(()).
 pub fn check_dependencies(
     target_block: &str,
     blocks: &HashMap<String, CodeBlock>,
 ) -> Result<(), TangleError> {
-    // Propaga error si falla construir el grafo
+    // Si detecta que falta un bloque nombrado en una macro, devuelve error BlockNotFound
     let graph = build_graph_from_target(target_block, blocks)?;
 
-    // Si detecta ciclo, devuelve error específico
+    // Si detecta ciclo, devuelve error CycleDetected
     has_cycle(&graph)?;
 
     // Si todo OK, devuelve unit ()
@@ -73,12 +84,7 @@ fn build_dependency_graph(
 
 
 
-#[derive(PartialEq, Clone)]
-enum State {
-    NotVisited,
-    Visiting,
-    Visited,
-}
+
 
 fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError> {
     let mut state = HashMap::new();
