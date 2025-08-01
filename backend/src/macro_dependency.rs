@@ -95,7 +95,7 @@ fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError
 
     for node in graph.keys() {
         if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited {
-            if dfs(node, graph, &mut state) {
+            if check_cycle_dfs(node, graph, &mut state) {
                 return Err(TangleError::CycleDetected());
             }
         }
@@ -103,7 +103,7 @@ fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError
     Ok(())
 }
 
-fn dfs(
+fn check_cycle_dfs(
     node: &String,
     graph: &HashMap<String, HashSet<String>>,
     state: &mut HashMap<String, State>,
@@ -115,7 +115,7 @@ fn dfs(
 
         match neighbor_state {
             State::Visiting => return true,
-            State::NotVisited if dfs(neighbor, graph, state) => return true,
+            State::NotVisited if check_cycle_dfs(neighbor, graph, state) => return true,
             _ => (),
         }
     }
