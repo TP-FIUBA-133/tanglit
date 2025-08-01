@@ -52,30 +52,34 @@ fn build_dependency_graph(
     graph: &mut Graph,
     visited: &mut HashSet<String>,
 ) -> Result<(), TangleError> {
+    // 1. Verificar existencia del bloque actual
+    let block = all_blocks
+        .get(current_block)
+        .ok_or_else(|| TangleError::BlockNotFound(current_block.to_string()))?;
+
+    // 2. Evitar ciclos
     if visited.contains(current_block) {
         return Ok(());
     }
     visited.insert(current_block.to_string());
 
-    let block = all_blocks
-        .get(current_block)
-        .ok_or_else(|| TangleError::BlockNotFound(current_block.to_string()))?;
+    // 3. Agregar el nodo al grafo, incluso si no tiene macros
+    graph.entry(current_block.to_string()).or_default();
 
+    // 4. Regex para extraer macros
     let regex = Regex::new(MACROS_REGEX)
         .map_err(|e| TangleError::InternalError(format!("Regex error: {}", e)))?;
 
     for captures in regex.captures_iter(&block.code) {
         let macro_name = captures[1].to_string();
 
-        if !all_blocks.contains_key(&macro_name) {
-            return Err(TangleError::BlockNotFound(macro_name));
-        }
-
+        // 5. Insertar macro como dependencia
         graph
-            .entry(current_block.to_string())
-            .or_default()
+            .get_mut(current_block)
+            .unwrap()
             .insert(macro_name.clone());
 
+        // 6. Llamada recursiva (valida existencia)
         build_dependency_graph(&macro_name, all_blocks, graph, visited)?;
     }
 
