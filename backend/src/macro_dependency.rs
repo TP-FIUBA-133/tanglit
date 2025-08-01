@@ -88,8 +88,6 @@ fn build_dependency_graph(
 
 
 
-
-
 fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError> {
     let mut state = HashMap::new();
 
@@ -135,6 +133,75 @@ mod tests {
     fn set(items: &[&str]) -> HashSet<String> {
         items.iter().cloned().map(String::from).collect()
     }
+
+    // Test para verificar que se construya el grafo correctamente
+    #[test]
+    fn test_single_block_no_dependencies() {
+        let mut blocks = HashMap::new();
+        blocks.insert("main".to_string(), CodeBlock::new_with_code("let x = 5;".to_string()));
+
+        let graph = build_graph_from_target("main", &blocks).unwrap();
+        assert_eq!(graph.len(), 1);
+        assert_eq!(graph["main"].len(), 0);
+    }
+
+    #[test]
+    fn test_block_with_one_dependency() {
+        let mut blocks = HashMap::new();
+        blocks.insert("main".to_string(), CodeBlock::new_with_code("start @[helper]".to_string()));
+        blocks.insert("helper".to_string(), CodeBlock::new_with_code("let x = 42;".to_string()));
+
+        let graph = build_graph_from_target("main", &blocks).unwrap();
+
+        let mut expected = HashMap::new();
+        expected.insert("main".to_string(), HashSet::from(["helper".to_string()]));
+        expected.insert("helper".to_string(), HashSet::new());
+
+        assert_eq!(graph, expected);
+    }
+
+    #[test]
+    fn test_nested_dependencies() {
+        let mut blocks = HashMap::new();
+        blocks.insert("A".to_string(), CodeBlock::new_with_code("start @[B]".to_string()));
+        blocks.insert("B".to_string(), CodeBlock::new_with_code("middle @[C]".to_string()));
+        blocks.insert("C".to_string(), CodeBlock::new_with_code("end".to_string()));
+
+        let graph = build_graph_from_target("A", &blocks).unwrap();
+
+        let mut expected = HashMap::new();
+        expected.insert("A".to_string(), HashSet::from(["B".to_string()]));
+        expected.insert("B".to_string(), HashSet::from(["C".to_string()]));
+        expected.insert("C".to_string(), HashSet::new());
+
+        assert_eq!(graph, expected);
+    }
+
+    #[test]
+    fn test_missing_dependency_block() {
+        let mut blocks = HashMap::new();
+        blocks.insert("main".to_string(), CodeBlock::new_with_code("call @[missing]".to_string()));
+
+        let result = build_graph_from_target("main", &blocks);
+
+        assert!(matches!(result, Err(TangleError::BlockNotFound(ref name)) if name == "missing"));
+    }
+
+    #[test]
+    fn test_cycle_handled_gracefully() {
+        let mut blocks = HashMap::new();
+        blocks.insert("A".to_string(), CodeBlock::new_with_code("use @[B]".to_string()));
+        blocks.insert("B".to_string(), CodeBlock::new_with_code("use @[A]".to_string()));
+
+        let graph = build_graph_from_target("A", &blocks).unwrap();
+
+        assert_eq!(graph.len(), 2);
+        assert_eq!(graph["A"], HashSet::from(["B".to_string()]));
+        assert_eq!(graph["B"], HashSet::from(["A".to_string()]));
+    }
+
+
+    // Test for cycle detection
 
     #[test]
     fn no_cycle_empty_graph() {
