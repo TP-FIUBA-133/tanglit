@@ -33,6 +33,7 @@ impl fmt::Debug for ParserError {
 pub enum TangleError {
     BlockNotFound(String),
     InternalError(String),
+    CycleDetected(),
 }
 
 impl fmt::Display for TangleError {
@@ -40,6 +41,7 @@ impl fmt::Display for TangleError {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
             TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+            TangleError::CycleDetected() => write!(f, "Cycle detected"),
         }
     }
 }
@@ -49,6 +51,7 @@ impl fmt::Debug for TangleError {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
             TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+            TangleError::CycleDetected() => write!(f, "Cycle detected"),
         }
     }
 }
