@@ -16,9 +16,11 @@ enum State {
 }
 
 // check_dependencies verifica las dependencias de un bloque objetivo
-// y devuelve un error si falta algún bloque nombrado en una macro o si hay un ciclo 
-// en las dependencias.
-// Si todo está bien, devuelve Ok(()).
+// Post:
+// - Si el bloque objetivo no existe, devuelve un error BlockNotFound
+// - Si hay un ciclo en las dependencias, devuelve un error CycleDetected
+// - Si todo está bien, devuelve Ok(())
+// - Si hay un error interno, devuelve InternalError
 pub fn check_dependencies(
     target_block: &str,
     blocks: &HashMap<String, CodeBlock>,
@@ -33,7 +35,11 @@ pub fn check_dependencies(
     Ok(())
 }
 
-
+/// build_graph_from_target Construye un grafo de dependencias a partir del bloque objetivo
+/// y todos los bloques disponibles.
+/// # Post:
+/// - Si un bloque objetivo no existe, devuelve un error BlockNotFound
+/// - Si todo está bien, devuelve el grafo de dependencias
 fn build_graph_from_target(
     target_block: &str,
     all_blocks: &HashMap<String, CodeBlock>,
@@ -46,6 +52,10 @@ fn build_graph_from_target(
     Ok(graph)
 }
 
+/// build_dependency_graph Construye el grafo de dependencias de forma recursiva.
+/// # Post:
+/// - Si un bloque objetivo no existe, devuelve un error BlockNotFound
+/// - Si todo está bien, devuelve el grafo de dependencias
 fn build_dependency_graph(
     current_block: &str,
     all_blocks: &HashMap<String, CodeBlock>,
@@ -87,7 +97,10 @@ fn build_dependency_graph(
 }
 
 
-
+// has_cycle verifica si hay ciclos en el grafo de dependencias
+// # Post:
+// - Si hay un ciclo, devuelve un error CycleDetected
+// - Si no hay ciclos, devuelve Ok(())
 fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError> {
     let mut state = HashMap::new();
 
@@ -101,6 +114,10 @@ fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError
     Ok(())
 }
 
+/// check_cycle_dfs Realiza una búsqueda en profundidad para detectar ciclos
+/// # Post:
+/// - Si encuentra un ciclo, devuelve true
+/// - Si no encuentra ciclos, devuelve false
 fn check_cycle_dfs(
     node: &String,
     graph: &HashMap<String, HashSet<String>>,
