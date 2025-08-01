@@ -17,7 +17,7 @@ enum State {
 
 // check_dependencies verifica las dependencias de un bloque objetivo
 // Post:
-// - Si el bloque objetivo no existe, devuelve un error BlockNotFound
+// - Si un bloque en la cadena de macros no existe, devuelve un error BlockNotFound
 // - Si hay un ciclo en las dependencias, devuelve un error CycleDetected
 // - Si todo está bien, devuelve Ok(())
 // - Si hay un error interno, devuelve InternalError
@@ -38,7 +38,7 @@ pub fn check_dependencies(
 /// build_graph_from_target Construye un grafo de dependencias a partir del bloque objetivo
 /// y todos los bloques disponibles.
 /// # Post:
-/// - Si un bloque objetivo no existe, devuelve un error BlockNotFound
+/// - Si un bloque en la cadena de macros no existe, devuelve un error BlockNotFound
 /// - Si todo está bien, devuelve el grafo de dependencias
 fn build_graph_from_target(
     target_block: &str,
@@ -54,7 +54,7 @@ fn build_graph_from_target(
 
 /// build_dependency_graph Construye el grafo de dependencias de forma recursiva.
 /// # Post:
-/// - Si un bloque objetivo no existe, devuelve un error BlockNotFound
+/// - Si un bloque en la cadena de macros no existe, devuelve un error BlockNotFound
 /// - Si todo está bien, devuelve el grafo de dependencias
 fn build_dependency_graph(
     current_block: &str,
