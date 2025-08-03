@@ -29,20 +29,28 @@ impl fmt::Debug for TangleError {
     }
 }
 
-pub fn tangle_block(
+fn tangle_block(
     target_block: &str,
-    mut blocks: HashMap<String, CodeBlock>,
+    blocks: &HashMap<String, CodeBlock>,
     add_wrapper: bool,
 ) -> Result<(String, Language), TangleError> {
     // Get target_code_block
     let target_code_block = blocks
-        .remove(target_block)
+        .get(target_block)
         .ok_or(TangleError::BlockNotFound(target_block.into()))?;
 
-    let code = resolve_macros(&target_code_block, &blocks)?;
+    tangle_codeblock(target_code_block, blocks, add_wrapper)
+}
+
+fn tangle_codeblock(
+    target_codeblock: &CodeBlock,
+    blocks: &HashMap<String, CodeBlock>,
+    add_wrapper: bool,
+) -> Result<(String, Language), TangleError> {
+    let code = resolve_macros(target_codeblock, blocks)?;
 
     // Get imported blocks
-    let imported_blocks: Vec<CodeBlock> = target_code_block
+    let imported_blocks: Vec<CodeBlock> = target_codeblock
         .imports
         .iter()
         .map(|import| {
@@ -63,7 +71,7 @@ pub fn tangle_block(
     }
 
     if add_wrapper {
-        if target_code_block.language == Language::C {
+        if target_codeblock.language == Language::C {
             add_main_code_block(&code, &mut tangle);
         } else {
             tangle.push_str(&code);
@@ -72,7 +80,7 @@ pub fn tangle_block(
         tangle.push_str(&code);
     }
 
-    Ok((tangle, target_code_block.language.clone()))
+    Ok((tangle, target_codeblock.language.clone()))
 }
 
 /// Resolves macros in a code block by replacing them with the content of the referenced blocks.
@@ -113,12 +121,42 @@ fn resolve_macros(
 
 // TODO: this should use a template depending on the language
 // TODO: handle indentation
-pub fn add_main_code_block(code: &str, tangle: &mut String) {
+fn add_main_code_block(code: &str, tangle: &mut String) {
     tangle.push_str("int main() {\n");
     tangle.push_str(code);
     tangle.push('\n');
     tangle.push_str("    return 0;");
     tangle.push_str("\n}\n");
+}
+
+pub struct CodeBlocksDoc {
+    blocks: HashMap<String, CodeBlock>,
+}
+
+pub fn from_codeblocks(blocks: HashMap<String, CodeBlock>) -> CodeBlocksDoc {
+    CodeBlocksDoc { blocks }
+}
+
+impl CodeBlocksDoc {
+    pub fn tangle_block(
+        &self,
+        target_block: &str,
+        add_wrapper: bool,
+    ) -> Result<(String, Language), TangleError> {
+        tangle_block(target_block, &self.blocks, add_wrapper)
+    }
+
+    pub fn tangle_codeblock(
+        &self,
+        target_codeblock: &CodeBlock,
+        add_wrapper: bool,
+    ) -> Result<(String, Language), TangleError> {
+        tangle_codeblock(target_codeblock, &self.blocks, add_wrapper)
+    }
+
+    pub fn get_block(&self, name: &str) -> Option<&CodeBlock> {
+        self.blocks.get(name)
+    }
 }
 
 #[cfg(test)]
@@ -150,7 +188,7 @@ mod tests {
             ),
         );
 
-        let tangle = tangle_block("main", blocks, false).unwrap();
+        let tangle = tangle_block("main", &blocks, false).unwrap();
         assert_eq!(
             tangle,
             (
@@ -173,7 +211,7 @@ mod tests {
                 0,
             ),
         );
-        let result = tangle_block("main", blocks, false);
+        let result = tangle_block("main", &blocks, false);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
@@ -255,7 +293,7 @@ mod tests {
                 ),
             ),
         ]);
-        let tangle = tangle_block("main_block", blocks, true);
+        let tangle = tangle_block("main_block", &blocks, true);
         assert!(tangle.is_ok());
         let (tangled_code, _) = tangle.unwrap();
         assert_eq!(
@@ -301,7 +339,7 @@ printf("Hello, world!");
                 ),
             ),
         ]);
-        let tangle = tangle_block("main_block", blocks, false);
+        let tangle = tangle_block("main_block", &blocks, false);
         assert!(tangle.is_ok());
         let (tangled_code, _) = tangle.unwrap();
         assert_eq!(
@@ -332,7 +370,7 @@ printf("Hello, world!");
                 0,
             ),
         )]);
-        let tangle = tangle_block("main", blocks, true);
+        let tangle = tangle_block("main", &blocks, true);
         assert!(tangle.is_ok());
         let (tangled_code, _) = tangle.unwrap();
         assert_eq!(tangled_code, "print('monty python')\n");

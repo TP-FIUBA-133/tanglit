@@ -1,3 +1,4 @@
+use crate::doc::DocError;
 use crate::doc::Language;
 use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
@@ -8,8 +9,12 @@ use std::{env, fs};
 use std::{fs::write, path::PathBuf};
 
 pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
+    let blocks = doc.tangle()?;
+
     // Tangle blocks
-    let (output, lang) = doc.tangle_block(target_block, true)?;
+    let (output, lang) = blocks
+        .tangle_block(target_block, true)
+        .map_err(DocError::TangleError)?;
 
     // Write the output to a file
     let block_file_path = write_file(output, target_block, &lang)

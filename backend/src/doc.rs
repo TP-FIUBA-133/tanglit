@@ -12,7 +12,8 @@ use parser::exclude::exclude_from_ast;
 pub use parser::slides::Slide;
 use parser::slides::parse_slides_from_ast;
 use std::collections::HashMap;
-use tangle::tangle_block;
+pub use tangle::CodeBlocksDoc;
+use tangle::from_codeblocks;
 
 pub struct TanglitDoc {
     raw_markdown: String,
@@ -34,7 +35,7 @@ impl TanglitDoc {
         Self::new_from_string(&input)
     }
 
-    pub fn parse_blocks(&self) -> Result<HashMap<String, CodeBlock>, DocError> {
+    fn parse_blocks(&self) -> Result<HashMap<String, CodeBlock>, DocError> {
         Ok(parse_code_blocks_from_ast(&self.ast)?)
     }
 
@@ -60,12 +61,8 @@ impl TanglitDoc {
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
-    pub fn tangle_block(
-        &self,
-        target_block: &str,
-        add_wrapper: bool,
-    ) -> Result<(String, Language), DocError> {
+    pub fn tangle(&self) -> Result<CodeBlocksDoc, DocError> {
         let blocks = self.parse_blocks()?;
-        Ok(tangle_block(target_block, blocks, add_wrapper)?)
+        Ok(from_codeblocks(blocks))
     }
 }
