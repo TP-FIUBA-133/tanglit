@@ -35,11 +35,11 @@ pub fn tangle_block(
     add_wrapper: bool,
 ) -> Result<(String, Language), TangleError> {
     // Get target_code_block
-    let mut target_code_block = blocks
+    let target_code_block = blocks
         .remove(target_block)
         .ok_or(TangleError::BlockNotFound(target_block.into()))?;
 
-    resolve_macros(&mut target_code_block, &blocks)?;
+    let code = resolve_macros(&target_code_block, &blocks)?;
 
     // Get imported blocks
     let imported_blocks: Vec<CodeBlock> = target_code_block
@@ -64,12 +64,12 @@ pub fn tangle_block(
 
     if add_wrapper {
         if target_code_block.language == Language::C {
-            add_main_code_block(&target_code_block, &mut tangle);
+            add_main_code_block(&code, &mut tangle);
         } else {
-            tangle.push_str(&target_code_block.code);
+            tangle.push_str(&code);
         }
     } else {
-        tangle.push_str(&target_code_block.code);
+        tangle.push_str(&code);
     }
 
     Ok((tangle, target_code_block.language.clone()))
@@ -77,9 +77,9 @@ pub fn tangle_block(
 
 /// Resolves macros in a code block by replacing them with the content of the referenced blocks.
 fn resolve_macros(
-    code_block: &mut CodeBlock,
+    code_block: &CodeBlock,
     blocks: &HashMap<String, CodeBlock>,
-) -> Result<(), TangleError> {
+) -> Result<String, TangleError> {
     let re = Regex::new(MACROS_REGEX)
         .map_err(|e| TangleError::InternalError(format!("Failed to compile regex: {}", e)))?;
 
@@ -108,16 +108,14 @@ fn resolve_macros(
             .clone()
     });
 
-    code_block.code = code_block_with_macros.into_owned();
-
-    Ok(())
+    Ok(code_block_with_macros.into_owned())
 }
 
 // TODO: this should use a template depending on the language
 // TODO: handle indentation
-pub fn add_main_code_block(code_block: &CodeBlock, tangle: &mut String) {
+pub fn add_main_code_block(code: &str, tangle: &mut String) {
     tangle.push_str("int main() {\n");
-    tangle.push_str(&code_block.code);
+    tangle.push_str(code);
     tangle.push('\n');
     tangle.push_str("    return 0;");
     tangle.push_str("\n}\n");
@@ -186,7 +184,7 @@ mod tests {
     #[test]
     fn test_resolve_macros() {
         let mut blocks = HashMap::new();
-        let mut main = CodeBlock::new(
+        let main = CodeBlock::new(
             Language::Python,
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
@@ -205,10 +203,10 @@ mod tests {
             ),
         );
 
-        let result = resolve_macros(&mut main, &blocks);
+        let result = resolve_macros(&main, &blocks);
         assert!(result.is_ok());
         assert_eq!(
-            main.code,
+            result.unwrap(),
             "print('Helper function')\nprint('Hello, world!')".to_string()
         );
     }
@@ -216,7 +214,7 @@ mod tests {
     #[test]
     fn test_resolve_macros_with_missing_block() {
         let mut blocks = HashMap::new();
-        let mut main = CodeBlock::new(
+        let main = CodeBlock::new(
             Language::Python,
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
@@ -224,7 +222,7 @@ mod tests {
             0,
         );
         blocks.insert("main".to_string(), main.clone());
-        let result = resolve_macros(&mut main, &blocks);
+        let result = resolve_macros(&main, &blocks);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
