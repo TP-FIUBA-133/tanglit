@@ -1,0 +1,8 @@
+PLACEHOLDER = "#<([^#<>]+)>#"
+-----
+#<IMPORTS>#
+
+int main(){
+    #<BODY>#
+    return 0;
+}
