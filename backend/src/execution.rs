@@ -1,3 +1,4 @@
+use crate::configuration::get_default_temp_dir;
 use crate::doc::CodeBlocksDoc;
 use crate::doc::DocError;
 use crate::doc::TangleError;
@@ -6,7 +7,6 @@ use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
 use std::io;
 use std::process::{Command, Output, Stdio};
-use std::{env, fs};
 use std::{fs::write, path::PathBuf};
 
 const DEFAULT_INDENT_SIZE: usize = 4;
@@ -14,11 +14,8 @@ const DEFAULT_INDENT_CHARACTER: char = ' ';
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
 fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
-    let current_dir = env::current_dir()?;
-    let tmp_dir = current_dir.join("tmp");
-    if !tmp_dir.exists() {
-        fs::create_dir_all(&tmp_dir)?;
-    }
+    let tmp_dir = get_default_temp_dir();
+
     // Create the file path using the target block name
     let ext = match lang {
         Language::C => "c",
