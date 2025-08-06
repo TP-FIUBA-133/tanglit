@@ -1,11 +1,8 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
+use backend::doc::{Language, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
-use backend::parser::code_block::Language;
-use backend::parser::exclude::exclude_from_ast;
-use backend::parser::{ast_to_markdown, parse_from_file};
-use backend::util::read_file_and_parse_blocks;
-use backend::{cli::Cli, execution, tangle::tangle_block};
+use backend::{cli::Cli, execution};
 use clap::Parser;
 use std::{
     fs::write,
@@ -13,11 +10,10 @@ use std::{
 };
 
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
-    // Parse blocks from the input file
-    let blocks = read_file_and_parse_blocks(&tangle_args.general.input_file_path)?;
-    // Tangle blocks
-    let (output, lang) = tangle_block(&tangle_args.target_block, blocks, true)?;
-    // Write the output to a file
+    let input_file_path = tangle_args.general.input_file_path;
+    let doc = TanglitDoc::new_from_file(&input_file_path)?;
+    let (output, lang) = doc.tangle_block(&tangle_args.target_block, true)?;
+
     let output_file_path =
         get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
     match write(&output_file_path, output) {
@@ -28,9 +24,8 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
 
 fn handle_exclude_command(exclude_args: ExcludeArgs) -> Result<String, ExecutionError> {
     let input_file_path = exclude_args.general.input_file_path;
-    let ast = parse_from_file(input_file_path.trim()).expect("Failed to parse");
-    let ast_with_exclusions = exclude_from_ast(&ast);
-    let output = ast_to_markdown(&ast_with_exclusions)?;
+    let doc = TanglitDoc::new_from_file(&input_file_path)?;
+    let output = doc.exclude()?;
 
     // Write the output to a file
     match write(Path::new(&exclude_args.output_file_path), output) {
@@ -45,10 +40,8 @@ fn handle_exclude_command(exclude_args: ExcludeArgs) -> Result<String, Execution
 fn handle_execute_command(
     execute_args: backend::cli::ExecuteArgs,
 ) -> Result<String, ExecutionError> {
-    let output = execution::execute(
-        &execute_args.general.input_file_path,
-        &execute_args.target_block,
-    )?;
+    let doc = TanglitDoc::new_from_file(&execute_args.general.input_file_path)?;
+    let output = execution::execute(&doc, &execute_args.target_block)?;
     Ok(format!(
         "Output of block {}:\n{}\nstderr: {}\nexit code: {}",
         execute_args.target_block,

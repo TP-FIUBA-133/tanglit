@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::errors::ParserError;
+use super::ParserError;
 use markdown::mdast::Code;
 use regex::Regex;
 use serde::Serialize;
