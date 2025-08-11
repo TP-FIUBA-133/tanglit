@@ -1,4 +1,4 @@
-use backend::cli::{Commands, ExcludeArgs, TangleArgs};
+use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleArgs};
 use backend::doc::{Language, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
@@ -51,6 +51,18 @@ fn handle_execute_command(
     ))
 }
 
+fn handle_generate_pdf_command(
+    generate_pdf_args: GeneratePDFArgs,
+) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&generate_pdf_args.general.input_file_path)?;
+    doc.generate_pdf(&generate_pdf_args.output_file_path)?;
+
+    Ok(format!(
+        "✅ PDF saved to {}",
+        &generate_pdf_args.output_file_path
+    ))
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -58,6 +70,7 @@ fn main() {
         Commands::Tangle(args) => handle_tangle_command(args),
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
+        Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
     };
     match result {
         Ok(message) => println!("{}", message),
