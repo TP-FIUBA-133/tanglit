@@ -1,8 +1,4 @@
-use crate::doc::CodeBlocksDoc;
-use crate::doc::DocError;
-use crate::doc::TangleError;
-use crate::doc::TanglitDoc;
-use crate::doc::{CodeBlock, Language};
+use crate::doc::{CodeBlock, CodeBlocksDoc, DocError, Language, TangleError, TanglitDoc};
 use crate::errors::ExecutionError;
 use std::io;
 use std::process::{Command, Output, Stdio};
@@ -144,7 +140,7 @@ fn make_executable_code(
             // Tangle the imported block
             let import_output = blocks
                 .tangle_codeblock(import_block)
-                .map_err(|e| ExecutionError::from(DocError::from(e)))?;
+                .map_err(DocError::from)?;
             // Append the import output to the main output
             output.push_str(&import_output);
             output.push('\n');
