@@ -212,6 +212,7 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
 
 //TODO: execution tests (probably require mocking or to be integration type tests)
 
+#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
