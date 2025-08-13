@@ -45,14 +45,7 @@ fn tangle_block(
 ) -> Result<String, TangleError> {
     // Get target_code_block
     let target_code_block = get_codeblock(target_block, blocks)?;
-    tangle_codeblock(&target_code_block, blocks)
-}
-
-fn tangle_codeblock(
-    target_codeblock: &CodeBlock,
-    blocks: &HashMap<String, CodeBlock>,
-) -> Result<String, TangleError> {
-    resolve_macros(target_codeblock, blocks)
+    resolve_macros(&target_code_block, blocks)
 }
 
 /// Resolves macros in a code block by replacing them with the content of the referenced blocks.
@@ -113,7 +106,7 @@ impl CodeBlocksDoc {
     }
 
     pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
-        tangle_codeblock(target_codeblock, &self.blocks)
+        resolve_macros(target_codeblock, &self.blocks)
     }
 
     pub fn get_block(&self, name: &str) -> Option<&CodeBlock> {
