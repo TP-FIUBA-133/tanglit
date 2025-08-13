@@ -103,6 +103,7 @@ fn get_code_nodes_from_mdast(mdast: &Node) -> Result<Vec<Code>, ParserError> {
     Ok(code_nodes)
 }
 
+// TODO: Make all options configurable
 pub fn markdown_to_html(input: &str) -> String {
     // InspiredGitHub
     // Solarized (dark)

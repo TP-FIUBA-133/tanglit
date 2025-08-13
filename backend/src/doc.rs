@@ -63,7 +63,7 @@ impl TanglitDoc {
     pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
         let markdown_with_exclusions = self.exclude()?;
         let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
-        generate_pdf(&html_with_exclusions, output_file_path);
+        generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
     }
 }
