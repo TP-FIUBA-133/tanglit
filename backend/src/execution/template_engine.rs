@@ -14,11 +14,29 @@ pub struct TemplateConfig {
 }
 
 /// Sets indentation for each line in the code.
+/// This function modifies the input code by intentionally indenting all lines *after* the first.
+/// The first line is **not** indented to respect the indentation set by the template, otherwise
+/// the first line would get indented twice.
 ///
 /// # Arguments
 /// * `code` - A mutable reference to the string containing the code to indent
 /// * `indent_size` - Optional number of indentation characters to use per level (defaults to 4)
 /// * `indent_character` - Optional character to use for indentation (defaults to space)
+///
+/// # examples
+/// if we have a snippet of code like:
+///
+/// ~~~text
+/// int x = 42;
+/// std::cout << "the meaning of life is " << x << std::endl;
+/// std::cout << "or something like that" << std::endl;
+/// ~~~
+/// and the desired indentation is 4 spaces, then the output string is actually:
+/// ~~~text
+/// int x = 42;
+///     std::cout << "the meaning of life is " << x << std::endl;
+///     std::cout << "or something like that" << std::endl;
+/// ~~~
 pub fn set_indentation(
     code: &mut String,
     indent_size: Option<usize>,
