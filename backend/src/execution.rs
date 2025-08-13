@@ -1,4 +1,4 @@
-use crate::configuration::get_default_temp_dir;
+use crate::configuration::get_temp_dir;
 use crate::doc::{CodeBlock, CodeBlocks, Language, TangleError, TanglitDoc};
 use crate::errors::ExecutionError;
 use std::io;
@@ -10,7 +10,7 @@ const DEFAULT_INDENT_CHARACTER: char = ' ';
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
 fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
-    let tmp_dir = get_default_temp_dir();
+    let tmp_dir = get_temp_dir();
 
     // Create the file path using the target block name
     let ext = match lang {
