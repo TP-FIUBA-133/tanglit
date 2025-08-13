@@ -136,25 +136,23 @@ fn make_executable_code(
     let mut output = String::new();
 
     for import in &code_block.imports {
-        if let Some(import_block) = blocks.get_block(import) {
-            // Tangle the imported block
-            let import_output = blocks
-                .tangle_codeblock(import_block)
-                .map_err(DocError::from)?;
-            // Append the import output to the main output
-            output.push_str(&import_output);
-            output.push('\n');
-        } else {
-            return Err(ExecutionError::InternalError(format!(
-                "Import '{}' not found in blocks",
-                import
-            )));
-        }
+        let import_block = blocks
+            .get_block(import)
+            .ok_or(ExecutionError::InternalError(format!(
+                "Import '{import}' not found in blocks"
+            )))?;
+        // Tangle the imported block
+        let import_output = blocks
+            .tangle_codeblock(import_block)
+            .map_err(DocError::from)?;
+        // Append the import output to the main output
+        output.push_str(&import_output);
+        output.push('\n');
     }
 
     let code = blocks
         .tangle_codeblock(code_block)
-        .map_err(|e| ExecutionError::from(DocError::from(e)))?;
+        .map_err(DocError::from)?;
 
     match &code_block.language {
         Language::C => add_c_wrapper(&code, &mut output),
