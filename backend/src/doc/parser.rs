@@ -3,6 +3,7 @@ pub mod exclude;
 pub mod slides;
 
 use code_block::CodeBlock;
+use comrak::{Plugins, markdown_to_html_with_plugins, plugins::syntect::SyntectAdapterBuilder};
 use markdown::{
     ParseOptions,
     mdast::{Code, Node},
@@ -10,10 +11,14 @@ use markdown::{
 use std::collections::HashMap;
 use std::fmt;
 
+// Taken from https://github.com/sindresorhus/github-markdown-css/blob/bedb4b771f5fa1ae117df597c79993fd1eb4dff0/github-markdown-light.css
+const GITHUB_MARKDOWN_LIGHT_CSS: &str = include_str!("../../resources/github-markdown-light.css");
+
 pub enum ParserError {
     InvalidInput(String),
     CodeBlockError(String),
-    ConversionError(String),
+    AstConversionError(String),
+    HtmlConversionError(String),
 }
 
 impl fmt::Display for ParserError {
@@ -21,8 +26,11 @@ impl fmt::Display for ParserError {
         match self {
             ParserError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             ParserError::CodeBlockError(msg) => write!(f, "Error parsing Code Block: {}", msg),
-            ParserError::ConversionError(msg) => {
+            ParserError::AstConversionError(msg) => {
                 write!(f, "Error converting AST back to markdown: {}", msg)
+            }
+            ParserError::HtmlConversionError(msg) => {
+                write!(f, "Error converting markdown to HTML: {}", msg)
             }
         }
     }
@@ -33,8 +41,11 @@ impl fmt::Debug for ParserError {
         match self {
             ParserError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             ParserError::CodeBlockError(msg) => write!(f, "Error parsing Code Block: {}", msg),
-            ParserError::ConversionError(msg) => {
+            ParserError::AstConversionError(msg) => {
                 write!(f, "Error converting AST back to markdown: {}", msg)
+            }
+            ParserError::HtmlConversionError(msg) => {
+                write!(f, "Error converting markdown to HTML: {}", msg)
             }
         }
     }
@@ -53,7 +64,7 @@ pub fn ast_to_markdown(ast: &Node) -> Result<String, ParserError> {
         ..default_options
     };
     mdast_util_to_markdown::to_markdown_with_options(ast, &options).map_err(|e| {
-        ParserError::ConversionError(format!("Error converting AST to markdown: {}", e))
+        ParserError::AstConversionError(format!("Error converting AST to markdown: {}", e))
     })
 }
 
@@ -90,6 +101,40 @@ fn get_code_nodes_from_mdast(mdast: &Node) -> Result<Vec<Code>, ParserError> {
         }
     }
     Ok(code_nodes)
+}
+
+// TODO: Make all options configurable
+pub fn markdown_to_html(input: &str) -> String {
+    // InspiredGitHub
+    // Solarized (dark)
+    // Solarized (light)
+    // base16-eighties.dark
+    // base16-mocha.dark
+    // base16-ocean.dark
+    // base16-ocean.light
+    let adapter = SyntectAdapterBuilder::new()
+        .theme("base16-ocean.light")
+        .build();
+
+    let mut options = comrak::Options::default();
+    options.extension.strikethrough = true;
+    options.extension.table = true;
+    options.extension.tagfilter = true;
+    options.extension.tasklist = true;
+    options.extension.autolink = true;
+    options.extension.footnotes = true;
+    options.extension.header_ids = Some("user-content-".to_string()); // mimics GitHub's prefix
+    options.render.github_pre_lang = true;
+
+    let mut plugins = Plugins::default();
+
+    plugins.render.codefence_syntax_highlighter = Some(&adapter);
+
+    let inner_html = markdown_to_html_with_plugins(input, &options, &plugins);
+    format!(
+        r#"<style>{}</style><div class="markdown-body">{}</div>"#,
+        GITHUB_MARKDOWN_LIGHT_CSS, inner_html
+    )
 }
 
 #[cfg(test)]

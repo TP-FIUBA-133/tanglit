@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+comrak = "0.40"
+headless_chrome = "1.0.17"
 regex = "1.11.1"
 markdown = { version = "1.0.0", features = ["serde"] }
 mdast_util_to_markdown = "0.0.2"
