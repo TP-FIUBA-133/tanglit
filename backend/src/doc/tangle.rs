@@ -29,6 +29,36 @@ impl fmt::Debug for TangleError {
     }
 }
 
+pub struct CodeBlocksDoc {
+    blocks: HashMap<String, CodeBlock>,
+}
+
+pub fn from_codeblocks(blocks: HashMap<String, CodeBlock>) -> CodeBlocksDoc {
+    CodeBlocksDoc { blocks }
+}
+
+impl CodeBlocksDoc {
+    #[cfg(test)]
+    /// This constructor is for testing purposes only
+    /// User code should either use from_codeblocks (if available) or
+    /// obtain one from a TanglitDoc instance via `tangle()` method
+    pub fn from_codeblocks(blocks: std::collections::HashMap<String, CodeBlock>) -> Self {
+        Self { blocks }
+    }
+
+    pub fn tangle_block(&self, target_block: &str) -> Result<String, TangleError> {
+        tangle_block(target_block, &self.blocks)
+    }
+
+    pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
+        resolve_macros(target_codeblock, &self.blocks)
+    }
+
+    pub fn get_block(&self, name: &str) -> Option<&CodeBlock> {
+        self.blocks.get(name)
+    }
+}
+
 fn get_codeblock(
     target_block: &str,
     blocks: &HashMap<String, CodeBlock>,
@@ -82,36 +112,6 @@ fn resolve_macros(
     });
 
     Ok(code_block_with_macros.into_owned())
-}
-
-pub struct CodeBlocksDoc {
-    blocks: HashMap<String, CodeBlock>,
-}
-
-pub fn from_codeblocks(blocks: HashMap<String, CodeBlock>) -> CodeBlocksDoc {
-    CodeBlocksDoc { blocks }
-}
-
-impl CodeBlocksDoc {
-    #[cfg(test)]
-    /// This constructor is for testing purposes only
-    /// User code should either use from_codeblocks (if available) or
-    /// obtain one from a TanglitDoc instance via `tangle()` method
-    pub fn from_codeblocks(blocks: std::collections::HashMap<String, CodeBlock>) -> Self {
-        Self { blocks }
-    }
-
-    pub fn tangle_block(&self, target_block: &str) -> Result<String, TangleError> {
-        tangle_block(target_block, &self.blocks)
-    }
-
-    pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
-        resolve_macros(target_codeblock, &self.blocks)
-    }
-
-    pub fn get_block(&self, name: &str) -> Option<&CodeBlock> {
-        self.blocks.get(name)
-    }
 }
 
 #[cfg(test)]
