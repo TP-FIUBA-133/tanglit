@@ -7,13 +7,12 @@ const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const blocks = ref<number[]>([]);
-const all_blocks = ref<{start_line: number, tag: string}[]>([]);
+const all_blocks = ref([]);
 const block_output = ref<string>("");
 enum TANGLIT_COMMANDS {
   exclude = "tanglit_exclude",
   parse_slides = "tanglit_parse_slides",
   parse_blocks = "tanglit_parse_blocks",
-  execute_block = "tanglit_execute_block",
 }
 
 async function exclude(raw_markdown: string): Promise<string> {
@@ -21,18 +20,18 @@ async function exclude(raw_markdown: string): Promise<string> {
 }
 
 async function parse_slides(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{ start_line: number, tag: string }>;
+  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{ start_line: number }>;
   return rv.map((item) => item.start_line);
 }
 
 async function parse_blocks(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{ start_line: number, tag: string }>;
+  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{ start_line: number }>;
   all_blocks.value = rv;
   return rv.map((item) => item.start_line);
 }
 
-async function execute_block(raw_markdown: string, block_name: string): Promise<string> {
-  let rv = await invoke(TANGLIT_COMMANDS.execute_block, { raw_markdown, block_name }) as string;
+async function execute_block(raw_markdown: string, block_name): Promise<string> {
+  let rv = await invoke("tanglit_execute_block", { raw_markdown, block_name });
   return rv;
 }
 
