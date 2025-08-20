@@ -1,4 +1,4 @@
-use crate::doc::{CodeBlock, CodeBlocksDoc, DocError, Language, TangleError, TanglitDoc};
+use crate::doc::{CodeBlock, CodeBlocks, DocError, Language, TangleError, TanglitDoc};
 use crate::errors::ExecutionError;
 use std::io;
 use std::process::{Command, Output, Stdio};
@@ -130,7 +130,7 @@ fn add_python_wrapper(code: &str, tangle: &mut String) {
 /// and adds any imported blocks. Indentation is applied.
 fn make_executable_code(
     code_block: &CodeBlock,
-    blocks: &CodeBlocksDoc,
+    blocks: &CodeBlocks,
 ) -> Result<String, ExecutionError> {
     // Tangle blocks
     let mut output = String::new();
@@ -174,7 +174,7 @@ fn make_executable_code(
 /// # Returns
 /// * Result containing the stdout of the execution or an error if something goes wrong
 pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
-    let blocks = doc.tangle()?;
+    let blocks = doc.get_code_blocks()?;
 
     let block =
         blocks
@@ -243,7 +243,7 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocksDoc::from_codeblocks(blocks)).unwrap();
+        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
         assert_eq!(
             tangle,
             "#include <stdio.h>\nint main() {\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
@@ -282,7 +282,7 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocksDoc::from_codeblocks(blocks)).unwrap();
+        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
         assert_eq!(
             tangle,
             "import sys\nif __name__ == '__main__':\n    x = 42\n    print(f\"Hello, world!: {x}\")\n".to_string()

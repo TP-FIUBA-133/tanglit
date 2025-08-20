@@ -14,15 +14,13 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     let doc = TanglitDoc::new_from_file(&input_file_path)?;
 
     // Tangle the document
-    let blocks = doc.tangle()?;
+    let blocks = doc.get_code_blocks()?;
     let block = blocks
         .get_block(&tangle_args.target_block)
         .ok_or(ExecutionError::from(DocError::from(
             TangleError::BlockNotFound(tangle_args.target_block.clone()),
         )))?;
-    let output = blocks
-        .tangle_block(&tangle_args.target_block)
-        .map_err(DocError::from)?;
+    let output = blocks.tangle_codeblock(block).map_err(DocError::from)?;
 
     let lang = block.language.clone();
 
