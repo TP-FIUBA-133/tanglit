@@ -138,21 +138,17 @@ fn make_executable_code(
     for import in &code_block.imports {
         let import_block = blocks
             .get_block(import)
-            .ok_or(ExecutionError::InternalError(format!(
+            .ok_or(ExecutionError::ImportError(format!(
                 "Import '{import}' not found in blocks"
             )))?;
         // Tangle the imported block
-        let import_output = blocks
-            .tangle_codeblock(import_block)
-            .map_err(DocError::from)?;
+        let import_output = blocks.tangle_codeblock(import_block)?;
         // Append the import output to the main output
         output.push_str(&import_output);
         output.push('\n');
     }
 
-    let code = blocks
-        .tangle_codeblock(code_block)
-        .map_err(DocError::from)?;
+    let code = blocks.tangle_codeblock(code_block)?;
 
     match &code_block.language {
         Language::C => add_c_wrapper(&code, &mut output),

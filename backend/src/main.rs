@@ -20,7 +20,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
         .ok_or(ExecutionError::from(DocError::from(
             TangleError::BlockNotFound(tangle_args.target_block.clone()),
         )))?;
-    let output = blocks.tangle_codeblock(block).map_err(DocError::from)?;
+    let output = blocks.tangle_codeblock(block)?;
 
     let lang = block.language.clone();
 
