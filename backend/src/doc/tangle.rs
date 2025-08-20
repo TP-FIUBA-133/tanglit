@@ -30,7 +30,7 @@ impl fmt::Debug for TangleError {
 }
 
 pub struct CodeBlocks {
-    blocks: HashMap<String, CodeBlock>,
+    pub blocks: HashMap<String, CodeBlock>,
 }
 
 pub fn from_codeblocks(blocks: HashMap<String, CodeBlock>) -> CodeBlocks {
