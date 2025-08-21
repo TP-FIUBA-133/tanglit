@@ -1,4 +1,4 @@
-use crate::doc::{CodeBlock, CodeBlocks, DocError, Language, TangleError, TanglitDoc};
+use crate::doc::{CodeBlock, CodeBlocks, Language, TangleError, TanglitDoc};
 use crate::errors::ExecutionError;
 use std::io;
 use std::process::{Command, Output, Stdio};
