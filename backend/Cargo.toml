@@ -13,10 +13,7 @@ clap = { version = "4.5.39", features = ["derive", "env"] }
 serde = { version = "1.0.219", features = ["derive"] }
 once_cell = "1.21.3"
 directories = "6.0.0"
-include_dir = {version = "0.7.4", features = ["metadata"] }
-
-[patch.crates-io]
-include_dir = { path = "./libs/include_dir/include_dir" }
+include_dir = { version = "0.7.4", features = ["metadata"] }
 
 [dev-dependencies]
 env_logger = "0.11.8"
