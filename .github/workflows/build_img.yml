@@ -1,0 +1,43 @@
+# .github/workflows/build_img.yml
+
+name: Build Builder Image
+
+# This workflow now runs manually from the Actions tab
+on:
+  workflow_dispatch:
+
+env:
+  # Use ghcr.io for the container registry
+  REGISTRY: ghcr.io
+  # Use the GitHub repository owner and name for the image name
+  # Example: ghcr.io/your-username/your-repo-name
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # This job builds the dependency image and pushes it to the GitHub Container Registry
+  build-builder-image:
+    name: Build and Push Builder Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Needed to push images to GHCR
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # Assumes your Dockerfile is at the root of the repo
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
