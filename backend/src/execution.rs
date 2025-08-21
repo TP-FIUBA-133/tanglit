@@ -172,12 +172,9 @@ fn make_executable_code(
 pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
     let blocks = doc.get_code_blocks()?;
 
-    let block =
-        blocks
-            .get_block(target_block)
-            .ok_or(DocError::from(TangleError::BlockNotFound(
-                target_block.to_string(),
-            )))?;
+    let block = blocks
+        .get_block(target_block)
+        .ok_or(TangleError::BlockNotFound(target_block.to_string()))?;
 
     // create the executable source code
     let output = make_executable_code(block, &blocks)?;

@@ -1,5 +1,5 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
-use backend::doc::{DocError, Language, TangleError, TanglitDoc};
+use backend::doc::{Language, TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
@@ -17,9 +17,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     let blocks = doc.get_code_blocks()?;
     let block = blocks
         .get_block(&tangle_args.target_block)
-        .ok_or(ExecutionError::from(DocError::from(
-            TangleError::BlockNotFound(tangle_args.target_block.clone()),
-        )))?;
+        .ok_or(TangleError::BlockNotFound(tangle_args.target_block.clone()))?;
     let output = blocks.tangle_codeblock(block)?;
 
     let lang = block.language.clone();
