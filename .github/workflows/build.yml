@@ -37,6 +37,6 @@ jobs:
         # The --pull always flag ensures we use the latest image pushed by the previous job
         run: |
           docker run --rm --pull always \
-            -v "${{ github.workspace }}":/usr/src/app \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder \
-            cargo test --release
+            -v "${{ github.workspace }}":/tanglit \
+            -e TANGLIT_DIR=/tanglit \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
