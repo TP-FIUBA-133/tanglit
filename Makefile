@@ -1,5 +1,5 @@
 copy-config:
-	cp -r backend/resources/config ${HOME}/.config/tanglit/
+	cp -a backend/resources/config/. ${HOME}/.config/tanglit/
 build-backend:
 	cd backend && cargo build
 	mkdir -p build && cp backend/target/release/backend build/tanglit-backend
