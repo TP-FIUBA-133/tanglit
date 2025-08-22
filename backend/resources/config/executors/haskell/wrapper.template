@@ -1,5 +1,3 @@
-PLACEHOLDER = "#<([^#<>]+)>#"
------
 import System.IO
 #<IMPORTS>#
 

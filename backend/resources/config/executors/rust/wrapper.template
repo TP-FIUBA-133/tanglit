@@ -1,6 +1,5 @@
 #<IMPORTS>#
 
-int main(){
+fn main(){
     #<BODY>#
-    return 0;
 }

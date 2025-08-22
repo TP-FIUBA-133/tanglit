@@ -5,7 +5,7 @@ SRC_FILE="$1"
 OUT_DIR="$(dirname "$SRC_FILE")"
 
 if [[ -z "$SRC_FILE" || -z "$OUT_DIR" ]]; then
-    # echo "Usage: $0 <source.cpp>"
+    # echo "Usage: $0 <source.py>"
     exit 1
 fi
 
@@ -13,10 +13,7 @@ BASENAME=$(basename "$SRC_FILE")
 BASENAME="${BASENAME%.*}"
 BIN_PATH="$OUT_DIR/$BASENAME"
 
-CPP_FILE="$OUT_DIR/$BASENAME.cpp"
-mv "$SRC_FILE" "$CPP_FILE"
-
-g++ -o "$BIN_PATH" "$CPP_FILE" > /dev/null
+PYTHON_FILE="$OUT_DIR/$BASENAME.py"
 
 cd "$OUT_DIR"
-"./$BASENAME"
+python3 "$PYTHON_FILE"

@@ -2,11 +2,9 @@ mod executors;
 mod template_engine;
 mod wrappers;
 
-use crate::doc::CodeBlocksDoc;
 use crate::doc::DocError;
 use crate::doc::TangleError;
 use crate::doc::TanglitDoc;
-use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
 use std::process::Output;
 

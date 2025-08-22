@@ -4,7 +4,7 @@ use crate::doc::CodeBlocksDoc;
 use crate::doc::DocError;
 use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
-use crate::execution::template_engine::{TemplateConfig, set_indentation};
+use crate::execution::template_engine::{Template, set_indentation};
 use std::collections::HashMap;
 use std::fs::write;
 use std::io;
@@ -55,11 +55,7 @@ fn add_rust_wrapper(code: &str, tangle: &mut String) {
 }
 
 /// Loads and applies a template wrapper for the given language
-fn add_template_wrapper(
-    language: &Language,
-    code: &str,
-    imports: &str,
-) -> Result<String, ExecutionError> {
+fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String, ExecutionError> {
     // Try to load language-specific template, fall back to hardcoded wrappers
     let config_dir = get_default_config_dir();
     let lang_str = language.to_string().to_lowercase();
@@ -69,7 +65,7 @@ fn add_template_wrapper(
         .join("wrapper.template");
 
     // Try to load template file, fall back to hardcoded wrappers if not found
-    match TemplateConfig::parse_from_file(template_path) {
+    match Template::load_from_file(template_path) {
         Ok(template) => {
             let mut replacements = HashMap::new();
             replacements.insert("IMPORTS".to_string(), imports.to_string());
@@ -130,7 +126,7 @@ pub fn make_executable_code(
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
     // Use template-based wrapper with fallback to hardcoded ones
-    add_template_wrapper(&code_block.language, &code, &imports_output)
+    add_wrapper(&code_block.language, &code, &imports_output)
 }
 
 #[cfg(test)]
