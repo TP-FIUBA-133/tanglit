@@ -1,4 +1,5 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
+use backend::configuration::init_configuration;
 use backend::doc::{Language, TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
@@ -62,6 +63,11 @@ fn handle_execute_command(
 
 fn main() {
     let cli = Cli::parse();
+
+    if let Err(e) = init_configuration() {
+        eprintln!("Configuration error: {}", e);
+        std::process::exit(1);
+    }
 
     let result = match cli.command {
         Commands::Tangle(args) => handle_tangle_command(args),
