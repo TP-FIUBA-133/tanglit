@@ -11,29 +11,40 @@ pub fn execute_file(
 ) -> Result<Output, ExecutionError> {
     let config_dir = get_default_config_dir();
     let lang_str = language.to_string().to_lowercase();
-    let execution_script_path = config_dir
-        .join("executors")
-        .join(lang_str)
-        .join("execute.sh");
+    let executor_dir = config_dir.join("executors").join(lang_str);
 
-    if !execution_script_path.exists() {
-        let output = match language {
-            Language::C => execute_c_file(source_file_path),
-            Language::Python => execute_python_file(source_file_path),
-            Language::Rust => execute_rust_file(source_file_path),
-            Language::Unknown(lang) => {
-                return Err(ExecutionError::UnsupportedLanguage(lang.clone()));
-            }
-        };
-        return Ok(output);
-    }
+    // Look for a file named "execute" (with or without extension) in the directory
+    let execution_script_path = std::fs::read_dir(&executor_dir).ok().and_then(|entries| {
+        entries
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .find(|path| {
+                path.file_stem()
+                    .map(|stem| stem == "execute")
+                    .unwrap_or(false)
+            })
+    });
+
     // If an execution script exists, run it
-    Command::new(execution_script_path)
-        .arg(source_file_path)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .map_err(|e| ExecutionError::InternalError(e.to_string()))
+    if let Some(script_path) = execution_script_path {
+        return Command::new(script_path)
+            .arg(source_file_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|e| ExecutionError::InternalError(e.to_string()));
+    }
+
+    // Fall back to built-in language executors
+    let output = match language {
+        Language::C => execute_c_file(source_file_path),
+        Language::Python => execute_python_file(source_file_path),
+        Language::Rust => execute_rust_file(source_file_path),
+        Language::Unknown(lang) => {
+            return Err(ExecutionError::UnsupportedLanguage(lang.clone()));
+        }
+    };
+    Ok(output)
 }
 
 /// Executes a C file by compiling it and then running the resulting binary.
