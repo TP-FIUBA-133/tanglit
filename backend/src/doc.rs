@@ -2,9 +2,8 @@ mod error;
 mod parser;
 mod tangle;
 
-pub use crate::doc::error::DocError;
 use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
-pub use crate::doc::tangle::TangleError;
+pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
 pub use parser::code_block::{CodeBlock, Language};
@@ -12,7 +11,8 @@ use parser::exclude::exclude_from_ast;
 pub use parser::slides::Slide;
 use parser::slides::parse_slides_from_ast;
 use std::collections::HashMap;
-use tangle::tangle_block;
+pub use tangle::CodeBlocks;
+pub use tangle::TangleError;
 
 pub struct TanglitDoc {
     raw_markdown: String,
@@ -34,7 +34,7 @@ impl TanglitDoc {
         Self::new_from_string(&input)
     }
 
-    pub fn parse_blocks(&self) -> Result<HashMap<String, CodeBlock>, DocError> {
+    fn parse_blocks(&self) -> Result<HashMap<String, CodeBlock>, DocError> {
         Ok(parse_code_blocks_from_ast(&self.ast)?)
     }
 
@@ -47,12 +47,8 @@ impl TanglitDoc {
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
-    pub fn tangle_block(
-        &self,
-        target_block: &str,
-        add_wrapper: bool,
-    ) -> Result<(String, Language), DocError> {
+    pub fn get_code_blocks(&self) -> Result<CodeBlocks, DocError> {
         let blocks = self.parse_blocks()?;
-        Ok(tangle_block(target_block, blocks, add_wrapper)?)
+        Ok(CodeBlocks::from_codeblocks(blocks))
     }
 }

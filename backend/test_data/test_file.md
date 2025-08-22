@@ -25,7 +25,9 @@ for i in range(4):
 Define main block `run`:
 
 ```c use=[headers,helper] main_block
+int main(){
     greet("Tangle User");
+}
 ```
 
 ---
@@ -37,10 +39,15 @@ Define a variable:
 ```c config
 const char* language = "C";
 ```
+or even just a plain value:
+```c a_value
+42
+```
 
-Import and use the variable using a macro:
+Import and use the variable using macros:
 
 ```c variable_user use=[headers]
-    @[config]
-    printf("This program is written in %s.\n", language);
+@[config]
+printf("This program is written in %s.\n", language);
+printf("and the meaning of life is %d\n", @[a_value]);
 ```
