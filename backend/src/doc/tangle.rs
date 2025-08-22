@@ -33,10 +33,6 @@ pub struct CodeBlocks {
     pub blocks: HashMap<String, CodeBlock>,
 }
 
-pub fn from_codeblocks(blocks: HashMap<String, CodeBlock>) -> CodeBlocks {
-    CodeBlocks { blocks }
-}
-
 impl CodeBlocks {
     /// This constructor is for testing purposes only
     /// User code should either use from_codeblocks (if available) or
