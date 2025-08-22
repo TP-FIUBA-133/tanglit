@@ -1,5 +1,6 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
-use backend::doc::{Language, TanglitDoc};
+use backend::configuration::init_configuration;
+use backend::doc::{Language, TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
@@ -12,8 +13,17 @@ use std::{
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
     let input_file_path = tangle_args.general.input_file_path;
     let doc = TanglitDoc::new_from_file(&input_file_path)?;
-    let (output, lang) = doc.tangle_block(&tangle_args.target_block, true)?;
 
+    // Tangle the document
+    let blocks = doc.get_code_blocks()?;
+    let block = blocks
+        .get_block(&tangle_args.target_block)
+        .ok_or(TangleError::BlockNotFound(tangle_args.target_block.clone()))?;
+    let output = blocks.tangle_codeblock(block)?;
+
+    let lang = block.language.clone();
+
+    // Write the output to a file
     let output_file_path =
         get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
     match write(&output_file_path, output) {
@@ -53,6 +63,11 @@ fn handle_execute_command(
 
 fn main() {
     let cli = Cli::parse();
+
+    if let Err(e) = init_configuration() {
+        eprintln!("Configuration error: {}", e);
+        std::process::exit(1);
+    }
 
     let result = match cli.command {
         Commands::Tangle(args) => handle_tangle_command(args),
