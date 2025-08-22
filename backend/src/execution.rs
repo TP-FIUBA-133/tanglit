@@ -2,7 +2,6 @@ mod executors;
 mod template_engine;
 mod wrappers;
 
-use crate::doc::DocError;
 use crate::doc::TangleError;
 use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
@@ -19,14 +18,11 @@ pub use wrappers::{make_executable_code, write_file};
 /// # Returns
 /// * Result containing the stdout of the execution or an error if something goes wrong
 pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
-    let blocks = doc.tangle()?;
+    let blocks = doc.get_code_blocks()?;
 
-    let block =
-        blocks
-            .get_block(target_block)
-            .ok_or(DocError::from(TangleError::BlockNotFound(
-                target_block.to_string(),
-            )))?;
+    let block = blocks
+        .get_block(target_block)
+        .ok_or(TangleError::BlockNotFound(target_block.to_string()))?;
 
     // create the executable source code
     let output = make_executable_code(block, &blocks)?;

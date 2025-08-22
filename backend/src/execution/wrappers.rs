@@ -1,6 +1,6 @@
-use crate::configuration::get_default_config_dir;
-use crate::configuration::get_default_temp_dir;
-use crate::doc::CodeBlocksDoc;
+use crate::configuration::get_config_dir;
+use crate::configuration::get_temp_dir;
+use crate::doc::CodeBlocks;
 use crate::doc::DocError;
 use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
@@ -10,7 +10,7 @@ use std::io;
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
 pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
-    let tmp_dir = get_default_temp_dir();
+    let tmp_dir = get_temp_dir();
     // Create the file path using the target block name
     let ext = match lang {
         Language::C => "c",
@@ -56,7 +56,7 @@ fn add_rust_wrapper(code: &str, tangle: &mut String) {
 /// Loads and applies a template wrapper for the given language
 fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String, ExecutionError> {
     // Try to load language-specific template, fall back to hardcoded wrappers
-    let config_dir = get_default_config_dir();
+    let config_dir = get_config_dir();
     let lang_str = language.to_string().to_lowercase();
     let template_path = config_dir
         .join("executors")
@@ -92,7 +92,7 @@ fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String,
 /// and adds any imported blocks.
 pub fn make_executable_code(
     code_block: &CodeBlock,
-    blocks: &CodeBlocksDoc,
+    blocks: &CodeBlocks,
 ) -> Result<String, ExecutionError> {
     // Tangle blocks
     let mut imports_output = String::new();
@@ -159,7 +159,7 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocksDoc::from_codeblocks(blocks)).unwrap();
+        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
         assert_eq!(
             tangle,
             "#include <stdio.h>\nint main() {\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
@@ -198,7 +198,7 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocksDoc::from_codeblocks(blocks)).unwrap();
+        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
         assert_eq!(
             tangle,
             "import sys\nif __name__ == '__main__':\n    x = 42\n    print(f\"Hello, world!: {x}\")".to_string()

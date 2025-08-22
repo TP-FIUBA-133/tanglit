@@ -13,7 +13,7 @@ const CONFIG_DIR_ENVVAR: &str = "TANGLIT_CONFIG_DIR";
 /// If the environment variable is not set, it defaults to a platform-specific config directory
 /// under the user's home directory.
 /// If it cannot be determined, it falls back to the current directory in a `.tanglit` subdirectory.
-pub fn get_default_config_dir() -> &'static PathBuf {
+pub fn get_config_dir() -> &'static PathBuf {
     DEFAULT_CONFIG_DIR.get_or_init(|| {
         std::env::var(CONFIG_DIR_ENVVAR)
             .map(|v| PathBuf::from(v).join(DEFAULT_PROJECT_NAME))
@@ -31,7 +31,7 @@ pub fn get_default_config_dir() -> &'static PathBuf {
 /// defaults to the system's temporary directory with a subdirectory named after the project.
 /// It also follows the implementation of rust's `std::env::temp_dir()`, meaning that `TMPDIR` is also
 /// a valid environment variable to use in unix systems
-pub fn get_default_temp_dir() -> &'static PathBuf {
+pub fn get_temp_dir() -> &'static PathBuf {
     DEFAULT_TEMP_DIR.get_or_init(|| {
         std::env::var(TEMP_DIR_ENVVAR)
             .map(PathBuf::from)
@@ -40,9 +40,9 @@ pub fn get_default_temp_dir() -> &'static PathBuf {
 }
 
 pub fn create_configuration_dirs() -> io::Result<()> {
-    let temp_dir = get_default_temp_dir();
+    let temp_dir = get_temp_dir();
     fs::create_dir_all(temp_dir)?;
-    let config_dir = get_default_config_dir();
+    let config_dir = get_config_dir();
     fs::create_dir_all(config_dir)?;
     Ok(())
 }
@@ -56,7 +56,7 @@ mod tests {
         use temp_env::with_var;
         let random_dir = "/tmp/tanglit_test_config";
         with_var(super::CONFIG_DIR_ENVVAR, Some(random_dir), || {
-            let config_dir = super::get_default_config_dir();
+            let config_dir = super::get_config_dir();
             assert_eq!(
                 config_dir.as_path(),
                 PathBuf::from(random_dir)

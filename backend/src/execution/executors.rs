@@ -1,4 +1,4 @@
-use crate::configuration::get_default_config_dir;
+use crate::configuration::get_config_dir;
 use crate::doc::Language;
 use crate::errors::ExecutionError;
 use std::path::PathBuf;
@@ -9,7 +9,7 @@ pub fn execute_file(
     language: &Language,
     source_file_path: PathBuf,
 ) -> Result<Output, ExecutionError> {
-    let config_dir = get_default_config_dir();
+    let config_dir = get_config_dir();
     let lang_str = language.to_string().to_lowercase();
     let executor_dir = config_dir.join("executors").join(lang_str);
 
