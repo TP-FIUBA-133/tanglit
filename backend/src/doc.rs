@@ -13,7 +13,6 @@ use parser::slides::parse_slides_from_ast;
 use std::collections::HashMap;
 pub use tangle::CodeBlocks;
 pub use tangle::TangleError;
-use tangle::from_codeblocks;
 
 pub struct TanglitDoc {
     raw_markdown: String,
@@ -50,6 +49,6 @@ impl TanglitDoc {
 
     pub fn get_code_blocks(&self) -> Result<CodeBlocks, DocError> {
         let blocks = self.parse_blocks()?;
-        Ok(from_codeblocks(blocks))
+        Ok(CodeBlocks::from_codeblocks(blocks))
     }
 }
