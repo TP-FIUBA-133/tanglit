@@ -35,84 +35,12 @@ pub fn execute_file(
             .map_err(|e| ExecutionError::InternalError(e.to_string()));
     }
 
-    // Fall back to built-in language executors
-    let output = match language {
-        Language::C => execute_c_file(source_file_path),
-        Language::Python => execute_python_file(source_file_path),
-        Language::Rust => execute_rust_file(source_file_path),
-        Language::Unknown(lang) => {
-            return Err(ExecutionError::UnsupportedLanguage(lang.clone()));
-        }
-    };
-    Ok(output)
-}
-
-/// Executes a C file by compiling it and then running the resulting binary.
-/// This function assumes that the `gcc` compiler is available in the system's PATH.
-fn execute_c_file(source_file_path: PathBuf) -> Output {
-    let output_binary = source_file_path.with_extension("");
-
-    // Compile the C program
-    // TODO: make compilation configurable at runtime
-    let compile_status = Command::new("gcc")
-        .arg(&source_file_path)
-        .arg("-o")
-        .arg(&output_binary)
-        .status()
-        .expect("Failed to start gcc");
-
-    if !compile_status.success() {
-        eprintln!("Failed to compile C program.");
-        std::process::exit(1);
+    // Otherwise, we indicate that we can't execute this language
+    // TODO: remove variants from Language struct
+    match language {
+        Language::C => Err(ExecutionError::UnsupportedLanguage("C".to_string())),
+        Language::Python => Err(ExecutionError::UnsupportedLanguage("Python".to_string())),
+        Language::Rust => Err(ExecutionError::UnsupportedLanguage("Rust".to_string())),
+        Language::Unknown(lang) => Err(ExecutionError::UnsupportedLanguage(lang.clone())),
     }
-
-    let binary = output_binary.to_str().unwrap();
-
-    // Step 2: Run the compiled C binary and capture output
-    run_binary(binary)
-}
-
-/// Executes a Python file by running it with the Python interpreter.
-/// This function assumes that the Python interpreter is available in the system's PATH.
-fn execute_python_file(source_file_path: PathBuf) -> Output {
-    // Run the Python script and capture output
-    Command::new("python3")
-        .arg(source_file_path)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .expect("Failed to execute Python script")
-}
-
-/// Executes a Rust file by compiling it and then running the resulting binary.
-/// This function assumes that the `rustc` compiler is available in the system's PATH.
-fn execute_rust_file(source_file_path: PathBuf) -> Output {
-    let output_binary = source_file_path.with_extension("");
-
-    // Compile the Rust program
-    let compile_status = Command::new("rustc")
-        .arg(&source_file_path)
-        .arg("-o")
-        .arg(&output_binary)
-        .status()
-        .expect("Failed to start rustc");
-
-    if !compile_status.success() {
-        eprintln!("Failed to compile Rust program.");
-        std::process::exit(1);
-    }
-
-    let binary = output_binary.to_str().unwrap();
-
-    // Step 2: Run the compiled Rust binary and capture output
-    run_binary(binary)
-}
-
-/// Runs a binary file and captures its output.
-fn run_binary(binary_path: &str) -> Output {
-    Command::new(binary_path)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .expect("Failed to execute binary")
 }
