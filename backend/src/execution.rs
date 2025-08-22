@@ -1,12 +1,8 @@
-use crate::configuration::get_default_temp_dir;
-use crate::doc::CodeBlocksDoc;
-use crate::doc::DocError;
-use crate::doc::TangleError;
-use crate::doc::TanglitDoc;
-use crate::doc::{CodeBlock, Language};
+use crate::doc::{CodeBlock, CodeBlocks, Language, TangleError, TanglitDoc};
 use crate::errors::ExecutionError;
 use std::io;
 use std::process::{Command, Output, Stdio};
+use std::{env, fs};
 use std::{fs::write, path::PathBuf};
 
 const DEFAULT_INDENT_SIZE: usize = 4;
@@ -14,8 +10,11 @@ const DEFAULT_INDENT_CHARACTER: char = ' ';
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
 fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
-    let tmp_dir = get_default_temp_dir();
-
+    let current_dir = env::current_dir()?;
+    let tmp_dir = current_dir.join("tmp");
+    if !tmp_dir.exists() {
+        fs::create_dir_all(&tmp_dir)?;
+    }
     // Create the file path using the target block name
     let ext = match lang {
         Language::C => "c",
@@ -131,31 +130,25 @@ fn add_python_wrapper(code: &str, tangle: &mut String) {
 /// and adds any imported blocks. Indentation is applied.
 fn make_executable_code(
     code_block: &CodeBlock,
-    blocks: &CodeBlocksDoc,
+    blocks: &CodeBlocks,
 ) -> Result<String, ExecutionError> {
     // Tangle blocks
     let mut output = String::new();
 
     for import in &code_block.imports {
-        if let Some(import_block) = blocks.get_block(import) {
-            // Tangle the imported block
-            let import_output = blocks
-                .tangle_codeblock(import_block)
-                .map_err(|e| ExecutionError::from(DocError::from(e)))?;
-            // Append the import output to the main output
-            output.push_str(&import_output);
-            output.push('\n');
-        } else {
-            return Err(ExecutionError::InternalError(format!(
-                "Import '{}' not found in blocks",
-                import
-            )));
-        }
+        let import_block = blocks
+            .get_block(import)
+            .ok_or(ExecutionError::ImportError(format!(
+                "Import '{import}' not found in blocks"
+            )))?;
+        // Tangle the imported block
+        let import_output = blocks.tangle_codeblock(import_block)?;
+        // Append the import output to the main output
+        output.push_str(&import_output);
+        output.push('\n');
     }
 
-    let code = blocks
-        .tangle_codeblock(code_block)
-        .map_err(|e| ExecutionError::from(DocError::from(e)))?;
+    let code = blocks.tangle_codeblock(code_block)?;
 
     match &code_block.language {
         Language::C => add_c_wrapper(&code, &mut output),
@@ -177,14 +170,11 @@ fn make_executable_code(
 /// # Returns
 /// * Result containing the stdout of the execution or an error if something goes wrong
 pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
-    let blocks = doc.tangle()?;
+    let blocks = doc.get_code_blocks()?;
 
-    let block =
-        blocks
-            .get_block(target_block)
-            .ok_or(DocError::from(TangleError::BlockNotFound(
-                target_block.to_string(),
-            )))?;
+    let block = blocks
+        .get_block(target_block)
+        .ok_or(TangleError::BlockNotFound(target_block.to_string()))?;
 
     // create the executable source code
     let output = make_executable_code(block, &blocks)?;
@@ -209,6 +199,7 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
 
 //TODO: execution tests (probably require mocking or to be integration type tests)
 
+#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
@@ -245,7 +236,7 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocksDoc::from_codeblocks(blocks)).unwrap();
+        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
         assert_eq!(
             tangle,
             "#include <stdio.h>\nint main() {\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
@@ -284,7 +275,7 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocksDoc::from_codeblocks(blocks)).unwrap();
+        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
         assert_eq!(
             tangle,
             "import sys\nif __name__ == '__main__':\n    x = 42\n    print(f\"Hello, world!: {x}\")\n".to_string()
