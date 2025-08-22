@@ -5,7 +5,6 @@ use crate::doc::DocError;
 use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
 use crate::execution::template_engine::{Template, set_indentation};
-use std::collections::HashMap;
 use std::fs::write;
 use std::io;
 
@@ -66,15 +65,9 @@ fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String,
 
     // Try to load template file, fall back to hardcoded wrappers if not found
     match Template::load_from_file(template_path) {
-        Ok(template) => {
-            let mut replacements = HashMap::new();
-            replacements.insert("IMPORTS".to_string(), imports.to_string());
-            replacements.insert("BODY".to_string(), code.to_string());
-
-            template
-                .render(&replacements)
-                .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e)))
-        }
+        Ok(template) => template
+            .render(imports, code)
+            .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e))),
         Err(_) => {
             // Fall back to hardcoded wrappers
             let mut output = imports.to_string();
@@ -133,6 +126,7 @@ pub fn make_executable_code(
 mod tests {
     use super::*;
     use crate::doc::Language;
+    use std::collections::HashMap;
 
     #[test]
     fn test_make_executable_code_c() {

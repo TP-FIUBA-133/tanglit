@@ -50,11 +50,16 @@ impl Template {
     /// # Returns
     /// * A result with a string with the rendered template content
     ///   or an error if rendering fails
-    pub fn render(&self, replacements: &HashMap<String, String>) -> Result<String, String> {
+    pub fn render(&self, imports: &str, body: &str) -> Result<String, String> {
         let mut result = self.template_content.clone();
         let pattern = &self.placeholder_pattern;
 
-        process_replacements(replacements, pattern, &mut result)?;
+        let replacements = HashMap::from([
+            ("IMPORTS".to_string(), imports.to_string()),
+            ("BODY".to_string(), body.to_string()),
+        ]);
+
+        process_replacements(&replacements, pattern, &mut result)?;
 
         Ok(result)
     }
@@ -187,12 +192,10 @@ void main(){
         let content = get_sample_template();
         let config = Template::load(&content).unwrap();
 
-        // This template expects to replace #<IMPORTS># and #<BODY>#, so let's add those as well
-        let mut replacements = HashMap::new();
-        replacements.insert("IMPORTS".to_string(), "use std::io;".to_string());
-        replacements.insert("BODY".to_string(), "println!(\"Hello\");".to_string());
-
-        let rendered = config.render(&replacements).unwrap();
+        // The template expects to replace #<IMPORTS># and #<BODY>#
+        let rendered = config
+            .render("use std::io;", "println!(\"Hello\");")
+            .unwrap();
 
         assert_eq!(
             rendered,
@@ -208,18 +211,18 @@ void main(){
     #[test]
     // missing replacements should remove placeholder patterns from the rendered output
     fn test_render_with_missing_replacements() {
-        let content = get_sample_template();
-        let config = Template::load(&content).unwrap();
+        let mut content = get_sample_template();
+        let placeholder = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
 
-        // This template expects to replace #<IMPORTS># and #<BODY>#, so let's add those as well
         let mut replacements = HashMap::new();
         replacements.insert("IMPORTS".to_string(), "use std::io;".to_string());
         // Missing BODY replacement
 
-        let rendered = config.render(&replacements).unwrap();
+        let result = process_replacements(&replacements, &placeholder, &mut content);
 
+        assert!(result.is_ok());
         assert_eq!(
-            rendered,
+            content,
             r##"use std::io;
 
 void main(){

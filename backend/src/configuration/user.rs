@@ -47,6 +47,7 @@ pub fn create_configuration_dirs() -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
