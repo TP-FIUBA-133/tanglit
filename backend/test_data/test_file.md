@@ -90,3 +90,8 @@ Also c++
 std::cout << "Hello, World!" << std::endl;
 ```
 
+Rust
+
+```rust rust-example
+println!("hello world");
+```
