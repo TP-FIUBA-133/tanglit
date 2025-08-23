@@ -16,7 +16,7 @@ const CONFIG_DIR_ENVVAR: &str = "TANGLIT_CONFIG_DIR";
 pub fn get_config_dir() -> &'static PathBuf {
     DEFAULT_CONFIG_DIR.get_or_init(|| {
         std::env::var(CONFIG_DIR_ENVVAR)
-            .map(|v| PathBuf::from(v).join(DEFAULT_PROJECT_NAME))
+            .map(PathBuf::from)
             .unwrap_or_else(|_| {
                 directories::ProjectDirs::from("", "", DEFAULT_PROJECT_NAME)
                     .map(|dirs| dirs.config_dir().to_path_buf())
