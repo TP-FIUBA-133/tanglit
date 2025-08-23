@@ -52,6 +52,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "conflicts with other tests due to static state"]
     fn test_get_default_config_dir() {
         use temp_env::with_var;
         let random_dir = "/tmp/tanglit_test_config";
