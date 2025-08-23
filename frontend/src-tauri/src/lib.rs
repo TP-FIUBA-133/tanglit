@@ -19,10 +19,10 @@ fn tanglit_parse_slides(raw_markdown: &str) -> Result<Vec<Slide>, String> {
 fn tanglit_parse_blocks(raw_markdown: &str) -> Result<Vec<CodeBlock>, String> {
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    let blocks = doc
-        .parse_blocks()
+    let code_blocks = doc
+        .get_code_blocks()
         .map_err(|e| format!("Error parsing blocks: {}", e))?;
-    let blocks = blocks.values().cloned().collect();
+    let blocks = code_blocks.blocks.values().cloned().collect();
     Ok(blocks)
 }
 
