@@ -45,8 +45,13 @@ impl Template {
     /// The interpolation takes into account indentation
     /// by indenting all lines after the first with the same amount of columns as the placeholder's position.
     /// Missing replacement values are removed from the template.
+    /// This function assumes that the template contains 2 placeholder markers: IMPORTS and BODY.
+    /// If any of these are missing, they will be replaced by empty strings.
     /// # Arguments
-    /// * `replacements` - A map of placeholder names to their replacement values
+    /// * `imports` - contents of the imports section to be spliced
+    ///   into the IMPORTS placeholder marker of the template
+    /// * `body` - contents of the codeblock to be spliced into
+    ///   the BODY placeholder marker of the template
     /// # Returns
     /// * A result with a string with the rendered template content
     ///   or an error if rendering fails

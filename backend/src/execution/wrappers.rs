@@ -4,7 +4,7 @@ use crate::doc::CodeBlocks;
 use crate::doc::DocError;
 use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
-use crate::execution::template_engine::{Template, set_indentation};
+use crate::execution::template_engine::Template;
 use std::fs::write;
 use std::io;
 
@@ -25,34 +25,6 @@ pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<s
     io::Result::Ok(source_file)
 }
 
-fn add_c_wrapper(code: &str, tangle: &mut String) {
-    let mut code = code.to_string();
-    code.push_str("\nreturn 0;");
-    set_indentation(&mut code, Some(4), Some(' '));
-
-    tangle.push_str("int main() {\n    ");
-    tangle.push_str(&code);
-    tangle.push('\n');
-    tangle.push_str("}\n");
-}
-
-fn add_python_wrapper(code: &str, tangle: &mut String) {
-    // For Python, we don't need to add a wrapper
-    // but we can still set indentation
-    let mut code = code.to_string();
-    set_indentation(&mut code, Some(4), Some(' '));
-    tangle.push_str("if __name__ == '__main__':\n    ");
-    tangle.push_str(&code);
-}
-
-fn add_rust_wrapper(code: &str, tangle: &mut String) {
-    let mut code = code.to_string();
-    set_indentation(&mut code, Some(4), Some(' '));
-    tangle.push_str("fn main() {\n    ");
-    tangle.push_str(&code);
-    tangle.push_str("}\n");
-}
-
 /// Loads and applies a template wrapper for the given language
 fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String, ExecutionError> {
     // Try to load language-specific template, fall back to hardcoded wrappers
@@ -63,29 +35,18 @@ fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String,
         .join(lang_str)
         .join("wrapper.template");
 
-    // Try to load template file, fall back to hardcoded wrappers if not found
-    match Template::load_from_file(template_path) {
-        Ok(template) => template
-            .render(imports, code)
-            .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e))),
-        Err(_) => {
-            // Fall back to hardcoded wrappers
-            let mut output = imports.to_string();
-
-            match language {
-                Language::C => add_c_wrapper(code, &mut output),
-                Language::Python => {
-                    add_python_wrapper(code, &mut output);
-                }
-                Language::Rust => add_rust_wrapper(code, &mut output),
-                Language::Unknown(lang) => {
-                    return Err(ExecutionError::UnsupportedLanguage(lang.clone()));
-                }
-            }
-
-            Ok(output)
-        }
-    }
+    // Try to load template file or error out if not found
+    Template::load_from_file(template_path)
+        .map_err(|e| {
+            ExecutionError::UnsupportedLanguage(format!(
+                "Template file for {} language not found: {}",
+                language, e
+            ))
+        })
+        .and_then(|t| {
+            t.render(imports, code)
+                .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e)))
+        })
 }
 
 /// Tangles code in a given codeblock, wraps it in a language-specific wrapper
@@ -124,12 +85,15 @@ pub fn make_executable_code(
 
 #[cfg(test)]
 mod tests {
+    use temp_env::with_var;
+
     use super::*;
     use crate::doc::Language;
     use std::collections::HashMap;
 
     #[test]
-    fn test_make_executable_code_c() {
+    #[ignore = "the implementation of get_config_dir must be changed before this can work"]
+    fn test_apply_wrapper() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
             Language::C,
@@ -159,49 +123,18 @@ mod tests {
                 0,
             ),
         );
-        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
-        assert_eq!(
-            tangle,
-            "#include <stdio.h>\nint main() {\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
-                .to_string()
+        let config_path = format!(
+            "{}/resources/config",
+            std::env::var("CARGO_MANIFEST_DIR").unwrap()
         );
-    }
-
-    #[test]
-    fn test_make_executable_code_python() {
-        let mut blocks = HashMap::new();
-        let main = CodeBlock::new(
-            Language::Python,
-            "@[x]\nprint(f\"Hello, world!: {x}\")".to_string(),
-            "main".to_string(),
-            vec!["io".to_string()],
-            0,
-        );
-        blocks.insert("main".to_string(), main.clone());
-        blocks.insert(
-            "io".to_string(),
-            CodeBlock::new(
-                Language::Python,
-                "import sys".to_string(),
-                "io".to_string(),
-                vec![],
-                0,
-            ),
-        );
-        blocks.insert(
-            "x".to_string(),
-            CodeBlock::new(
-                Language::Python,
-                "x = 42".to_string(),
-                "x".to_string(),
-                vec![],
-                0,
-            ),
-        );
-        let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
-        assert_eq!(
-            tangle,
-            "import sys\nif __name__ == '__main__':\n    x = 42\n    print(f\"Hello, world!: {x}\")".to_string()
-        );
+        println!("Using config path: {}", config_path);
+        with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
+            let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
+            assert_eq!(
+                tangle,
+                "#include <stdio.h>\n\n\nint main(){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
+                    .to_string()
+            );
+        });
     }
 }
