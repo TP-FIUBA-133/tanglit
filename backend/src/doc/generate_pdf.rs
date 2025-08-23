@@ -11,7 +11,7 @@ impl fmt::Display for GeneratePdfError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             GeneratePdfError::IOError(msg) => write!(f, "Invalid input: {}", msg),
-            GeneratePdfError::ChromeError(msg) => write!(f, "Error generating PDF: {}", msg),
+            GeneratePdfError::ChromeError(msg) => write!(f, "Chrome error: {}", msg),
         }
     }
 }
@@ -20,7 +20,7 @@ impl fmt::Debug for GeneratePdfError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             GeneratePdfError::IOError(msg) => write!(f, "Invalid input: {}", msg),
-            GeneratePdfError::ChromeError(msg) => write!(f, "Error generating PDF: {}", msg),
+            GeneratePdfError::ChromeError(msg) => write!(f, "Chrome error: {}", msg),
         }
     }
 }
