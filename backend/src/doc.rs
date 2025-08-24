@@ -38,6 +38,19 @@ impl TanglitDoc {
         Ok(parse_code_blocks_from_ast(&self.ast)?)
     }
 
+    pub fn get_block(
+        &self,
+        block_name: &str,
+        blocks: &HashMap<String, CodeBlock>,
+    ) -> Result<CodeBlock, DocError> {
+        blocks
+            .get(block_name)
+            .cloned()
+            .ok_or(DocError::TangleError(TangleError::BlockNotFound(
+                block_name.to_string(),
+            )))
+    }
+
     pub fn parse_slides(&self) -> Vec<Slide> {
         parse_slides_from_ast(&self.ast, &self.raw_markdown)
     }

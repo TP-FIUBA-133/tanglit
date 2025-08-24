@@ -1,0 +1,5 @@
+import System.IO
+#<IMPORTS>#
+
+main :: IO ()
+main = putStrLn . show $ #<BODY>#

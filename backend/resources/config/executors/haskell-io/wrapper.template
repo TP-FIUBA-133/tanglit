@@ -1,0 +1,7 @@
+import System.IO
+#<IMPORTS>#
+
+main :: IO ()
+main = do
+  #<BODY>#
+  return ()
