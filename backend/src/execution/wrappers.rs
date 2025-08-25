@@ -138,7 +138,7 @@ mod tests {
         println!("Using config path: {}", config_path);
         with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
             let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
-            assert_eq ! (
+            assert_eq!(
                 tangle,
                 "#include <stdio.h>\n\n\nint main(){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
                 .to_string()
