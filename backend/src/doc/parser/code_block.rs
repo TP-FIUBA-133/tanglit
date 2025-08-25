@@ -32,13 +32,7 @@ impl CodeBlock {
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(
-            None,
-            code,
-            "".to_string(),
-            Vec::new(),
-            0,
-        )
+        Self::new(None, code, "".to_string(), Vec::new(), 0)
     }
 
     /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
