@@ -6,7 +6,7 @@ use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from
 pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
-pub use parser::code_block::{CodeBlock, Language};
+pub use parser::code_block::CodeBlock;
 use parser::exclude::exclude_from_ast;
 pub use parser::slides::Slide;
 use parser::slides::parse_slides_from_ast;
