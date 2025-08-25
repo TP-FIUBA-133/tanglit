@@ -94,8 +94,6 @@ fn get_code_nodes_from_mdast(mdast: &Node) -> Result<Vec<Code>, ParserError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::doc::parser::code_block::Language;
-
     use super::*;
 
     fn parse_code_blocks_from_string(
@@ -210,7 +208,10 @@ print("Hello, world!")
             blocks.get("block3").unwrap().imports,
             vec!["block1".to_string(), "block2".to_string()]
         );
-        assert_eq!(blocks.get("block3").unwrap().language, Language::Python);
+        assert_eq!(
+            blocks.get("block3").unwrap().language,
+            Option::from("python".to_string())
+        );
     }
 
     #[test]
@@ -225,7 +226,7 @@ print("Hello, world!")
         assert_eq!(block.code.trim(), r#"print("Hello, world!")"#);
         assert_eq!(block.tag, "2".to_string());
         assert!(block.imports.is_empty());
-        assert_eq!(block.language, Language::Python);
+        assert_eq!(block.language, Option::from("python".to_string()));
     }
 
     #[test]

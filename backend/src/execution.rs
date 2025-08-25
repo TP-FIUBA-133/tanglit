@@ -28,7 +28,13 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
     let output = make_executable_code(block, &blocks)?;
 
     // Write the output to a file
-    let block_file_path = write_file(output, target_block, &block.language)
+    let lang = block
+        .language
+        .as_deref()
+        .ok_or(ExecutionError::UnsupportedLanguage(
+            "No language specified".to_string(),
+        ))?;
+    let block_file_path = write_file(output, target_block, lang)
         .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
 
     // Execute the file based on language

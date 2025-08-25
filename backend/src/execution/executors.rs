@@ -1,16 +1,19 @@
 use crate::configuration::get_config_dir;
-use crate::doc::Language;
 use crate::errors::ExecutionError;
 use std::path::PathBuf;
 use std::process::{Command, Output, Stdio};
 
 /// Executes a file based on its language
 pub fn execute_file(
-    language: &Language,
+    language: &Option<String>,
     source_file_path: PathBuf,
 ) -> Result<Output, ExecutionError> {
     let config_dir = get_config_dir();
-    let lang_str = language.to_string().to_lowercase();
+    let lang_str = language
+        .as_deref()
+        .ok_or(ExecutionError::UnsupportedLanguage(
+            "No language specified".to_string(),
+        ))?;
     let executor_dir = config_dir.join("executors").join(lang_str);
 
     // Look for a file named "execute" (with or without extension) in the directory
@@ -36,11 +39,5 @@ pub fn execute_file(
     }
 
     // Otherwise, we indicate that we can't execute this language
-    // TODO: remove variants from Language struct
-    match language {
-        Language::C => Err(ExecutionError::UnsupportedLanguage("C".to_string())),
-        Language::Python => Err(ExecutionError::UnsupportedLanguage("Python".to_string())),
-        Language::Rust => Err(ExecutionError::UnsupportedLanguage("Rust".to_string())),
-        Language::Unknown(lang) => Err(ExecutionError::UnsupportedLanguage(lang.clone())),
-    }
+    Err(ExecutionError::UnsupportedLanguage(lang_str.to_string()))
 }
