@@ -16,6 +16,8 @@ pub enum Commands {
     Exclude(ExcludeArgs),
     #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
+    #[command(about = "Generates a PDF from an markdown file, skiping the items with % markers")]
+    GeneratePDF(GeneratePDFArgs),
 }
 
 #[derive(Args, Debug)]
@@ -78,4 +80,18 @@ pub struct ExecuteArgs {
         env = "TARGET_BLOCK"
     )]
     pub target_block: String,
+}
+
+#[derive(Args)]
+pub struct GeneratePDFArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_FILE_PATH",
+        help = "Path to the file where the output will be saved.",
+        help_heading = "Exclude Args",
+        env = "OUTPUT_FILE_PATH"
+    )]
+    pub output_file_path: String,
 }
