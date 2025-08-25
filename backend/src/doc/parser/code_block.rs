@@ -33,7 +33,7 @@ impl CodeBlock {
 
     pub fn new_with_code(code: String) -> Self {
         Self::new(
-            Option::from("".to_string()),
+            None,
             code,
             "".to_string(),
             Vec::new(),
