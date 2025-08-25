@@ -1,5 +1,3 @@
-use std::fmt;
-
 use super::ParserError;
 use markdown::mdast::Code;
 use regex::Regex;
@@ -7,39 +5,9 @@ use serde::Serialize;
 
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 
-#[derive(Debug, PartialEq, Clone, Serialize)]
-pub enum Language {
-    Unknown(String),
-    Python,
-    Rust,
-    C,
-}
-
-impl Language {
-    pub fn parse_language(lang: &str) -> Self {
-        match lang {
-            "python" => Language::Python,
-            "rust" => Language::Rust,
-            "c" => Language::C,
-            other => Language::Unknown(other.to_string()),
-        }
-    }
-}
-
-impl fmt::Display for Language {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Language::Python => write!(f, "Python"),
-            Language::Rust => write!(f, "Rust"),
-            Language::C => write!(f, "C"),
-            Language::Unknown(lang) => write!(f, "{}", lang),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize)]
 pub struct CodeBlock {
-    pub language: Language,
+    pub language: Option<String>,
     pub code: String,
     pub tag: String,
     pub imports: Vec<String>,
@@ -48,7 +16,7 @@ pub struct CodeBlock {
 
 impl CodeBlock {
     pub fn new(
-        language: Language,
+        language: Option<String>,
         code: String,
         tag: String,
         imports: Vec<String>,
@@ -65,7 +33,7 @@ impl CodeBlock {
 
     pub fn new_with_code(code: String) -> Self {
         Self::new(
-            Language::Unknown("".to_string()),
+            Option::from("".to_string()),
             code,
             "".to_string(),
             Vec::new(),
@@ -76,7 +44,7 @@ impl CodeBlock {
     /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
     /// If the tag is not specified in the code block, it defaults to the line number of the code block.
     pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
-        let language = Language::parse_language(code_block.lang.unwrap_or_default().as_str());
+        let language = code_block.lang;
         let (tag, imports) = Self::parse_metadata(code_block.meta.unwrap_or_default().as_str());
         let start_line = code_block
             .position

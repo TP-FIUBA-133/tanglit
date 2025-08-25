@@ -1,6 +1,6 @@
 use backend::cli::{Commands, ExcludeArgs, TangleArgs};
 use backend::configuration::init_configuration;
-use backend::doc::{Language, TangleError, TanglitDoc};
+use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
@@ -25,7 +25,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
 
     // Write the output to a file
     let output_file_path =
-        get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, lang);
+        get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, &lang);
     match write(&output_file_path, output) {
         Ok(_) => Ok(format!("Blocks written to {}", output_file_path.display())),
         Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
@@ -81,11 +81,15 @@ fn main() {
 }
 
 // TODO: We should get the output file path based on the language
-fn get_output_file_path(output_file_path: &str, main_block: &str, lang: Language) -> PathBuf {
+fn get_output_file_path(
+    output_file_path: &str,
+    main_block: &str,
+    lang: &Option<String>,
+) -> PathBuf {
     let output_file_path = Path::new(output_file_path);
-    match lang {
-        Language::C => output_file_path.join(format!("{main_block}.c")),
-        Language::Python => output_file_path.join(format!("{main_block}.py")),
+    match lang.as_deref().unwrap_or("") {
+        "c" => output_file_path.join(format!("{main_block}.c")),
+        "python" => output_file_path.join(format!("{main_block}.py")),
         _ => output_file_path.join(format!("{main_block}.txt")),
     }
 }

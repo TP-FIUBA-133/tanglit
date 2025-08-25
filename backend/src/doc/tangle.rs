@@ -85,9 +85,7 @@ impl CodeBlocks {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
-    use crate::doc::parser::code_block::Language;
 
     #[test]
     // Tests that imports aren't inserted into the tangled output
@@ -96,7 +94,7 @@ mod tests {
         blocks.insert(
             "main".to_string(),
             CodeBlock::new(
-                Language::Python,
+                Option::from("python".to_string()),
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
@@ -106,7 +104,7 @@ mod tests {
         blocks.insert(
             "helper".to_string(),
             CodeBlock::new(
-                Language::Python,
+                Option::from("python".to_string()),
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
@@ -129,7 +127,7 @@ mod tests {
         blocks.insert(
             "main".to_string(),
             CodeBlock::new(
-                Language::Python,
+                Option::from("python".to_string()),
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
@@ -147,7 +145,7 @@ mod tests {
     fn test_resolve_macros() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
-            Language::Python,
+            Option::from("python".to_string()),
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
@@ -157,7 +155,7 @@ mod tests {
         blocks.insert(
             "helper".to_string(),
             CodeBlock::new(
-                Language::Python,
+                Option::from("python".to_string()),
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
@@ -180,7 +178,7 @@ mod tests {
     fn test_resolve_macros_with_missing_block() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
-            Language::Python,
+            Option::from("python".to_string()),
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],

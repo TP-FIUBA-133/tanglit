@@ -1,21 +1,21 @@
 use crate::configuration::get_config_dir;
 use crate::configuration::get_temp_dir;
+use crate::doc::CodeBlock;
 use crate::doc::CodeBlocks;
 use crate::doc::DocError;
-use crate::doc::{CodeBlock, Language};
 use crate::errors::ExecutionError;
 use crate::execution::template_engine::Template;
 use std::fs::write;
 use std::io;
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
-pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<std::path::PathBuf> {
+pub fn write_file(contents: String, name: &str, lang: &str) -> io::Result<std::path::PathBuf> {
     let tmp_dir = get_temp_dir();
     // Create the file path using the target block name
     let ext = match lang {
-        Language::C => "c",
-        Language::Python => "py",
-        Language::Rust => "rs",
+        "c" => "c",
+        "python" => "py",
+        "rust" => "rs",
         _ => "",
     };
     let source_file = tmp_dir.join(format!("{}.{}", name, ext));
@@ -26,13 +26,22 @@ pub fn write_file(contents: String, name: &str, lang: &Language) -> io::Result<s
 }
 
 /// Loads and applies a template wrapper for the given language
-fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String, ExecutionError> {
+fn add_wrapper(
+    language: &Option<String>,
+    code: &str,
+    imports: &str,
+) -> Result<String, ExecutionError> {
     // Try to load language-specific template, fall back to hardcoded wrappers
     let config_dir = get_config_dir();
-    let lang_str = language.to_string().to_lowercase();
+    let lang_str = language
+        .as_deref()
+        .ok_or(ExecutionError::UnsupportedLanguage(
+            "No language specified".to_string(),
+        ))?
+        .to_lowercase();
     let template_path = config_dir
         .join("executors")
-        .join(lang_str)
+        .join(lang_str.as_str())
         .join("wrapper.template");
 
     // Try to load template file or error out if not found
@@ -40,7 +49,7 @@ fn add_wrapper(language: &Language, code: &str, imports: &str) -> Result<String,
         .map_err(|e| {
             ExecutionError::UnsupportedLanguage(format!(
                 "Template file for {} language not found: {}",
-                language, e
+                lang_str, e
             ))
         })
         .and_then(|t| {
@@ -69,7 +78,8 @@ pub fn make_executable_code(
             imports_output.push('\n');
         } else {
             return Err(ExecutionError::InternalError(format!(
-                "Import '{}' not found in blocks",
+                "Import '{
+}' not found in blocks",
                 import
             )));
         }
@@ -88,7 +98,6 @@ mod tests {
     use temp_env::with_var;
 
     use super::*;
-    use crate::doc::Language;
     use std::collections::HashMap;
 
     #[test]
@@ -96,8 +105,8 @@ mod tests {
     fn test_apply_wrapper() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
-            Language::C,
-            "@[x]\nprintf(\"Hello, world!: %d\",x);".to_string(),
+            Option::from("c".to_string()),
+            " @ [x]\nprintf(\"Hello, world!: %d\",x);".to_string(),
             "main".to_string(),
             vec!["io".to_string()],
             0,
@@ -106,7 +115,7 @@ mod tests {
         blocks.insert(
             "io".to_string(),
             CodeBlock::new(
-                Language::C,
+                Option::from("c".to_string()),
                 "#include <stdio.h>".to_string(),
                 "io".to_string(),
                 vec![],
@@ -116,7 +125,7 @@ mod tests {
         blocks.insert(
             "x".to_string(),
             CodeBlock::new(
-                Language::C,
+                Option::from("c".to_string()),
                 "int x;\nx = 42;".to_string(),
                 "x".to_string(),
                 vec![],
@@ -130,11 +139,11 @@ mod tests {
         println!("Using config path: {}", config_path);
         with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
             let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
-            assert_eq!(
-                tangle,
-                "#include <stdio.h>\n\n\nint main(){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
-                    .to_string()
-            );
+            assert_eq ! (
+    tangle,
+    "#include <stdio.h>\n\n\nint main(){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
+    .to_string()
+    );
         });
     }
 }
