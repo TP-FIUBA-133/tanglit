@@ -105,7 +105,7 @@ mod tests {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
             Option::from("c".to_string()),
-            " @ [x]\nprintf(\"Hello, world!: %d\",x);".to_string(),
+            "@[x]\nprintf(\"Hello, world!: %d\",x);".to_string(),
             "main".to_string(),
             vec!["io".to_string()],
             0,
