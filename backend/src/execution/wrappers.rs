@@ -78,8 +78,7 @@ pub fn make_executable_code(
             imports_output.push('\n');
         } else {
             return Err(ExecutionError::InternalError(format!(
-                "Import '{
-}' not found in blocks",
+                "Import '{}' not found in blocks",
                 import
             )));
         }
