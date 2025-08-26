@@ -20,7 +20,7 @@ impl Template {
     /// Loads a template from a file path.
     pub fn load_from_file(
         file_path: &Path,
-        placeholder_regex: Option<&String>,
+        placeholder_regex: Option<&str>,
     ) -> Result<Self, ExecutionError> {
         let content = fs::read_to_string(file_path)
             .map_err(|e| ExecutionError::InternalError(format!("Error reading template: {}", e)))?;
@@ -28,9 +28,9 @@ impl Template {
     }
 
     /// Loads a template from the contents of a template file.
-    pub fn load(content: &str, placeholder_regex: Option<&String>) -> Result<Self, ExecutionError> {
+    pub fn load(content: &str, placeholder_regex: Option<&str>) -> Result<Self, ExecutionError> {
         let placeholder = Regex::new(
-            placeholder_regex.map_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN, |x| x.as_str()),
+            placeholder_regex.unwrap_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN),
         )
         .map_err(|e| ExecutionError::InternalError(format!("Invalid placeholder regex: {}", e)))?;
 
@@ -199,8 +199,7 @@ void main(){
     #[test]
     fn test_render_with_replacements() {
         let content = get_sample_template();
-        let config =
-            Template::load(&content, Option::from("#<([A-Z]+)>#".to_string()).as_ref()).unwrap();
+        let config = Template::load(&content, Option::from("#<([A-Z]+)>#")).unwrap();
 
         // The template expects to replace #<IMPORTS># and #<BODY>#
         let rendered = config
@@ -262,7 +261,7 @@ void main(){
     fn test_parse_from_file_error() {
         let result = Template::load_from_file(
             &PathBuf::from("nonexistent_file.txt"),
-            Option::from("<RWA>".to_string()).as_ref(),
+            Option::from("<RWA>"),
         );
         assert!(result.is_err());
     }
