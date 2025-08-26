@@ -40,8 +40,13 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
     // Write the output to a file
     let tmp_dir = get_temp_dir();
 
-    let block_file_path = write_file(output, tmp_dir, target_block, lang_config.extension.as_deref())
-        .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
+    let block_file_path = write_file(
+        output,
+        tmp_dir,
+        target_block,
+        lang_config.extension.as_deref(),
+    )
+    .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
 
     debug!("Wrote tangled code to file: {}", block_file_path.display());
     // Execute the file based on language
