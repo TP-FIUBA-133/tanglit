@@ -1,8 +1,8 @@
+use crate::errors::ExecutionError;
 use log::debug;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
-use std::io;
 use std::path::Path;
 
 const DEFAULT_INDENT_SIZE: usize = 4;
@@ -20,29 +20,23 @@ impl Template {
     /// Loads a template from a file path.
     pub fn load_from_file(
         file_path: &Path,
-        placeholder_regex: &Option<String>,
-    ) -> io::Result<Self> {
-        let content = fs::read_to_string(file_path)?;
-        Self::load(&content, placeholder_regex).ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "No separator line found (5 or more dashes)",
-            )
-        })
+        placeholder_regex: Option<&String>,
+    ) -> Result<Self, ExecutionError> {
+        let content = fs::read_to_string(file_path)
+            .map_err(|e| ExecutionError::InternalError(format!("Error reading template: {}", e)))?;
+        Self::load(&content, placeholder_regex)
     }
 
     /// Loads a template from the contents of a template file.
-    pub fn load(content: &str, placeholder_regex: &Option<String>) -> Option<Self> {
+    pub fn load(content: &str, placeholder_regex: Option<&String>) -> Result<Self, ExecutionError> {
         let placeholder = Regex::new(
-            placeholder_regex
-                .as_ref()
-                .unwrap_or(&CONFIG_PLACEHOLDER_DEFAULT_PATTERN.to_string()),
+            placeholder_regex.map_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN, |x| x.as_str()),
         )
-        .unwrap();
+        .map_err(|e| ExecutionError::InternalError(format!("Invalid placeholder regex: {}", e)))?;
 
         let template_content = content.to_string();
 
-        Some(Template {
+        Ok(Template {
             placeholder_pattern: placeholder,
             template_content,
         })
@@ -198,14 +192,15 @@ void main(){
     #[test]
     fn test_parse_template_config() {
         let content = get_sample_template();
-        let config = Template::load(&content, &None).unwrap();
+        let config = Template::load(&content, None).unwrap();
         assert!(config.template_content.contains("void main(){"));
     }
 
     #[test]
     fn test_render_with_replacements() {
         let content = get_sample_template();
-        let config = Template::load(&content, &Option::from("#<([A-Z]+)>#".to_string())).unwrap();
+        let config =
+            Template::load(&content, Option::from("#<([A-Z]+)>#".to_string()).as_ref()).unwrap();
 
         // The template expects to replace #<IMPORTS># and #<BODY>#
         let rendered = config
@@ -267,7 +262,7 @@ void main(){
     fn test_parse_from_file_error() {
         let result = Template::load_from_file(
             &PathBuf::from("nonexistent_file.txt"),
-            &Option::from("<RWA>".to_string()),
+            Option::from("<RWA>".to_string()).as_ref(),
         );
         assert!(result.is_err());
     }

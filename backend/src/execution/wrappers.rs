@@ -33,7 +33,7 @@ fn add_wrapper(
     template_path: &Path,
     code: &str,
     imports: &str,
-    placeholder_regex: &Option<String>,
+    placeholder_regex: Option<&String>,
 ) -> Result<String, ExecutionError> {
     // Try to load template file or error out if not found
     Template::load_from_file(template_path, placeholder_regex)
@@ -86,7 +86,7 @@ pub fn make_executable_code(
         &lang_config.config_dir.join("template"),
         &code,
         &imports_output,
-        &lang_config.placeholder_regex,
+        lang_config.placeholder_regex.as_ref(),
     )
 }
 
