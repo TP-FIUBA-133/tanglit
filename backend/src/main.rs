@@ -29,14 +29,14 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     // we can tangle even if we don't have a config for the language
     let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
     // we can tangle even if we don't have an extension
-    let extension = lang_config.as_ref().and_then(|cfg| cfg.extension.clone());
+    let extension = lang_config.and_then(|cfg| cfg.extension);
 
     // Write the output to a file
     match write_file(
         output,
         &PathBuf::from(tangle_args.output_dir),
         &tangle_args.target_block,
-        extension,
+        extension.as_deref(),
     ) {
         Ok(r) => Ok(format!("Blocks written to {}", r.display())),
         Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),

@@ -8,7 +8,7 @@ use std::fs::write;
 use std::io;
 use std::path::Path;
 
-pub fn full_filename(name: &str, ext: &Option<String>) -> String {
+pub fn full_filename(name: &str, ext: Option<&str>) -> String {
     ext.as_ref()
         .map_or(name.to_string(), |ext| format!("{}.{}", name, ext))
 }
@@ -18,9 +18,9 @@ pub fn write_file(
     contents: String,
     dir: &Path,
     name: &str,
-    ext: Option<String>,
+    ext: Option<&str>,
 ) -> io::Result<std::path::PathBuf> {
-    let dst_filename = full_filename(name, &ext);
+    let dst_filename = full_filename(name, ext);
     let dst_path = dir.join(dst_filename);
 
     // Write the tangled output to the file
