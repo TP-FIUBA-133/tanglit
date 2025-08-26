@@ -3,8 +3,8 @@ use std::{fs, io, path::PathBuf, sync::OnceLock};
 use directories;
 
 const DEFAULT_PROJECT_NAME: &str = "tanglit";
-static DEFAULT_CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
-static DEFAULT_TEMP_DIR: OnceLock<PathBuf> = OnceLock::new();
+static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
+static TEMP_DIR: OnceLock<PathBuf> = OnceLock::new();
 const TEMP_DIR_ENVVAR: &str = "TANGLIT_TEMP_DIR";
 const CONFIG_DIR_ENVVAR: &str = "TANGLIT_CONFIG_DIR";
 
@@ -25,7 +25,7 @@ fn calculate_config_dir() -> PathBuf {
 /// If it cannot be determined, it falls back to the current directory in a `.tanglit` subdirectory.
 #[cfg(not(test))]
 pub fn get_config_dir() -> &'static PathBuf {
-    DEFAULT_CONFIG_DIR.get_or_init(calculate_config_dir)
+    CONFIG_DIR.get_or_init(calculate_config_dir)
 }
 
 #[cfg(test)]
@@ -46,7 +46,7 @@ fn calculate_temp_dir() -> PathBuf {
 /// a valid environment variable to use in unix systems
 #[cfg(not(test))]
 pub fn get_temp_dir() -> &'static PathBuf {
-    DEFAULT_TEMP_DIR.get_or_init(calculate_temp_dir)
+    TEMP_DIR.get_or_init(calculate_temp_dir)
 }
 
 #[cfg(test)]
