@@ -49,6 +49,13 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
     .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
 
     debug!("Wrote tangled code to file: {}", block_file_path.display());
-    // Execute the file based on language
-    execute_file(&block.language, block_file_path)
+
+    let execution_script_path =
+        lang_config
+            .get_execution_script_path()
+            .ok_or(ExecutionError::InternalError(
+                "Execution script not found".to_string(),
+            ))?;
+
+    execute_file(&execution_script_path, &block_file_path)
 }

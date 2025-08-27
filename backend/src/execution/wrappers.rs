@@ -7,6 +7,7 @@ use crate::execution::template_engine::Template;
 use std::fs::write;
 use std::io;
 use std::path::Path;
+use log::debug;
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
     ext.as_ref()
@@ -22,7 +23,6 @@ pub fn write_file(
 ) -> io::Result<std::path::PathBuf> {
     let dst_filename = full_filename(name, ext);
     let dst_path = dir.join(dst_filename);
-
     // Write the tangled output to the file
     write(&dst_path, contents)?;
     io::Result::Ok(dst_path)
@@ -50,16 +50,8 @@ fn add_wrapper(
         })
 }
 
-/// Tangles code in a given codeblock, wraps it in a language-specific wrapper
-/// and adds any imported blocks.
-pub fn make_executable_code(
-    code_block: &CodeBlock,
-    blocks: &CodeBlocks,
-    lang_config: &LanguageConfig,
-) -> Result<String, ExecutionError> {
-    // Tangle blocks
+pub fn tangle_imports(code_block: &CodeBlock, blocks: &CodeBlocks) -> Result<String, ExecutionError> {
     let mut imports_output = String::new();
-
     for import in &code_block.imports {
         if let Some(import_block) = blocks.get_block(import) {
             // Tangle the imported block
@@ -76,14 +68,32 @@ pub fn make_executable_code(
             )));
         }
     }
+    Ok(imports_output)
+}
+
+/// Tangles code in a given codeblock, wraps it in a language-specific wrapper
+/// and adds any imported blocks.
+pub fn make_executable_code(
+    code_block: &CodeBlock,
+    blocks: &CodeBlocks,
+    lang_config: &LanguageConfig,
+) -> Result<String, ExecutionError> {
+
+    // Tangle blocks
+    let imports_output = tangle_imports(code_block, blocks)?;
 
     let code = blocks
         .tangle_codeblock(code_block)
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
-    // Use template-based wrapper with fallback to hardcoded ones
+    let template_path = lang_config
+        .get_template_path()
+        .ok_or(ExecutionError::InternalError(
+            "No template file found in language config dir".to_string(),
+        ))?;
+
     add_wrapper(
-        &lang_config.config_dir.join("template"),
+        &template_path,
         &code,
         &imports_output,
         lang_config.placeholder_regex.as_deref(),

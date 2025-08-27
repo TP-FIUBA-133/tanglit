@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Clone)]
 pub struct LanguageConfig {
@@ -8,6 +8,33 @@ pub struct LanguageConfig {
     #[serde(skip)]
     pub config_dir: PathBuf,
     pub placeholder_regex: Option<String>, // If empty, we'll use the default
+}
+
+const TEMPLATE_FILENAME: &str = "template";
+const EXECUTE_SCRIPT_FILENAME: &str = "execute";
+
+pub fn find_file_in_dir(dir: &Path, filename: &str) -> Option<PathBuf> {
+    fs::read_dir(&dir).ok().and_then(|entries| {
+        entries
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .find(|path| {
+                path.file_stem()
+                    .map(|stem| stem == filename)
+                    .unwrap_or(false)
+            })
+    })
+}
+
+impl LanguageConfig {
+    pub fn get_template_path(&self) -> Option<PathBuf> {
+        // Look for a file named TEMPLATE_FILENAME (with or without extension) in the config directory
+        find_file_in_dir(&self.config_dir, TEMPLATE_FILENAME)
+    }
+    pub fn get_execution_script_path(&self) -> Option<PathBuf> {
+        // Look for a file named EXECUTE_SCRIPT_FILENAME (with or without extension) in the config directory
+        find_file_in_dir(&self.config_dir, EXECUTE_SCRIPT_FILENAME)
+    }
 }
 
 impl LanguageConfig {
