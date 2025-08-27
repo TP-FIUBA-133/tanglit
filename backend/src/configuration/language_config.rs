@@ -14,7 +14,7 @@ const TEMPLATE_FILENAME: &str = "template";
 const EXECUTE_SCRIPT_FILENAME: &str = "execute";
 
 pub fn find_file_in_dir(dir: &Path, filename: &str) -> Option<PathBuf> {
-    fs::read_dir(&dir).ok().and_then(|entries| {
+    fs::read_dir(dir).ok().and_then(|entries| {
         entries
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())

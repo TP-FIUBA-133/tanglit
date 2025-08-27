@@ -7,7 +7,6 @@ use crate::execution::template_engine::Template;
 use std::fs::write;
 use std::io;
 use std::path::Path;
-use log::debug;
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
     ext.as_ref()
