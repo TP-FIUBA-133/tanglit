@@ -8,7 +8,6 @@ use crate::doc::TangleError;
 use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
 use crate::execution::util::find_file_in_dir;
-use executors::execute_file;
 use log::debug;
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
