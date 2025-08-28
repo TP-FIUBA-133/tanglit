@@ -4,9 +4,12 @@ use crate::doc::CodeBlocks;
 use crate::doc::DocError;
 use crate::errors::ExecutionError;
 use crate::execution::template_engine::Template;
+use crate::execution::util::find_file_in_dir;
 use std::fs::write;
 use std::io;
 use std::path::Path;
+
+const TEMPLATE_FILENAME: &str = "template";
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
     ext.as_ref()
@@ -49,7 +52,10 @@ fn add_wrapper(
         })
 }
 
-pub fn tangle_imports(code_block: &CodeBlock, blocks: &CodeBlocks) -> Result<String, ExecutionError> {
+pub fn tangle_imports(
+    code_block: &CodeBlock,
+    blocks: &CodeBlocks,
+) -> Result<String, ExecutionError> {
     let mut imports_output = String::new();
     for import in &code_block.imports {
         if let Some(import_block) = blocks.get_block(import) {
@@ -77,7 +83,6 @@ pub fn make_executable_code(
     blocks: &CodeBlocks,
     lang_config: &LanguageConfig,
 ) -> Result<String, ExecutionError> {
-
     // Tangle blocks
     let imports_output = tangle_imports(code_block, blocks)?;
 
@@ -85,11 +90,9 @@ pub fn make_executable_code(
         .tangle_codeblock(code_block)
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
-    let template_path = lang_config
-        .get_template_path()
-        .ok_or(ExecutionError::InternalError(
-            "No template file found in language config dir".to_string(),
-        ))?;
+    let template_path = find_file_in_dir(&lang_config.config_dir, TEMPLATE_FILENAME).ok_or(
+        ExecutionError::InternalError("No template file found in language config dir".to_string()),
+    )?;
 
     add_wrapper(
         &template_path,
