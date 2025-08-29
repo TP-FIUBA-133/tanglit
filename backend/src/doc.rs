@@ -9,11 +9,11 @@ use crate::doc::parser::{
 };
 pub use error::DocError;
 use markdown::mdast::Node;
+pub use parser::ParserError;
 pub use parser::code_block::CodeBlock;
 use parser::exclude::exclude_from_ast;
-use parser::slides::parse_slides_from_ast;
 pub use parser::slides::Slide;
-pub use parser::ParserError;
+use parser::slides::parse_slides_from_ast;
 use std::collections::HashMap;
 pub use tangle::CodeBlocks;
 pub use tangle::TangleError;
