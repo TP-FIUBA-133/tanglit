@@ -1,5 +1,5 @@
 use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleArgs};
-use backend::configuration::init_configuration;
+use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
@@ -9,6 +9,9 @@ use std::{
     fs::write,
     path::{Path, PathBuf},
 };
+
+use backend::execution::write_file;
+use env_logger::init;
 
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
     let input_file_path = tangle_args.general.input_file_path;
@@ -23,11 +26,19 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
 
     let lang = block.language.clone();
 
+    // we can tangle even if we don't have a config for the language
+    let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
+    // we can tangle even if we don't have an extension
+    let extension = lang_config.and_then(|cfg| cfg.extension);
+
     // Write the output to a file
-    let output_file_path =
-        get_output_file_path(&tangle_args.output_dir, &tangle_args.target_block, &lang);
-    match write(&output_file_path, output) {
-        Ok(_) => Ok(format!("Blocks written to {}", output_file_path.display())),
+    match write_file(
+        output,
+        &PathBuf::from(tangle_args.output_dir),
+        &tangle_args.target_block,
+        extension.as_deref(),
+    ) {
+        Ok(r) => Ok(format!("Blocks written to {}", r.display())),
         Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
     }
 }
@@ -74,6 +85,8 @@ fn handle_generate_pdf_command(
 }
 
 fn main() {
+    init(); // Initialize the logger
+
     let cli = Cli::parse();
 
     if let Err(e) = init_configuration() {
@@ -90,19 +103,5 @@ fn main() {
     match result {
         Ok(message) => println!("{}", message),
         Err(e) => eprintln!("Error: {}", e),
-    }
-}
-
-// TODO: We should get the output file path based on the language
-fn get_output_file_path(
-    output_file_path: &str,
-    main_block: &str,
-    lang: &Option<String>,
-) -> PathBuf {
-    let output_file_path = Path::new(output_file_path);
-    match lang.as_deref().unwrap_or("") {
-        "c" => output_file_path.join(format!("{main_block}.c")),
-        "python" => output_file_path.join(format!("{main_block}.py")),
-        _ => output_file_path.join(format!("{main_block}.txt")),
     }
 }

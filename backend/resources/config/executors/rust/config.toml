@@ -1,0 +1,2 @@
+extension = "rs"
+placeholder_regex = "#<([A-Z]+)>#"
