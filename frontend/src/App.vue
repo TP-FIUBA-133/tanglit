@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import MarkdownEditor from "./MarkdownEditor.vue";
 
@@ -8,7 +8,8 @@ const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const blocks = ref<number[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_output = ref<string>("");
+const block_execute = reactive({ error: undefined, result: undefined });
+
 enum TANGLIT_COMMANDS {
   exclude = "tanglit_exclude",
   parse_slides = "tanglit_parse_slides",
@@ -37,7 +38,16 @@ async function parse_blocks(raw_markdown: string): Promise<number[]> {
 }
 
 async function execute_block(raw_markdown: string, block_name: string): Promise<string> {
-  let rv = (await invoke("tanglit_execute_block", { raw_markdown, block_name })) as string;
+  let rv = await invoke("tanglit_execute_block", { raw_markdown, block_name })
+    .then((r) => {
+      block_execute.error = undefined;
+      block_execute.result = r;
+    })
+    .catch((e) => {
+      block_execute.error = e;
+      block_execute.result = undefined;
+    });
+
   return rv;
 }
 
@@ -111,7 +121,7 @@ async function run_block(line: number) {
     const block = all_blocks.value[i];
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
-      block_output.value = await execute_block(raw_markdown.value, block.tag);
+      await execute_block(raw_markdown.value, block.tag);
       break;
     }
   }
@@ -130,10 +140,22 @@ async function run_block(line: number) {
           class="editor"
         />
       </div>
-      <div>
-        <div class="exclusion_output">{{ exclusion_output }}</div>
-        <div class="block-output">Block output:</div>
-        <div class="block-output">{{ block_output }}</div>
+      <div class="exclusion_output">{{ exclusion_output }}</div>
+      <div class="block-execution">
+        Block execution
+        <div class="block-execute-error" v-if="block_execute.error"><span>Error</span>{{ block_execute.error }}</div>
+        <div class="block-output">
+          <div class="title-status">status:</div>
+          <div class="block-execute-status">{{ block_execute.status }}</div>
+        </div>
+        <div class="block-output">
+          <div class="title-stdout">stdout</div>
+          <div class="block-execute-stdout">{{ block_execute.stdout }}</div>
+        </div>
+        <div class="block-output">
+          <div class="title-stderr">stderr</div>
+          <div class="block-execute-stderr">{{ block_execute.stderr }}</div>
+        </div>
       </div>
     </div>
     <div class="status-bar">
@@ -170,16 +192,83 @@ async function run_block(line: number) {
   -webkit-text-size-adjust: 100%;
 }
 
+.title-status {
+  justify-content: left;
+  text-align: left;
+  font-family: sans-serif;
+  display: inline;
+  padding: 5px;
+}
+
+.title-stderr {
+  text-align: left;
+  font-family: sans-serif;
+  padding: 5px;
+}
+
+.title-stdout {
+  text-align: left;
+  font-family: sans-serif;
+  padding: 5px;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
   height: 100%;
 }
+
 .block-output {
-  font-family: monospace;
-  background-color: black;
+  background-color: #00304e;
+  margin: 2px;
+}
+
+.block-execution {
+  display: flex;
+  flex-direction: column;
+  background-color: #006eb3;
   color: white;
+  gap: 5px;
+}
+
+.block-execute-error {
+  font-family: monospace;
+  background-color: darkred;
+  color: white;
+  white-space: pre-wrap;
+  justify-content: left;
+  text-align: left;
+}
+
+.block-execute-status {
+  font-family: monospace;
+  background-color: #2b2727;
+  color: white;
+  white-space: pre-wrap;
+  justify-content: left;
+  text-align: left;
+  padding: 5px;
+}
+
+.block-execute-stderr {
+  font-family: monospace;
+  background-color: #2b2727;
+  color: white;
+  white-space: pre-wrap;
+  justify-content: left;
+  text-align: left;
+  padding: 5px;
+  margin: 5px;
+}
+
+.block-execute-stdout {
+  font-family: monospace;
+  text-align: left;
+  background-color: #2b2727;
+  color: white;
+  margin: 5px;
+  padding: 5px;
   white-space: pre-wrap;
 }
 .container {
