@@ -1,4 +1,6 @@
+use backend::configuration::init_configuration;
 use backend::doc::{CodeBlock, Slide, TanglitDoc};
+use serde::Serialize;
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
@@ -26,14 +28,26 @@ fn tanglit_parse_blocks(raw_markdown: &str) -> Result<Vec<CodeBlock>, String> {
     Ok(blocks)
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ExecutionOutput {
+    pub status: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+}
+
 #[tauri::command(rename_all = "snake_case")]
-fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<String, String> {
+fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<ExecutionOutput, String> {
+    init_configuration().map_err(|e| format!("Error initializing configuration: {}", e))?;
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
 
     match backend::execution::execute(&doc, block_name) {
-        Ok(output) => Ok(format!("{output:?}")),
-        Err(e) => Ok(format!("Error executing block: {}", e)),
+        Ok(output) => Ok(ExecutionOutput {
+            status: output.status.code(),
+            stdout: String::from_utf8(output.stdout).expect("Error reading stdout"),
+            stderr: String::from_utf8(output.stderr).expect("Error reading stderr"),
+        }),
+        Err(e) => Err(format!("Error executing block: {}", e)),
     }
 }
 
