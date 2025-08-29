@@ -140,21 +140,25 @@ async function run_block(line: number) {
           class="editor"
         />
       </div>
-      <div class="exclusion_output">{{ exclusion_output }}</div>
-      <div class="block-execution">
-        Block execution
-        <div class="block-execute-error" v-if="block_execute.error"><span>Error</span>{{ block_execute.error }}</div>
-        <div class="block-output">
-          <div class="title-status">status:</div>
-          <div class="block-execute-status">{{ block_execute.status }}</div>
-        </div>
-        <div class="block-output">
-          <div class="title-stdout">stdout</div>
-          <div class="block-execute-stdout">{{ block_execute.stdout }}</div>
-        </div>
-        <div class="block-output">
-          <div class="title-stderr">stderr</div>
-          <div class="block-execute-stderr">{{ block_execute.stderr }}</div>
+      <div class="side-panels">
+        <div class="exclusion_output">{{ exclusion_output }}</div>
+        <div class="block-execution">
+          Block execution
+          <div class="block-execute-error" v-if="block_execute.error"><span>Error</span>{{ block_execute.error }}</div>
+          <div v-if="block_execute.result">
+            <div class="block-output">
+              <div class="block-execute-title">status</div>
+              <div class="block-execute-status">{{ block_execute.result.status }}</div>
+            </div>
+            <div class="block-output">
+              <div class="block-execute-title">stdout</div>
+              <div class="block-execute-stdout">{{ block_execute.result.stdout }}</div>
+            </div>
+            <div class="block-output">
+              <div class="block-execute-title">stderr</div>
+              <div class="block-execute-stderr">{{ block_execute.result.stderr }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -192,21 +196,7 @@ async function run_block(line: number) {
   -webkit-text-size-adjust: 100%;
 }
 
-.title-status {
-  justify-content: left;
-  text-align: left;
-  font-family: sans-serif;
-  display: inline;
-  padding: 5px;
-}
-
-.title-stderr {
-  text-align: left;
-  font-family: sans-serif;
-  padding: 5px;
-}
-
-.title-stdout {
+.block-execute-title {
   text-align: left;
   font-family: sans-serif;
   padding: 5px;
@@ -230,6 +220,10 @@ body {
   background-color: #006eb3;
   color: white;
   gap: 5px;
+}
+
+.side-panels {
+  max-width: 50%;
 }
 
 .block-execute-error {
@@ -271,6 +265,7 @@ body {
   padding: 5px;
   white-space: pre-wrap;
 }
+
 .container {
   margin: 0;
   display: flex;
