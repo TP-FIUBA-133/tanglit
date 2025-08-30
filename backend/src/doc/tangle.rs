@@ -1,4 +1,5 @@
 use crate::doc::CodeBlock;
+use crate::utils::{get_indentation_at_offset, set_indentation};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -66,11 +67,17 @@ impl CodeBlocks {
         // Replace imports with block content
         let code_block_with_macros =
             re.replace_all(&target_codeblock.code, |caps: &regex::Captures| {
-                self.blocks
+                let mut code = self
+                    .blocks
                     .get(&caps[1])
                     .unwrap() // It is safe to unwrap here because we checked for missing blocks above
                     .code
-                    .clone()
+                    .clone();
+                let placeholder_offset = caps.get(0).unwrap().start();
+                let indent_size =
+                    get_indentation_at_offset(&target_codeblock.code, placeholder_offset);
+                set_indentation(&mut code, Some(indent_size), Some(' '));
+                code
             });
 
         Ok(code_block_with_macros.into_owned())
@@ -195,6 +202,43 @@ mod tests {
         assert_eq!(
             tangle.unwrap_err(),
             TangleError::BlockNotFound("helper".to_string())
+        );
+    }
+
+    #[test]
+    fn test_insert_macro_with_correct_indentation() {
+        let mut blocks = HashMap::new();
+        let main = CodeBlock::new(
+            Option::from("python".to_string()),
+            "for i in range(2):\n    @[helper]\n    print('Hello, world!')".to_string(),
+            "main".to_string(),
+            vec![],
+            0,
+        );
+        blocks.insert("main".to_string(), main.clone());
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Helper function')\nprint('second helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("main").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block).unwrap();
+
+        assert_eq!(
+            tangle,
+            r#"for i in range(2):
+    print('Helper function')
+    print('second helper function')
+    print('Hello, world!')"#
+                .to_string()
         );
     }
 }
