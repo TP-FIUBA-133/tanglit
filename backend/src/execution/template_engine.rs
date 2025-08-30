@@ -1,3 +1,4 @@
+use crate::utils::get_indentation_at_offset;
 use crate::utils::set_indentation;
 use regex::Regex;
 use std::collections::HashMap;
@@ -101,14 +102,9 @@ fn format_replacement(
 ) -> String {
     // Find the start of the match in the result string to calculate indentation
     let mat = captures.get(0).unwrap();
-    let start = wrapper_template[..mat.start()]
-        .rfind('\n')
-        .map_or(0, |i| i + 1);
-    let line = &wrapper_template[start..mat.start()];
+    let start_offset = mat.start();
 
-    // Calculate indentation: count all characters from start of line to match
-    // Doesn't handle tabs correctly, but assumes spaces for simplicity
-    let indent_size = line.len();
+    let indent_size = get_indentation_at_offset(wrapper_template, start_offset);
 
     let mut replacement = replacement_value;
     if indent_size > 0 {

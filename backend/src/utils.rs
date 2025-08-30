@@ -49,3 +49,11 @@ pub fn set_indentation(
 
     *code = result;
 }
+
+/// returns the columns of characters at the given character `offset` in `code`
+pub fn get_indentation_at_offset(code: &str, offset: usize) -> usize {
+    let line_start = code[..offset].rfind('\n').map_or(0, |i| i + 1);
+    let line = &code[line_start..offset];
+    // TODO: handle tabs (usually 4 spaces = 1 tab)
+    line.len()
+}
