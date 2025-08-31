@@ -10,10 +10,7 @@ if [[ -z "$SRC_FILE" || -z "$OUT_DIR" ]]; then
 fi
 
 BASENAME=$(basename "$SRC_FILE")
-BASENAME="${BASENAME%.*}"
-BIN_PATH="$OUT_DIR/$BASENAME"
-
-PYTHON_FILE="$OUT_DIR/$BASENAME.py"
+PYTHON_FILE="$BASENAME"
 
 cd "$OUT_DIR"
 python3 "$PYTHON_FILE"

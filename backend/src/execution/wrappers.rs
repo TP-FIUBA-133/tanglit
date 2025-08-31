@@ -1,55 +1,50 @@
-use crate::configuration::get_config_dir;
-use crate::configuration::get_temp_dir;
+use crate::configuration::language_config::LanguageConfig;
 use crate::doc::CodeBlock;
 use crate::doc::CodeBlocks;
 use crate::doc::DocError;
 use crate::errors::ExecutionError;
 use crate::execution::template_engine::Template;
+use crate::execution::util::find_file_in_dir;
 use std::fs::write;
 use std::io;
+use std::path::Path;
+
+const TEMPLATE_FILENAME: &str = "template";
+
+pub fn full_filename(name: &str, ext: Option<&str>) -> String {
+    ext.as_ref()
+        .map_or(name.to_string(), |ext| format!("{}.{}", name, ext))
+}
 
 /// Writes the contents to a file to a `tmp` directory in the current directory.
-pub fn write_file(contents: String, name: &str, lang: &str) -> io::Result<std::path::PathBuf> {
-    let tmp_dir = get_temp_dir();
-    // Create the file path using the target block name
-    let ext = match lang {
-        "c" => "c",
-        "python" => "py",
-        "rust" => "rs",
-        _ => "",
-    };
-    let source_file = tmp_dir.join(format!("{}.{}", name, ext));
+pub fn write_file(
+    contents: String,
+    dir: &Path,
+    name: &str,
+    ext: Option<&str>,
+) -> io::Result<std::path::PathBuf> {
+    let dst_filename = full_filename(name, ext);
+    let dst_path = dir.join(dst_filename);
 
     // Write the tangled output to the file
-    write(&source_file, contents)?;
-    io::Result::Ok(source_file)
+    write(&dst_path, contents)?;
+    io::Result::Ok(dst_path)
 }
 
 /// Loads and applies a template wrapper for the given language
 fn add_wrapper(
-    language: &Option<String>,
+    template_path: &Path,
     code: &str,
     imports: &str,
+    placeholder_regex: Option<&str>,
 ) -> Result<String, ExecutionError> {
-    // Try to load language-specific template, fall back to hardcoded wrappers
-    let config_dir = get_config_dir();
-    let lang_str = language
-        .as_deref()
-        .ok_or(ExecutionError::UnsupportedLanguage(
-            "No language specified".to_string(),
-        ))?
-        .to_lowercase();
-    let template_path = config_dir
-        .join("executors")
-        .join(lang_str.as_str())
-        .join("wrapper.template");
-
     // Try to load template file or error out if not found
-    Template::load_from_file(template_path)
+    Template::load_from_file(template_path, placeholder_regex)
         .map_err(|e| {
             ExecutionError::UnsupportedLanguage(format!(
-                "Template file for {} language not found: {}",
-                lang_str, e
+                "Unable to load template at path {}: {}",
+                template_path.display(),
+                e
             ))
         })
         .and_then(|t| {
@@ -58,15 +53,11 @@ fn add_wrapper(
         })
 }
 
-/// Tangles code in a given codeblock, wraps it in a language-specific wrapper
-/// and adds any imported blocks.
-pub fn make_executable_code(
+pub fn tangle_imports(
     code_block: &CodeBlock,
     blocks: &CodeBlocks,
 ) -> Result<String, ExecutionError> {
-    // Tangle blocks
     let mut imports_output = String::new();
-
     for import in &code_block.imports {
         if let Some(import_block) = blocks.get_block(import) {
             // Tangle the imported block
@@ -83,13 +74,34 @@ pub fn make_executable_code(
             )));
         }
     }
+    Ok(imports_output)
+}
+
+/// Tangles code in a given codeblock, wraps it in a language-specific wrapper
+/// and adds any imported blocks.
+pub fn make_executable_code(
+    code_block: &CodeBlock,
+    blocks: &CodeBlocks,
+    lang_config: &LanguageConfig,
+) -> Result<String, ExecutionError> {
+    // Tangle blocks
+    let imports_output = tangle_imports(code_block, blocks)?;
 
     let code = blocks
         .tangle_codeblock(code_block)
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
     // Use template-based wrapper with fallback to hardcoded ones
-    add_wrapper(&code_block.language, &code, &imports_output)
+    let template_path = find_file_in_dir(&lang_config.config_dir, TEMPLATE_FILENAME).ok_or(
+        ExecutionError::InternalError("No template file found in language config dir".to_string()),
+    )?;
+
+    add_wrapper(
+        &template_path,
+        &code,
+        &imports_output,
+        lang_config.placeholder_regex.as_deref(),
+    )
 }
 
 #[cfg(test)]
@@ -97,10 +109,10 @@ mod tests {
     use temp_env::with_var;
 
     use super::*;
+    use crate::configuration::get_config_for_lang;
     use std::collections::HashMap;
 
     #[test]
-    #[ignore = "the implementation of get_config_dir must be changed before this can work"]
     fn test_apply_wrapper() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
@@ -137,7 +149,10 @@ mod tests {
         );
         println!("Using config path: {}", config_path);
         with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
-            let tangle = make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks)).unwrap();
+            let lang_config = get_config_for_lang("c").unwrap();
+            let tangle =
+                make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks), &lang_config)
+                    .unwrap();
             assert_eq!(
                 tangle,
                 "#include <stdio.h>\n\n\nint main(){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
