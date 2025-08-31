@@ -99,7 +99,6 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    #[ignore = "the implementation of get_config_dir must be changed before this can work"]
     fn test_apply_wrapper() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
