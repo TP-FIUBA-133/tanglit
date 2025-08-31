@@ -95,8 +95,8 @@ mod tests {
     use temp_env::with_var;
 
     use super::*;
+    use crate::configuration::get_config_for_lang;
     use std::collections::HashMap;
-    use std::path::PathBuf;
 
     #[test]
     fn test_apply_wrapper() {
@@ -134,8 +134,8 @@ mod tests {
             std::env::var("CARGO_MANIFEST_DIR").unwrap()
         );
         println!("Using config path: {}", config_path);
-        let lang_config = LanguageConfig::load_from_file(&PathBuf::from(&config_path)).unwrap();
         with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
+            let lang_config = get_config_for_lang("c").unwrap();
             let tangle =
                 make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks), &lang_config)
                     .unwrap();

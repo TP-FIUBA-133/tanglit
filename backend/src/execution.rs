@@ -42,7 +42,7 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
 
     let block_file_path = write_file(
         output,
-        tmp_dir,
+        &tmp_dir,
         target_block,
         lang_config.extension.as_deref(),
     )
