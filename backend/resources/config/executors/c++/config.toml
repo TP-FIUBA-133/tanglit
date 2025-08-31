@@ -1,0 +1,2 @@
+extension = "cpp"
+placeholder_regex = "#<([A-Z]+)>#"
