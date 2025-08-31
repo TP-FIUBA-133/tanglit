@@ -1,14 +1,16 @@
+use crate::doc::macro_dependency::check_dependencies;
+
 use crate::doc::CodeBlock;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 
 #[derive(PartialEq)]
 pub enum TangleError {
     BlockNotFound(String),
     InternalError(String),
+    CycleDetected(),
 }
 
 impl fmt::Display for TangleError {
@@ -16,6 +18,7 @@ impl fmt::Display for TangleError {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
             TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+            TangleError::CycleDetected() => write!(f, "Cycle detected"),
         }
     }
 }
@@ -25,6 +28,7 @@ impl fmt::Debug for TangleError {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
             TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+            TangleError::CycleDetected() => write!(f, "Cycle detected"),
         }
     }
 }
@@ -40,28 +44,14 @@ impl CodeBlocks {
     pub fn from_codeblocks(blocks: std::collections::HashMap<String, CodeBlock>) -> Self {
         Self { blocks }
     }
-
+    
     /// Tangles a code block by resolving its macros and producing a
     /// string with all referenced blocks inlined.
     pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
         let re = Regex::new(MACROS_REGEX)
             .map_err(|e| TangleError::InternalError(format!("Failed to compile regex: {}", e)))?;
 
-        // Collect all referenced block names
-        let referenced_blocks: HashSet<_> = re
-            .captures_iter(&target_codeblock.code)
-            .map(|caps| caps[1].to_string())
-            .collect();
-
-        // Check for missing blocks
-        let missing: Vec<_> = referenced_blocks
-            .iter()
-            .filter(|tag| !&self.blocks.contains_key(*tag))
-            .collect();
-
-        if let Some(missing) = missing.first() {
-            return Err(TangleError::BlockNotFound(missing.to_string()));
-        }
+        check_dependencies(&target_codeblock.tag, &self.blocks)?;
 
         // Replace imports with block content
         let code_block_with_macros =

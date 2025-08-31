@@ -1,6 +1,8 @@
 mod error;
 mod parser;
 mod tangle;
+mod macro_dependency;
+
 
 use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 pub use error::DocError;
@@ -38,6 +40,7 @@ impl TanglitDoc {
         Ok(parse_code_blocks_from_ast(&self.ast)?)
     }
 
+    
     pub fn get_block(
         &self,
         block_name: &str,
@@ -50,6 +53,8 @@ impl TanglitDoc {
                 block_name.to_string(),
             )))
     }
+     
+    
 
     pub fn parse_slides(&self) -> Vec<Slide> {
         parse_slides_from_ast(&self.ast, &self.raw_markdown)

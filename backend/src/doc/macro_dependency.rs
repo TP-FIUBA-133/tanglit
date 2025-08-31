@@ -1,12 +1,11 @@
-use crate::{
-    errors::TangleError,
-    parser::code_block::{CodeBlock},
-};
+use crate::doc::{ParserError, TangleError};
+use crate::doc::CodeBlock;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 type Graph = HashMap<String, HashSet<String>>;
+
 
 #[derive(PartialEq, Clone)]
 enum State {
@@ -25,6 +24,7 @@ pub fn check_dependencies(
     target_block: &str,
     blocks: &HashMap<String, CodeBlock>,
 ) -> Result<(), TangleError> {
+    println!("target_block: {}", target_block);
     // Si detecta que falta un bloque nombrado en una macro, devuelve error BlockNotFound
     let graph = build_graph_from_target(target_block, blocks)?;
 
