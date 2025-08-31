@@ -1,10 +1,14 @@
 mod error;
+mod generate_pdf;
 mod parser;
 mod tangle;
 mod macro_dependency;
 
 
-use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
+use crate::doc::generate_pdf::generate_pdf;
+use crate::doc::parser::{
+    ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
+};
 pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
@@ -68,5 +72,12 @@ impl TanglitDoc {
     pub fn get_code_blocks(&self) -> Result<CodeBlocks, DocError> {
         let blocks = self.parse_blocks()?;
         Ok(CodeBlocks::from_codeblocks(blocks))
+    }
+
+    pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+        let markdown_with_exclusions = self.exclude()?;
+        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
+        generate_pdf(&html_with_exclusions, output_file_path)?;
+        Ok(())
     }
 }
