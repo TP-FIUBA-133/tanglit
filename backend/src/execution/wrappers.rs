@@ -9,6 +9,12 @@ use std::fs::write;
 use std::io;
 use std::path::Path;
 
+pub fn full_filename(name: &str, ext: Option<&str>) -> String {
+    ext.as_ref()
+        .map_or(name.to_string(), |ext| format!("{}.{}", name, ext))
+}
+use std::path::Path;
+
 const TEMPLATE_FILENAME: &str = "template";
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
@@ -25,6 +31,7 @@ pub fn write_file(
 ) -> io::Result<std::path::PathBuf> {
     let dst_filename = full_filename(name, ext);
     let dst_path = dir.join(dst_filename);
+
     // Write the tangled output to the file
     write(&dst_path, contents)?;
     io::Result::Ok(dst_path)
@@ -90,6 +97,7 @@ pub fn make_executable_code(
         .tangle_codeblock(code_block)
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
+    // Use template-based wrapper with fallback to hardcoded ones
     let template_path = find_file_in_dir(&lang_config.config_dir, TEMPLATE_FILENAME).ok_or(
         ExecutionError::InternalError("No template file found in language config dir".to_string()),
     )?;
@@ -107,11 +115,11 @@ mod tests {
     use temp_env::with_var;
 
     use super::*;
+    use crate::configuration::get_config_for_lang;
     use std::collections::HashMap;
     use std::path::PathBuf;
 
     #[test]
-    #[ignore = "the implementation of get_config_dir must be changed before this can work"]
     fn test_apply_wrapper() {
         let mut blocks = HashMap::new();
         let main = CodeBlock::new(
@@ -147,8 +155,8 @@ mod tests {
             std::env::var("CARGO_MANIFEST_DIR").unwrap()
         );
         println!("Using config path: {}", config_path);
-        let lang_config = LanguageConfig::load_from_file(&PathBuf::from(&config_path)).unwrap();
         with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
+            let lang_config = get_config_for_lang("c").unwrap();
             let tangle =
                 make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks), &lang_config)
                     .unwrap();
