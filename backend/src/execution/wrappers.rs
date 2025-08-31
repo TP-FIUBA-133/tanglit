@@ -9,12 +9,6 @@ use std::fs::write;
 use std::io;
 use std::path::Path;
 
-pub fn full_filename(name: &str, ext: Option<&str>) -> String {
-    ext.as_ref()
-        .map_or(name.to_string(), |ext| format!("{}.{}", name, ext))
-}
-use std::path::Path;
-
 const TEMPLATE_FILENAME: &str = "template";
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
@@ -117,7 +111,6 @@ mod tests {
     use super::*;
     use crate::configuration::get_config_for_lang;
     use std::collections::HashMap;
-    use std::path::PathBuf;
 
     #[test]
     fn test_apply_wrapper() {

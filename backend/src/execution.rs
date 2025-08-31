@@ -42,7 +42,7 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
     let output = make_executable_code(block, &blocks, &lang_config)?;
 
     // Write the output to a file
-    let tmp_dir = get_temp_dir();
+    let tmp_dir = &get_temp_dir();
 
     let block_file_path = write_file(
         output,

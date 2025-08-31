@@ -2,6 +2,8 @@
 import { ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import MarkdownEditor from "./MarkdownEditor.vue";
+import { Splitpanes, Pane } from "splitpanes";
+import "splitpanes/dist/splitpanes.css";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
@@ -121,20 +123,29 @@ async function run_block(line: number) {
 <template>
   <main class="container">
     <div class="main-container">
-      <div class="editor-wrapper">
-        <MarkdownEditor
-          @run-block="run_block"
-          v-model:raw_markdown="raw_markdown"
-          v-model:slide_lines="slides"
-          v-model:block_lines="blocks"
-          class="editor"
-        />
-      </div>
-      <div>
-        <div class="exclusion_output">{{ exclusion_output }}</div>
-        <div class="block-output">Block output:</div>
-        <div class="block-output">{{ block_output }}</div>
-      </div>
+      <splitpanes class="default-theme">
+        <pane size="50" class="editor-wrapper">
+          <MarkdownEditor
+            @run-block="run_block"
+            v-model:raw_markdown="raw_markdown"
+            v-model:slide_lines="slides"
+            v-model:block_lines="blocks"
+            class="editor"
+          />
+        </pane>
+        <pane size="50">
+          <splitpanes horizontal>
+            <pane>
+              <div class="exclusion_output">{{ exclusion_output }}</div>
+            </pane>
+
+            <pane>
+              <div class="block-output">Block output:</div>
+              <div class="block-output">{{ block_output }}</div>
+            </pane>
+          </splitpanes>
+        </pane>
+      </splitpanes>
     </div>
     <div class="status-bar">
       <div class="buttons">
@@ -176,12 +187,14 @@ body {
   padding: 0;
   height: 100%;
 }
+
 .block-output {
   font-family: monospace;
   background-color: black;
   color: white;
   white-space: pre-wrap;
 }
+
 .container {
   margin: 0;
   display: flex;
