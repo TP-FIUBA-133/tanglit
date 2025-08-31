@@ -1,9 +1,8 @@
 mod error;
 mod generate_pdf;
+mod macro_dependency;
 mod parser;
 mod tangle;
-mod macro_dependency;
-
 
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::{
@@ -44,7 +43,6 @@ impl TanglitDoc {
         Ok(parse_code_blocks_from_ast(&self.ast)?)
     }
 
-    
     pub fn get_block(
         &self,
         block_name: &str,
@@ -57,8 +55,6 @@ impl TanglitDoc {
                 block_name.to_string(),
             )))
     }
-     
-    
 
     pub fn parse_slides(&self) -> Vec<Slide> {
         parse_slides_from_ast(&self.ast, &self.raw_markdown)

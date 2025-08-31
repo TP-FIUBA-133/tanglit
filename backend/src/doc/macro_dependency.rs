@@ -1,11 +1,10 @@
-use crate::doc::TangleError;
 use crate::doc::CodeBlock;
+use crate::doc::TangleError;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 type Graph = HashMap<String, HashSet<String>>;
-
 
 #[derive(PartialEq, Clone)]
 enum State {
@@ -96,7 +95,6 @@ fn build_dependency_graph(
     Ok(())
 }
 
-
 // has_cycle verifica si hay ciclos en el grafo de dependencias
 // # Post:
 // - Si hay un ciclo, devuelve un error CycleDetected
@@ -105,7 +103,9 @@ fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError
     let mut state = HashMap::new();
 
     for node in graph.keys() {
-        if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited && check_cycle_dfs(node, graph, &mut state) {
+        if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited
+            && check_cycle_dfs(node, graph, &mut state)
+        {
             return Err(TangleError::CycleDetected());
         }
     }
@@ -137,7 +137,6 @@ fn check_cycle_dfs(
     false
 }
 
-
 ///// Tests
 #[cfg(test)]
 mod tests {
@@ -152,7 +151,10 @@ mod tests {
     #[test]
     fn test_single_block_no_dependencies() {
         let mut blocks = HashMap::new();
-        blocks.insert("main".to_string(), CodeBlock::new_with_code("let x = 5;".to_string()));
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new_with_code("let x = 5;".to_string()),
+        );
 
         let graph = build_graph_from_target("main", &blocks).unwrap();
         assert_eq!(graph.len(), 1);
@@ -162,8 +164,14 @@ mod tests {
     #[test]
     fn test_block_with_one_dependency() {
         let mut blocks = HashMap::new();
-        blocks.insert("main".to_string(), CodeBlock::new_with_code("start @[helper]".to_string()));
-        blocks.insert("helper".to_string(), CodeBlock::new_with_code("let x = 42;".to_string()));
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new_with_code("start @[helper]".to_string()),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new_with_code("let x = 42;".to_string()),
+        );
 
         let graph = build_graph_from_target("main", &blocks).unwrap();
 
@@ -177,8 +185,14 @@ mod tests {
     #[test]
     fn test_nested_dependencies() {
         let mut blocks = HashMap::new();
-        blocks.insert("A".to_string(), CodeBlock::new_with_code("start @[B]".to_string()));
-        blocks.insert("B".to_string(), CodeBlock::new_with_code("middle @[C]".to_string()));
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new_with_code("start @[B]".to_string()),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new_with_code("middle @[C]".to_string()),
+        );
         blocks.insert("C".to_string(), CodeBlock::new_with_code("end".to_string()));
 
         let graph = build_graph_from_target("A", &blocks).unwrap();
@@ -194,7 +208,10 @@ mod tests {
     #[test]
     fn test_missing_dependency_block() {
         let mut blocks = HashMap::new();
-        blocks.insert("main".to_string(), CodeBlock::new_with_code("call @[missing]".to_string()));
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new_with_code("call @[missing]".to_string()),
+        );
 
         let result = build_graph_from_target("main", &blocks);
 
@@ -204,8 +221,14 @@ mod tests {
     #[test]
     fn test_cycle_handled_gracefully() {
         let mut blocks = HashMap::new();
-        blocks.insert("A".to_string(), CodeBlock::new_with_code("use @[B]".to_string()));
-        blocks.insert("B".to_string(), CodeBlock::new_with_code("use @[A]".to_string()));
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new_with_code("use @[B]".to_string()),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new_with_code("use @[A]".to_string()),
+        );
 
         let graph = build_graph_from_target("A", &blocks).unwrap();
 
@@ -213,7 +236,6 @@ mod tests {
         assert_eq!(graph["A"], HashSet::from(["B".to_string()]));
         assert_eq!(graph["B"], HashSet::from(["A".to_string()]));
     }
-
 
     // Test for cycle detection
 

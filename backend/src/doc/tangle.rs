@@ -2,7 +2,7 @@ use crate::doc::macro_dependency::check_dependencies;
 
 use crate::doc::CodeBlock;
 use regex::Regex;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::fmt;
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 
@@ -44,7 +44,7 @@ impl CodeBlocks {
     pub fn from_codeblocks(blocks: std::collections::HashMap<String, CodeBlock>) -> Self {
         Self { blocks }
     }
-    
+
     /// Tangles a code block by resolving its macros and producing a
     /// string with all referenced blocks inlined.
     pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
