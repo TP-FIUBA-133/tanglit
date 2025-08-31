@@ -1,4 +1,4 @@
-use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleArgs};
+use backend::cli::{Commands, ExcludeArgs, GeneralArgs, GeneratePDFArgs, TangleArgs};
 use backend::configuration::init_configuration;
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -73,6 +73,13 @@ fn handle_generate_pdf_command(
     ))
 }
 
+fn handle_generate_slides(args: GeneralArgs) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&args.input_file_path)?;
+    doc.generate_slides()?;
+
+    Ok(format!("✅ Slides Generated",))
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -86,6 +93,7 @@ fn main() {
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
+        Commands::GenerateSlides(args) => handle_generate_slides(args),
     };
     match result {
         Ok(message) => println!("{}", message),
