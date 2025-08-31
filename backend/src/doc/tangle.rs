@@ -2,7 +2,7 @@ use crate::doc::macro_dependency::check_dependencies;
 
 use crate::doc::CodeBlock;
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::fmt;
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 

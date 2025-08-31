@@ -1,4 +1,4 @@
-use crate::doc::{ParserError, TangleError};
+use crate::doc::TangleError;
 use crate::doc::CodeBlock;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
@@ -105,10 +105,8 @@ fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError
     let mut state = HashMap::new();
 
     for node in graph.keys() {
-        if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited {
-            if check_cycle_dfs(node, graph, &mut state) {
-                return Err(TangleError::CycleDetected());
-            }
+        if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited && check_cycle_dfs(node, graph, &mut state) {
+            return Err(TangleError::CycleDetected());
         }
     }
     Ok(())
@@ -141,8 +139,7 @@ fn check_cycle_dfs(
 
 
 ///// Tests
-/// 
-/// #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::{HashMap, HashSet};
