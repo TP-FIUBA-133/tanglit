@@ -38,10 +38,10 @@ export async function parse_blocks(raw_markdown: string) {
   return rv;
 }
 
-export async function execute_block(raw_markdown: string, block_name: string): Promise<string> {
+export async function execute_block(raw_markdown: string, block_name: string): Promise<BlockExecute> {
   try {
     const r = await invoke(TANGLIT_COMMANDS.execute, { raw_markdown, block_name });
-    return { result: r };
+    return { result: r as ExecutionOutput };
   } catch (e) {
     return { error: e };
   }
