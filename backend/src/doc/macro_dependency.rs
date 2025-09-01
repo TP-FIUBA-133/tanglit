@@ -23,7 +23,6 @@ pub fn check_dependencies(
     target_block: &str,
     blocks: &HashMap<String, CodeBlock>,
 ) -> Result<(), TangleError> {
-    println!("target_block: {}", target_block);
     // Si detecta que falta un bloque nombrado en una macro, devuelve error BlockNotFound
     let graph = build_graph_from_target(target_block, blocks)?;
 
