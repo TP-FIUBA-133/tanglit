@@ -28,7 +28,9 @@ pub fn check_dependencies(
     let graph = build_graph_from_target(target_block, blocks)?;
 
     // Si detecta ciclo, devuelve error CycleDetected
-    has_cycle(&graph)?;
+    if has_cycle(&graph) {
+        return Err(TangleError::CycleDetected());
+    }
 
     // Si todo OK, devuelve unit ()
     Ok(())
@@ -99,17 +101,17 @@ fn build_dependency_graph(
 // # Post:
 // - Si hay un ciclo, devuelve un error CycleDetected
 // - Si no hay ciclos, devuelve Ok(())
-fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> Result<(), TangleError> {
+fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> bool {
     let mut state = HashMap::new();
 
     for node in graph.keys() {
         if *state.get(node).unwrap_or(&State::NotVisited) == State::NotVisited
             && check_cycle_dfs(node, graph, &mut state)
         {
-            return Err(TangleError::CycleDetected());
+            return true;
         }
     }
-    Ok(())
+    false
 }
 
 /// check_cycle_dfs Realiza una búsqueda en profundidad para detectar ciclos
@@ -242,14 +244,14 @@ mod tests {
     #[test]
     fn no_cycle_empty_graph() {
         let graph: HashMap<String, HashSet<String>> = HashMap::new();
-        assert_eq!(has_cycle(&graph), Ok(()));
+        assert_eq!(has_cycle(&graph), false);
     }
 
     #[test]
     fn no_cycle_single_node() {
         let mut graph = HashMap::new();
         graph.insert("A".to_string(), HashSet::new());
-        assert_eq!(has_cycle(&graph), Ok(()));
+        assert_eq!(has_cycle(&graph), false);
     }
 
     #[test]
@@ -258,14 +260,14 @@ mod tests {
         graph.insert("A".to_string(), set(&["B"]));
         graph.insert("B".to_string(), set(&["C"]));
         graph.insert("C".to_string(), HashSet::new());
-        assert_eq!(has_cycle(&graph), Ok(()));
+        assert_eq!(has_cycle(&graph), false);
     }
 
     #[test]
     fn cycle_self_loop() {
         let mut graph = HashMap::new();
         graph.insert("A".to_string(), set(&["A"]));
-        assert_eq!(has_cycle(&graph), Err(TangleError::CycleDetected()));
+        assert_eq!(has_cycle(&graph), true);
     }
 
     #[test]
@@ -274,7 +276,7 @@ mod tests {
         graph.insert("A".to_string(), set(&["B"]));
         graph.insert("B".to_string(), set(&["C"]));
         graph.insert("C".to_string(), set(&["A"]));
-        assert_eq!(has_cycle(&graph), Err(TangleError::CycleDetected()));
+        assert_eq!(has_cycle(&graph), true);
     }
 
     #[test]
@@ -287,7 +289,7 @@ mod tests {
         graph.insert("X".to_string(), set(&["Y"]));
         graph.insert("Y".to_string(), HashSet::new()); // sin ciclo
 
-        assert_eq!(has_cycle(&graph), Err(TangleError::CycleDetected()));
+        assert_eq!(has_cycle(&graph), true);
     }
 
     #[test]
@@ -299,6 +301,6 @@ mod tests {
         graph.insert("X".to_string(), set(&["Y"]));
         graph.insert("Y".to_string(), HashSet::new());
 
-        assert_eq!(has_cycle(&graph), Ok(()));
+        assert_eq!(has_cycle(&graph), false);
     }
 }
