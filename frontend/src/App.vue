@@ -1,60 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import MarkdownEditor from "./MarkdownEditor.vue";
+import { BlockExecute } from "./tanglit.ts";
+import * as tanglit from "./tanglit.ts";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-
-type ExecutionOutput = {
-  stdout: string,
-  stderr: string,
-  status: number
-}
-
-type BlockExecute = {
-  error?: unknown
-  result?: ExecutionOutput
-}
-
 const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
-
-enum TANGLIT_COMMANDS {
-  exclude = "tanglit_exclude",
-  parse_slides = "tanglit_parse_slides",
-  parse_blocks = "tanglit_parse_blocks",
-}
-
-async function exclude(raw_markdown: string): Promise<string> {
-  return await invoke(TANGLIT_COMMANDS.exclude, { raw_markdown });
-}
-
-async function parse_slides(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{
-    start_line: number;
-    tag: string;
-  }>;
-  return rv.map((item) => item.start_line);
-}
-
-async function parse_blocks(raw_markdown: string) {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{
-    start_line: number;
-    tag: string;
-  }>;
-  return rv;
-}
-
-async function execute_block(raw_markdown: string, block_name: string): Promise<string> {
-  try {
-    const r = await invoke("tanglit_execute_block", { raw_markdown, block_name })
-    return { result: r }
-  } catch (e) {
-    return { error: e }
-  }
-}
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -73,9 +27,9 @@ const time_to_process = ref(0);
 watch(raw_markdown, async (newValue) => {
   let start_time = performance.now();
   try {
-    slides.value = await parse_slides(newValue);
-    exclusion_output.value = await exclude(newValue);
-    all_blocks.value = await parse_blocks(newValue);
+    slides.value = await tanglit.parse_slides(newValue);
+    exclusion_output.value = await tanglit.exclude(newValue);
+    all_blocks.value = await tanglit.parse_blocks(newValue);
   } catch (e) {
     alert("Error: " + e);
   }
@@ -126,7 +80,7 @@ async function run_block(line: number) {
     const block = all_blocks.value[i];
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
-      block_execute.value = await execute_block(raw_markdown.value, block.tag);
+      block_execute.value = await tanglit.execute_block(raw_markdown.value, block.tag);
       break;
     }
   }
