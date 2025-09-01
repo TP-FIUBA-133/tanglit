@@ -23,7 +23,7 @@ export async function exclude(raw_markdown: string): Promise<string> {
 }
 
 export async function parse_slides(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{
+  const rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{
     start_line: number;
     tag: string;
   }>;
@@ -31,7 +31,7 @@ export async function parse_slides(raw_markdown: string): Promise<number[]> {
 }
 
 export async function parse_blocks(raw_markdown: string) {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{
+  const rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{
     start_line: number;
     tag: string;
   }>;
