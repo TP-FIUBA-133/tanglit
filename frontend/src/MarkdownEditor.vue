@@ -9,7 +9,7 @@ type IGlyphMarginWidgetPosition = monaco.editor.IGlyphMarginWidgetPosition;
 
 const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
-const block_lines_mod = defineModel<number[]>("block_lines");
+const props = defineProps(["block_lines"]);
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
 const emit = defineEmits(["run-block"]);
@@ -92,7 +92,7 @@ watch(slide_lines_mod, (newValue, oldValue) => {
   });
 });
 
-watch(block_lines_mod, (newValue, oldValue) => {
+watch(() => props.block_lines, (newValue, oldValue) => {
   if (!editor.value) return;
   let editorInstance = editor.value;
 
