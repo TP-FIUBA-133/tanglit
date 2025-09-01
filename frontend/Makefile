@@ -9,3 +9,10 @@ clean: init
 
 build: init
 	npm run tauri build
+
+check:
+	npm ci && npm run lint && npx prettier --check src
+	cd src-tauri && cargo check && cargo clippy -- -D warnings && cargo fmt -- --check
+
+format:
+	npm ci && npx prettier --write src
