@@ -86,8 +86,7 @@ async function run_block(line: number) {
   }
 }
 
-const block_lines = computed(() => all_blocks.value.map(item => item.start_line))
-
+const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
 </script>
 
 <template>
