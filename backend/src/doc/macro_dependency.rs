@@ -13,33 +13,33 @@ enum State {
     Visited,
 }
 
-// check_dependencies verifica las dependencias de un bloque objetivo
+// check_dependencies checks the dependencies of a target block
 // Post:
-// - Si un bloque en la cadena de macros no existe, devuelve un error BlockNotFound
-// - Si hay un ciclo en las dependencias, devuelve un error CycleDetected
-// - Si todo está bien, devuelve Ok(())
-// - Si hay un error interno, devuelve InternalError
+// - If a block in the macro chain does not exist, it returns a BlockNotFound error
+// - If there is a cycle in the dependencies, it returns a CycleDetected error
+// - If everything is fine, it returns Ok(())
+// - If there is an internal error, it returns InternalError
 pub fn check_dependencies(
     target_block: &str,
     blocks: &HashMap<String, CodeBlock>,
 ) -> Result<(), TangleError> {
-    // Si detecta que falta un bloque nombrado en una macro, devuelve error BlockNotFound
+    // If it detects that a block named in a macro is missing, it returns a BlockNotFound error
     let graph = build_graph_from_target(target_block, blocks)?;
 
-    // Si detecta ciclo, devuelve error CycleDetected
+    // If it detects a cycle, it returns a CycleDetected error
     if has_cycle(&graph) {
         return Err(TangleError::CycleDetected());
     }
 
-    // Si todo OK, devuelve unit ()
+    // If everything is fine, it returns Ok(())
     Ok(())
 }
 
-/// build_graph_from_target Construye un grafo de dependencias a partir del bloque objetivo
-/// y todos los bloques disponibles.
+/// build_graph_from_target Builds a dependency graph from the target block
+/// and all available blocks.
 /// # Post:
-/// - Si un bloque en la cadena de macros no existe, devuelve un error BlockNotFound
-/// - Si todo está bien, devuelve el grafo de dependencias
+/// - If a block in the macro chain does not exist, it returns a BlockNotFound error
+/// - If everything is fine, it returns the dependency graph
 fn build_graph_from_target(
     target_block: &str,
     all_blocks: &HashMap<String, CodeBlock>,
@@ -53,11 +53,10 @@ fn build_graph_from_target(
 
     Ok(graph)
 }
-
-/// build_dependency_graph Construye el grafo de dependencias de forma recursiva.
+/// build_dependency_graph Builds the dependency graph recursively.
 /// # Post:
-/// - Si un bloque en la cadena de macros no existe, devuelve un error BlockNotFound
-/// - Si todo está bien, devuelve el grafo de dependencias
+/// - If a block in the macro chain does not exist, it returns a BlockNotFound error
+/// - If everything is fine, it returns the dependency graph
 fn build_dependency_graph(
     current_block: &str,
     all_blocks: &HashMap<String, CodeBlock>,
@@ -65,44 +64,39 @@ fn build_dependency_graph(
     visited: &mut HashSet<String>,
     regex: &Regex,
 ) -> Result<(), TangleError> {
-    // 1. Verificar existencia del bloque actual
+    // Check existence of the current block
     let block = all_blocks
         .get(current_block)
         .ok_or_else(|| TangleError::BlockNotFound(current_block.to_string()))?;
 
-    // 2. Evitar ciclos
+    // Check for multiple calls
     if visited.contains(current_block) {
         return Ok(());
     }
     visited.insert(current_block.to_string());
 
-    // 3. Agregar el nodo al grafo, incluso si no tiene macros
+    // Add the node to the graph
     graph.entry(current_block.to_string()).or_default();
-
-
-    // 4. Regex para extraer macros
-    
 
     for captures in regex.captures_iter(&block.code) {
         let macro_name = captures[1].to_string();
 
-        // 5. Insertar macro como dependencia
+        // Insert the macro as an adjacent node
         graph
             .get_mut(current_block)
             .unwrap()
             .insert(macro_name.clone());
 
-        // 6. Llamada recursiva (valida existencia)
         build_dependency_graph(&macro_name, all_blocks, graph, visited, regex)?;
     }
 
     Ok(())
 }
 
-// has_cycle verifica si hay ciclos en el grafo de dependencias
-// # Post:
-// - Si hay un ciclo, devuelve un error CycleDetected
-// - Si no hay ciclos, devuelve Ok(())
+/// check_cycle_dfs Performs a depth-first search to detect cycles
+/// # Post:
+/// - If it finds a cycle, it returns true
+/// - If it finds no cycles, it returns false
 fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> bool {
     let mut state = HashMap::new();
 
@@ -116,10 +110,6 @@ fn has_cycle(graph: &HashMap<String, HashSet<String>>) -> bool {
     false
 }
 
-/// check_cycle_dfs Realiza una búsqueda en profundidad para detectar ciclos
-/// # Post:
-/// - Si encuentra un ciclo, devuelve true
-/// - Si no encuentra ciclos, devuelve false
 fn check_cycle_dfs(
     node: &String,
     graph: &HashMap<String, HashSet<String>>,
@@ -151,7 +141,7 @@ mod tests {
         items.iter().cloned().map(String::from).collect()
     }
 
-    // Test para verificar que se construya el grafo correctamente
+    // Test to verify that the graph is built correctly
     #[test]
     fn test_single_block_no_dependencies() {
         let mut blocks = HashMap::new();
@@ -241,7 +231,7 @@ mod tests {
         assert_eq!(graph["B"], HashSet::from(["A".to_string()]));
     }
 
-    // Test for cycle detection
+    // Tests for cycle detection
 
     #[test]
     fn no_cycle_empty_graph() {
@@ -286,11 +276,10 @@ mod tests {
         let mut graph = HashMap::new();
         graph.insert("A".to_string(), set(&["B"]));
         graph.insert("B".to_string(), set(&["C"]));
-        graph.insert("C".to_string(), set(&["A"])); // ciclo aquí
+        graph.insert("C".to_string(), set(&["A"])); // cycle here
 
         graph.insert("X".to_string(), set(&["Y"]));
-        graph.insert("Y".to_string(), HashSet::new()); // sin ciclo
-
+        graph.insert("Y".to_string(), HashSet::new());
         assert_eq!(has_cycle(&graph), true);
     }
 
