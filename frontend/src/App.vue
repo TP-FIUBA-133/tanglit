@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { BlockExecute } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
+import { BlockExecute } from "./tanglit.ts";
+import BlockExecutionResult from "./BlockExecutionResult.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
+const block_execute = ref<BlockExecute>({ error: undefined, output: undefined });
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -103,24 +104,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
       </div>
       <div class="side-panels">
         <div class="exclusion_output">{{ exclusion_output }}</div>
-        <div class="block-execution">
-          Block execution
-          <div class="block-execute-error" v-if="block_execute.error"><span>Error</span>{{ block_execute.error }}</div>
-          <div v-else-if="block_execute.result">
-            <div class="block-output">
-              <div class="block-execute-title">status</div>
-              <div class="block-execute-status">{{ block_execute.result.status }}</div>
-            </div>
-            <div class="block-output">
-              <div class="block-execute-title">stdout</div>
-              <div class="block-execute-stdout">{{ block_execute.result.stdout }}</div>
-            </div>
-            <div class="block-output">
-              <div class="block-execute-title">stderr</div>
-              <div class="block-execute-stderr">{{ block_execute.result.stderr }}</div>
-            </div>
-          </div>
-        </div>
+        <BlockExecutionResult :result="block_execute" />
       </div>
     </div>
     <div class="status-bar">
@@ -157,12 +141,6 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
   -webkit-text-size-adjust: 100%;
 }
 
-.block-execute-title {
-  text-align: left;
-  font-family: sans-serif;
-  padding: 5px;
-}
-
 html,
 body {
   margin: 0;
@@ -170,61 +148,8 @@ body {
   height: 100%;
 }
 
-.block-output {
-  background-color: #00304e;
-  margin: 2px;
-}
-
-.block-execution {
-  display: flex;
-  flex-direction: column;
-  background-color: #006eb3;
-  color: white;
-  gap: 5px;
-}
-
 .side-panels {
   max-width: 50%;
-}
-
-.block-execute-error {
-  font-family: monospace;
-  background-color: darkred;
-  color: white;
-  white-space: pre-wrap;
-  justify-content: left;
-  text-align: left;
-}
-
-.block-execute-status {
-  font-family: monospace;
-  background-color: #2b2727;
-  color: white;
-  white-space: pre-wrap;
-  justify-content: left;
-  text-align: left;
-  padding: 5px;
-}
-
-.block-execute-stderr {
-  font-family: monospace;
-  background-color: #2b2727;
-  color: white;
-  white-space: pre-wrap;
-  justify-content: left;
-  text-align: left;
-  padding: 5px;
-  margin: 5px;
-}
-
-.block-execute-stdout {
-  font-family: monospace;
-  text-align: left;
-  background-color: #2b2727;
-  color: white;
-  margin: 5px;
-  padding: 5px;
-  white-space: pre-wrap;
 }
 
 .container {

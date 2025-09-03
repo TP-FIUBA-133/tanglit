@@ -8,7 +8,7 @@ export type ExecutionOutput = {
 
 export type BlockExecute = {
   error?: unknown;
-  result?: ExecutionOutput;
+  output?: ExecutionOutput;
 };
 
 enum TANGLIT_COMMANDS {
@@ -41,7 +41,7 @@ export async function parse_blocks(raw_markdown: string) {
 export async function execute_block(raw_markdown: string, block_name: string): Promise<BlockExecute> {
   try {
     const r = await invoke(TANGLIT_COMMANDS.execute, { raw_markdown, block_name });
-    return { result: r as ExecutionOutput };
+    return { output: r as ExecutionOutput };
   } catch (e) {
     return { error: e };
   }
