@@ -141,6 +141,67 @@ mod tests {
         items.iter().cloned().map(String::from).collect()
     }
 
+    // Check Dependencies Tests
+    #[test]
+    fn infinite_cycle_in_dependencies_return_cycle_detected() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new_with_code("use @[B]".to_string()),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new_with_code("use @[A]".to_string()),
+        );
+
+        let mut one_block: HashMap<String, CodeBlock> = HashMap::new();
+        one_block.insert(
+            "A".to_string(),
+            CodeBlock::new_with_code("use @[A]".to_string()),
+        );
+
+        let result = check_dependencies("A", &blocks);
+        assert!(matches!(result, Err(TangleError::CycleDetected())));
+        let result_one_block = check_dependencies("A", &one_block);
+        assert!(matches!(
+            result_one_block,
+            Err(TangleError::CycleDetected())
+        ));
+    }
+
+    #[test]
+    fn missing_block_in_dependencies_return_block_not_found() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new_with_code("call @[missing]".to_string()),
+        );
+
+        let emptyblocks: HashMap<String, CodeBlock> = HashMap::new();
+
+        let result = check_dependencies("main", &blocks);
+        assert!(matches!(result, Err(TangleError::BlockNotFound(ref name)) if name == "missing"));
+
+        let result = check_dependencies("missing", &emptyblocks);
+        assert!(matches!(result, Err(TangleError::BlockNotFound(ref name)) if name == "missing"));
+    }
+
+    #[test]
+    fn test_case_no_missing_dependencies_and_no_cycles() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new_with_code("start @[helper]".to_string()),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new_with_code("let x = 42;".to_string()),
+        );
+
+        let result = check_dependencies("main", &blocks);
+        assert!(result.is_ok());
+    }
+
     // Test to verify that the graph is built correctly
     #[test]
     fn test_single_block_no_dependencies() {
