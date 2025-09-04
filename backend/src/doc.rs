@@ -1,5 +1,6 @@
 mod error;
 mod generate_pdf;
+mod macro_dependency;
 mod parser;
 mod tangle;
 
