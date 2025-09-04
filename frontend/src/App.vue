@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import * as tanglit from "./tanglit.ts";
 import { BlockExecute } from "./tanglit.ts";
+import * as tanglit from "./tanglit.ts";
 import BlockExecutionResult from "./BlockExecutionResult.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, output: undefined });
+const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
