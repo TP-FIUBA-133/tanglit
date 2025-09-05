@@ -84,9 +84,9 @@ fn handle_generate_pdf_command(
     ))
 }
 
-fn handle_generate_slides(args: GeneralArgs) -> Result<String, ExecutionError> {
+fn handle_generate_html_slides(args: GeneralArgs) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&args.input_file_path)?;
-    doc.generate_slides()?;
+    doc.generate_html_slides()?;
 
     Ok(format!("✅ Slides Generated",))
 }
@@ -106,7 +106,7 @@ fn main() {
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
-        Commands::GenerateSlidesHtml(args) => handle_generate_slides(args),
+        Commands::GenerateSlidesHtml(args) => handle_generate_html_slides(args),
     };
     match result {
         Ok(message) => println!("{}", message),

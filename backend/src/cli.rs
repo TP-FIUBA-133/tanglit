@@ -18,7 +18,7 @@ pub enum Commands {
     Execute(ExecuteArgs),
     #[command(about = "Generates a PDF from an markdown file, skiping the items with % markers")]
     GeneratePDF(GeneratePDFArgs),
-    #[command(about = "Generates slides from a markdown file")]
+    #[command(about = "Generates html slides from a markdown file")]
     GenerateSlidesHtml(GeneralArgs),
 }
 

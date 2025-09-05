@@ -61,7 +61,7 @@ impl TanglitDoc {
         parse_slides_index_from_ast(&self.ast, &self.raw_markdown)
     }
 
-    pub fn generate_slides(&self) -> Result<(), DocError> {
+    pub fn generate_html_slides(&self) -> Result<(), DocError> {
         let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
 
         for (i, slide) in slides.iter().enumerate() {
