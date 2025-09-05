@@ -93,7 +93,7 @@ fn main() {
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
-        Commands::GenerateSlides(args) => handle_generate_slides(args),
+        Commands::GenerateSlidesHtml(args) => handle_generate_slides(args),
     };
     match result {
         Ok(message) => println!("{}", message),
