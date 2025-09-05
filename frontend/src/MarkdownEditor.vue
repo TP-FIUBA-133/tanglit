@@ -9,7 +9,7 @@ type IGlyphMarginWidgetPosition = monaco.editor.IGlyphMarginWidgetPosition;
 
 const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
-const block_lines_mod = defineModel<number[]>("block_lines");
+const props = defineProps(["block_lines"]);
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
 const emit = defineEmits(["run-block"]);
@@ -92,28 +92,31 @@ watch(slide_lines_mod, (newValue, oldValue) => {
   });
 });
 
-watch(block_lines_mod, (newValue, oldValue) => {
-  if (!editor.value) return;
-  let editorInstance = editor.value;
+watch(
+  () => props.block_lines,
+  (newValue, oldValue) => {
+    if (!editor.value) return;
+    let editorInstance = editor.value;
 
-  const newLines = new Set(newValue || []);
-  const oldLines = new Set(oldValue || []);
+    const newLines = new Set(newValue || []);
+    const oldLines = new Set(oldValue || []);
 
-  oldValue?.forEach((line) => {
-    if (line < 1) return; // Ensure line numbers are valid
-    if (!newLines.has(line)) {
-      const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "code")];
-      editorInstance.removeGlyphMarginWidget(marginGlyph);
-    }
-  });
-  newValue?.forEach((line) => {
-    if (line < 1) return; // Ensure line numbers are valid
-    if (!oldLines.has(line)) {
-      // Add the margin glyph only if it doesn't already exist
-      add_margin_glyph(RunBlockWidget(line)); // Pass the slide index as extra data
-    }
-  });
-});
+    oldValue?.forEach((line) => {
+      if (line < 1) return; // Ensure line numbers are valid
+      if (!newLines.has(line)) {
+        const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "code")];
+        editorInstance.removeGlyphMarginWidget(marginGlyph);
+      }
+    });
+    newValue?.forEach((line) => {
+      if (line < 1) return; // Ensure line numbers are valid
+      if (!oldLines.has(line)) {
+        // Add the margin glyph only if it doesn't already exist
+        add_margin_glyph(RunBlockWidget(line)); // Pass the slide index as extra data
+      }
+    });
+  },
+);
 </script>
 
 <template>
