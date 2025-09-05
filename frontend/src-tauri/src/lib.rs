@@ -1,5 +1,5 @@
 use backend::configuration::init_configuration;
-use backend::doc::{CodeBlock, Slide, TanglitDoc};
+use backend::doc::{CodeBlock, SlideByIndex, TanglitDoc};
 use serde::Serialize;
 
 #[tauri::command(rename_all = "snake_case")]
@@ -11,10 +11,10 @@ fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn tanglit_parse_slides(raw_markdown: &str) -> Result<Vec<Slide>, String> {
+fn tanglit_parse_slides(raw_markdown: &str) -> Result<Vec<SlideByIndex>, String> {
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    Ok(doc.parse_slides())
+    Ok(doc.parse_slides_index())
 }
 
 #[tauri::command(rename_all = "snake_case")]
