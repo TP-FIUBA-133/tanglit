@@ -61,12 +61,12 @@ impl TanglitDoc {
         parse_slides_index_from_ast(&self.ast, &self.raw_markdown)
     }
 
-    pub fn generate_html_slides(&self) -> Result<(), DocError> {
+    pub fn generate_html_slides(&self, output_dir: String) -> Result<(), DocError> {
         let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
 
         for (i, slide) in slides.iter().enumerate() {
             let slide_html = slide.get_html()?;
-            fs::write(format!("slide_{}.html", i), slide_html)?;
+            fs::write(format!("{}/slide_{}.html", output_dir, i), slide_html)?;
         }
 
         Ok(())

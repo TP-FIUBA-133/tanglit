@@ -1,4 +1,4 @@
-use backend::cli::{Commands, ExcludeArgs, GeneralArgs, GeneratePDFArgs, TangleArgs};
+use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesHtmlArgs, TangleArgs};
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -84,9 +84,9 @@ fn handle_generate_pdf_command(
     ))
 }
 
-fn handle_generate_html_slides(args: GeneralArgs) -> Result<String, ExecutionError> {
-    let doc = TanglitDoc::new_from_file(&args.input_file_path)?;
-    doc.generate_html_slides()?;
+fn handle_generate_html_slides(args: GenerateSlidesHtmlArgs) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
+    doc.generate_html_slides(args.output_dir)?;
 
     Ok("✅ Slides Generated".to_string())
 }
