@@ -88,7 +88,7 @@ fn handle_generate_html_slides(args: GeneralArgs) -> Result<String, ExecutionErr
     let doc = TanglitDoc::new_from_file(&args.input_file_path)?;
     doc.generate_html_slides()?;
 
-    Ok(format!("✅ Slides Generated",))
+    Ok("✅ Slides Generated".to_string())
 }
 
 fn main() {
