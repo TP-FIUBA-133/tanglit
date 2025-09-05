@@ -141,14 +141,11 @@ impl Slide {
         let mut slide_md = String::new();
 
         if let Some(title_node) = &self.title {
-            // slide_md.push_str("# ");
             slide_md.push_str(&crate::doc::parser::ast_to_markdown(title_node)?);
-            // slide_md.push_str("\n\n");
         }
 
         for content_node in &self.content {
             slide_md.push_str(&crate::doc::parser::ast_to_markdown(content_node)?);
-            // slide_md.push_str("\n\n");
         }
 
         Ok(crate::doc::parser::markdown_to_html(&slide_md))
