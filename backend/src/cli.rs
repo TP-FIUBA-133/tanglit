@@ -18,8 +18,8 @@ pub enum Commands {
     Execute(ExecuteArgs),
     #[command(about = "Generates a PDF from an markdown file, skiping the items with % markers")]
     GeneratePDF(GeneratePDFArgs),
-    #[command(about = "Generates html slides from a markdown file")]
-    GenerateSlidesHtml(GenerateSlidesHtmlArgs),
+    #[command(about = "Generates markdown slides from a markdown file")]
+    GenerateSlidesMd(GenerateSlidesMdArgs),
 }
 
 #[derive(Args, Debug)]
@@ -99,7 +99,7 @@ pub struct GeneratePDFArgs {
 }
 
 #[derive(Args)]
-pub struct GenerateSlidesHtmlArgs {
+pub struct GenerateSlidesMdArgs {
     #[command(flatten)]
     pub general: GeneralArgs,
     #[arg(

@@ -137,7 +137,7 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
 }
 
 impl Slide {
-    pub fn get_html(&self) -> Result<String, crate::doc::DocError> {
+    pub fn to_markdown(&self) -> Result<String, crate::doc::DocError> {
         let mut slide_md = String::new();
 
         if let Some(title_node) = &self.title {
@@ -148,6 +148,6 @@ impl Slide {
             slide_md.push_str(&crate::doc::parser::ast_to_markdown(content_node)?);
         }
 
-        Ok(crate::doc::parser::markdown_to_html(&slide_md))
+        Ok(slide_md)
     }
 }
