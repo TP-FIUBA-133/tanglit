@@ -5,10 +5,10 @@ mod tests {
     use super::*;
     use crate::doc::parser::parse_from_string;
 
-    fn check_returned_slides(input: &str, expected_slides: Vec<Slide>) {
+    fn check_returned_slides(input: &str, expected_slides: Vec<SlideByIndex>) {
         let input_str = input.trim();
         let root_ast = parse_from_string(input_str).expect("Input expected to be ok");
-        let slides = parse_slides_from_ast(&root_ast, input_str);
+        let slides = parse_slides_index_from_ast(&root_ast, input_str);
         assert_eq!(slides, expected_slides);
     }
 
@@ -31,7 +31,7 @@ Cras lacinia non justo at ornare.
 
         check_returned_slides(
             input,
-            vec![Slide {
+            vec![SlideByIndex {
                 title: None,
                 content: vec![0, 1], // 0: paragraph node, 1: list node
                 start_line: 1,
@@ -54,7 +54,7 @@ Cras lacinia non justo at ornare.
 
         check_returned_slides(
             input,
-            vec![Slide {
+            vec![SlideByIndex {
                 title: Some(0),      // 0: title node
                 content: vec![1, 2], // 1: paragraph node, 2: list node
                 start_line: 1,
@@ -77,7 +77,7 @@ Cras lacinia non justo at ornare.
         "#;
         check_returned_slides(
             input,
-            vec![Slide {
+            vec![SlideByIndex {
                 title: None,         // no title (just like starting slide with --- ---)
                 content: vec![1, 2], // 1: paragraph node, 2: list node
                 start_line: 1,
@@ -106,17 +106,17 @@ sed accumsan varius, odio metus porta ante, id feugiat erat tortor eget lacus.
         check_returned_slides(
             input,
             vec![
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node
                     content: vec![1], // 1: paragraph node
                     start_line: 1,
                 },
-                Slide {
+                SlideByIndex {
                     title: Some(2),   // 2: title node
                     content: vec![3], // 3: list node
                     start_line: 5,
                 },
-                Slide {
+                SlideByIndex {
                     title: Some(4),   // 4: title node
                     content: vec![5], // 5: paragraph node
                     start_line: 10,
@@ -144,12 +144,12 @@ Cras lacinia non justo at ornare.
         check_returned_slides(
             input,
             vec![
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node
                     content: vec![1], // 1: paragraph node
                     start_line: 1,
                 },
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node (same as previous slide)
                     content: vec![3], // 3: list node
                     start_line: 6,
@@ -182,17 +182,17 @@ sed accumsan varius, odio metus porta ante, id feugiat erat tortor eget lacus.
         check_returned_slides(
             input,
             vec![
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node
                     content: vec![1], // 1: paragraph node
                     start_line: 1,
                 },
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node (same as previous slide)
                     content: vec![3], // 3: list node
                     start_line: 6,
                 },
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node (same as previous slide)
                     content: vec![5], // 3: list node
                     start_line: 13,
@@ -220,12 +220,12 @@ Cras lacinia non justo at ornare.
         check_returned_slides(
             input,
             vec![
-                Slide {
+                SlideByIndex {
                     title: Some(0),   // 0: title node
                     content: vec![1], // 1: paragraph node
                     start_line: 1,
                 },
-                Slide {
+                SlideByIndex {
                     title: None,      // no title
                     content: vec![3], // 3: list node
                     start_line: 6,

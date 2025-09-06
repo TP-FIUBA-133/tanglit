@@ -5,6 +5,7 @@ pub enum DocError {
     ParseError(ParserError),
     TangleError(TangleError),
     GeneratePdfError(GeneratePdfError),
+    IOError(String),
 }
 
 impl fmt::Display for DocError {
@@ -13,6 +14,7 @@ impl fmt::Display for DocError {
             DocError::ParseError(e) => write!(f, "Error parsing blocks: {}", e),
             DocError::TangleError(e) => write!(f, "Error tangling block: {}", e),
             DocError::GeneratePdfError(e) => write!(f, "Error generating PDF: {}", e),
+            DocError::IOError(msg) => write!(f, "IO Error: {}", msg),
         }
     }
 }
@@ -32,5 +34,11 @@ impl From<TangleError> for DocError {
 impl From<GeneratePdfError> for DocError {
     fn from(error: GeneratePdfError) -> Self {
         DocError::GeneratePdfError(error)
+    }
+}
+
+impl From<std::io::Error> for DocError {
+    fn from(error: std::io::Error) -> Self {
+        DocError::IOError(format!("IO Error: {}", error))
     }
 }

@@ -18,6 +18,8 @@ pub enum Commands {
     Execute(ExecuteArgs),
     #[command(about = "Generates a PDF from an markdown file, skiping the items with % markers")]
     GeneratePDF(GeneratePDFArgs),
+    #[command(about = "Generates markdown slides from a markdown file")]
+    GenerateSlidesMd(GenerateSlidesMdArgs),
 }
 
 #[derive(Args, Debug)]
@@ -94,4 +96,18 @@ pub struct GeneratePDFArgs {
         env = "OUTPUT_FILE_PATH"
     )]
     pub output_file_path: String,
+}
+
+#[derive(Args)]
+pub struct GenerateSlidesMdArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_DIR",
+        help = "Path to the directory where the output file will be saved.",
+        help_heading = "Tangle Args",
+        env = "OUTPUT_DIR"
+    )]
+    pub output_dir: String,
 }
