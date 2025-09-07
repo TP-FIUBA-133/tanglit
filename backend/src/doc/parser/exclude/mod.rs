@@ -7,7 +7,8 @@ use regex::Regex;
 mod test;
 mod to_node;
 
-static MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
+static PDF_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
+static SLIDES_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (&[ipl]?)").unwrap());
 
 pub enum FilterTarget {
     Pdf,
@@ -40,6 +41,12 @@ impl FilterTarget {
         match self {
             FilterTarget::Pdf => "%p",
             FilterTarget::Slides => "&p",
+        }
+    }
+    fn marker_regex(&self) -> &'static Regex {
+        match self {
+            FilterTarget::Pdf => &PDF_MARKER_REGEX,
+            FilterTarget::Slides => &SLIDES_MARKER_REGEX,
         }
     }
 }
@@ -89,7 +96,8 @@ fn process_paragraph(paragraph: &Paragraph, target: &FilterTarget) -> Option<Par
         children: vec![],
         position: None,
     };
-    if get_paragraph_first_line_marker(paragraph) == Some(target.paragraph_marker().into()) {
+    if get_paragraph_first_line_marker(paragraph, target) == Some(target.paragraph_marker().into())
+    {
         return None; // Exclude the entire paragraph if the first line has the marker
     }
     for child in &paragraph.children {
@@ -169,7 +177,7 @@ fn should_exclude_list(list_node: &List, target: &FilterTarget) -> bool {
     };
 
     // Exclude the entire list if the first line of the first item has the marker
-    let first_line_marker = get_paragraph_first_line_marker(p);
+    let first_line_marker = get_paragraph_first_line_marker(p, target);
     first_line_marker == Some(target.list_marker().into())
 }
 
@@ -180,7 +188,7 @@ fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget) -> bool
     let Node::Paragraph(p) = &list_item.children[0] else {
         return false;
     };
-    let item_marker = get_paragraph_first_line_marker(p);
+    let item_marker = get_paragraph_first_line_marker(p, target);
     item_marker == Some(target.list_item_marker().into())
 }
 
@@ -202,10 +210,11 @@ fn process_text(text: &Text, target: &FilterTarget) -> Option<Text> {
     })
 }
 
-fn get_paragraph_first_line_marker(paragraph: &Paragraph) -> Option<String> {
+fn get_paragraph_first_line_marker(paragraph: &Paragraph, target: &FilterTarget) -> Option<String> {
     if let Some(Node::Text(text)) = paragraph.children.first() {
         let first_line = text.value.lines().next()?;
-        return Some(MARKER_REGEX.captures(first_line)?[1].to_string());
+        let marker_regex = target.marker_regex();
+        return Some(marker_regex.captures(first_line)?[1].to_string());
     }
     None
 }

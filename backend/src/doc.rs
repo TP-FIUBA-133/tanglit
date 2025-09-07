@@ -63,7 +63,7 @@ impl TanglitDoc {
     }
 
     pub fn generate_md_slides(&self, output_dir: String) -> Result<(), DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Pdf);
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
         let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
 
         for (i, slide) in slides.iter().enumerate() {
