@@ -1,14 +1,11 @@
-use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs};
+use backend::cli::{Commands, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs};
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
 use clap::Parser;
-use std::{
-    fs::write,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
 use backend::execution::write_file;
 use env_logger::init;
@@ -39,21 +36,6 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
         extension.as_deref(),
     ) {
         Ok(r) => Ok(format!("Blocks written to {}", r.display())),
-        Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
-    }
-}
-
-fn handle_exclude_command(exclude_args: ExcludeArgs) -> Result<String, ExecutionError> {
-    let input_file_path = exclude_args.general.input_file_path;
-    let doc = TanglitDoc::new_from_file(&input_file_path)?;
-    let output = doc.exclude()?;
-
-    // Write the output to a file
-    match write(Path::new(&exclude_args.output_file_path), output) {
-        Ok(_) => Ok(format!(
-            "Blocks written to {}",
-            exclude_args.output_file_path
-        )),
         Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
     }
 }
@@ -103,7 +85,6 @@ fn main() {
 
     let result = match cli.command {
         Commands::Tangle(args) => handle_tangle_command(args),
-        Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),

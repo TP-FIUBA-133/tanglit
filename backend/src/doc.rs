@@ -4,6 +4,7 @@ mod parser;
 mod tangle;
 
 use crate::doc::generate_pdf::generate_pdf;
+use crate::doc::parser::exclude::FilterTarget;
 use crate::doc::parser::slides::parse_slides_from_ast;
 use crate::doc::parser::{
     ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
@@ -62,7 +63,8 @@ impl TanglitDoc {
     }
 
     pub fn generate_md_slides(&self, output_dir: String) -> Result<(), DocError> {
-        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Pdf);
+        let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
 
         for (i, slide) in slides.iter().enumerate() {
             let slide_md = slide.to_markdown()?;
@@ -72,8 +74,13 @@ impl TanglitDoc {
         Ok(())
     }
 
-    pub fn exclude(&self) -> Result<String, DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast);
+    pub fn filter_content_for_pdf(&self) -> Result<String, DocError> {
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Pdf);
+        Ok(ast_to_markdown(&ast_with_exclusions)?)
+    }
+
+    pub fn filter_content_for_slides(&self) -> Result<String, DocError> {
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
@@ -82,12 +89,9 @@ impl TanglitDoc {
         Ok(CodeBlocks::from_codeblocks(blocks))
     }
 
-    pub fn generate_html(&self) -> Result<String, DocError> {
-        let markdown_with_exclusions = self.exclude()?;
-        Ok(markdown_to_html(&markdown_with_exclusions))
-    }
     pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
-        let html_with_exclusions = self.generate_html()?;
+        let markdown_with_exclusions = self.filter_content_for_pdf()?;
+        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
     }

@@ -8,7 +8,7 @@ mod tests {
 
     fn exclude_from_markdown(input: &str) -> Node {
         let mdast = parse_from_string(input).expect("Failed to parse markdown");
-        exclude_from_ast(&mdast)
+        exclude_from_ast(&mdast, FilterTarget::Pdf)
     }
 
     fn test_exclusions_file(file: &str) {
