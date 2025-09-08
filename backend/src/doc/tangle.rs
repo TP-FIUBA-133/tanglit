@@ -1,8 +1,8 @@
-use crate::doc::macro_dependency::check_dependencies;
+//use crate::doc::macro_dependency::check_dependencies;
 
 use crate::doc::CodeBlock;
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 
@@ -48,28 +48,63 @@ impl CodeBlocks {
     /// Tangles a code block by resolving its macros and producing a
     /// string with all referenced blocks inlined.
     pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
-        let re = Regex::new(MACROS_REGEX)
+        let visited = &mut HashSet::new();
+        let regex = &Regex::new(MACROS_REGEX)
             .map_err(|e| TangleError::InternalError(format!("Failed to compile regex: {}", e)))?;
 
-        check_dependencies(&target_codeblock.tag, &self.blocks)?;
+        self.expand_block(target_codeblock.tag.clone(), visited, regex)
+    }
 
-        // Replace imports with block content
-        let code_block_with_macros =
-            re.replace_all(&target_codeblock.code, |caps: &regex::Captures| {
-                self.blocks
-                    .get(&caps[1])
-                    .unwrap() // It is safe to unwrap here because we checked for missing blocks above
-                    .code
-                    .clone()
-            });
+    fn expand_block(
+        &self,
+        target_codeblock_name: String,
+        visited: &mut HashSet<String>,
+        regex: &Regex,
+    ) -> Result<String, TangleError> {
+        let target_block = self.get_code_block(&target_codeblock_name)?;
 
-        Ok(code_block_with_macros.into_owned())
+        Self::assert_no_cycle(visited, &target_codeblock_name)?;
+
+        visited.insert(target_codeblock_name.clone());
+
+        let mut expanded_block_code = String::new();
+        let mut final_index = 0;
+
+        for macro_references in regex.captures_iter(&target_block.code) {
+            let macro_reference = macro_references.get(0).unwrap(); // @[A]
+            let block_called = &macro_references[1]; // "A"
+
+            expanded_block_code.push_str(&target_block.code[final_index..macro_reference.start()]);
+
+            let macro_block_code = self.expand_block(block_called.to_string(), visited, regex)?;
+
+            expanded_block_code.push_str(&macro_block_code);
+
+            final_index = macro_reference.end();
+        }
+        expanded_block_code.push_str(&target_block.code[final_index..]);
+
+        visited.remove(&target_codeblock_name);
+
+        Ok(expanded_block_code)
     }
 
     /// Find and return the specified code block by name.
     /// Returns `None` if the block can't be found within its collection.
     pub fn get_block(&self, name: &str) -> Option<&CodeBlock> {
         self.blocks.get(name)
+    }
+
+    fn get_code_block(&self, code_name: &str) -> Result<&CodeBlock, TangleError> {
+        self.blocks
+            .get(code_name)
+            .ok_or_else(|| TangleError::BlockNotFound(code_name.to_string()))
+    }
+
+    fn assert_no_cycle(visited: &HashSet<String>, code_name: &str) -> Result<(), TangleError> {
+        (!visited.contains(code_name))
+            .then_some(())
+            .ok_or(TangleError::CycleDetected())
     }
 }
 
@@ -146,8 +181,18 @@ mod tests {
             "helper".to_string(),
             CodeBlock::new(
                 Option::from("python".to_string()),
-                "print('Helper function')".to_string(),
+                "@[config]\nprint('Helper function')".to_string(),
                 "helper".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "config".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('config function')".to_string(),
+                "config".to_string(),
                 vec![],
                 0,
             ),
@@ -160,7 +205,7 @@ mod tests {
 
         assert_eq!(
             tangle,
-            "print('Helper function')\nprint('Hello, world!')".to_string()
+            "print('config function')\nprint('Helper function')\nprint('Hello, world!')".to_string()
         );
     }
 
@@ -185,6 +230,29 @@ mod tests {
         assert_eq!(
             tangle.unwrap_err(),
             TangleError::BlockNotFound("helper".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cycle_detection() {
+        let mut blocks = HashMap::new();
+        let main = CodeBlock::new(
+            Option::from("python".to_string()),
+            "@[main]\nprint('Hello, world!')".to_string(),
+            "main".to_string(),
+            vec![],
+            0,
+        );
+        blocks.insert("main".to_string(), main);
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("main").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block);
+    
+        assert!(tangle.is_err());
+        assert_eq!(
+            tangle.unwrap_err(),
+            TangleError::CycleDetected()
         );
     }
 }
