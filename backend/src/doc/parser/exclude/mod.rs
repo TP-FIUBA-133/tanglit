@@ -9,6 +9,8 @@ mod to_node;
 
 static PDF_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
 static SLIDES_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (&[ipl]?)").unwrap());
+static PDF_MARKER_CLEANER: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s*%[ipl]?$").unwrap());
+static SLIDES_MARKER_CLEANER: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s*&[ipl]?$").unwrap());
 
 pub enum FilterTarget {
     Pdf,
@@ -47,6 +49,12 @@ impl FilterTarget {
         match self {
             FilterTarget::Pdf => &PDF_MARKER_REGEX,
             FilterTarget::Slides => &SLIDES_MARKER_REGEX,
+        }
+    }
+    fn marker_cleaner(&self) -> &'static Regex {
+        match self {
+            FilterTarget::Pdf => &SLIDES_MARKER_CLEANER,
+            FilterTarget::Slides => &PDF_MARKER_CLEANER,
         }
     }
 }
@@ -123,7 +131,12 @@ fn process_code(code: &Code, target: &FilterTarget) -> Option<Code> {
         return None; // Exclude this code block
     }
 
-    Some(code.clone())
+    let cleaned_meta = target.marker_cleaner().replace(meta_str, "").to_string();
+
+    let mut new_code = code.clone();
+    new_code.meta = Some(cleaned_meta);
+
+    Some(new_code)
 }
 
 fn process_list(list_node: &List, target: &FilterTarget) -> Option<List> {
@@ -194,12 +207,16 @@ fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget) -> bool
 
 fn process_text(text: &Text, target: &FilterTarget) -> Option<Text> {
     let mut content = String::new();
+    let cleaner_regex = target.marker_cleaner();
     for line in text.value.lines() {
         if line.ends_with(target.line_marker()) {
             continue;
-        } else {
-            content.push_str((line.to_string() + "\n").as_str());
         }
+
+        // Remove the other target's marker
+        let cleaned_line = cleaner_regex.replace(line, "");
+        content.push_str(cleaned_line.trim_end());
+        content.push('\n');
     }
     if content.is_empty() {
         return None;
