@@ -22,3 +22,6 @@ run-release: ./target/release/backend
 
 ./target/release/backend: $(BACKEND_SRC_FILES)
 	cargo build --release
+
+check:
+	cargo check && cargo clippy -- -D warnings && cargo fmt -- --check && cargo test

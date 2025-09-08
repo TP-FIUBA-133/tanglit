@@ -1,45 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { invoke } from "@tauri-apps/api/core";
+import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
+import { BlockExecute } from "./tanglit.ts";
+import * as tanglit from "./tanglit.ts";
+import BlockExecutionResult from "./BlockExecutionResult.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
-const blocks = ref<number[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_output = ref<string>("");
-enum TANGLIT_COMMANDS {
-  exclude = "tanglit_exclude",
-  parse_slides = "tanglit_parse_slides",
-  parse_blocks = "tanglit_parse_blocks",
-}
-
-async function exclude(raw_markdown: string): Promise<string> {
-  return await invoke(TANGLIT_COMMANDS.exclude, { raw_markdown });
-}
-
-async function parse_slides(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_slides, { raw_markdown })) as Array<{
-    start_line: number;
-    tag: string;
-  }>;
-  return rv.map((item) => item.start_line);
-}
-
-async function parse_blocks(raw_markdown: string): Promise<number[]> {
-  let rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{
-    start_line: number;
-    tag: string;
-  }>;
-  all_blocks.value = rv;
-  return rv.map((item) => item.start_line);
-}
-
-async function execute_block(raw_markdown: string, block_name: string): Promise<string> {
-  let rv = (await invoke("tanglit_execute_block", { raw_markdown, block_name })) as string;
-  return rv;
-}
+const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -58,9 +28,9 @@ const time_to_process = ref(0);
 watch(raw_markdown, async (newValue) => {
   let start_time = performance.now();
   try {
-    slides.value = await parse_slides(newValue);
-    exclusion_output.value = await exclude(newValue);
-    blocks.value = await parse_blocks(newValue);
+    slides.value = await tanglit.parse_slides(newValue);
+    exclusion_output.value = await tanglit.exclude(newValue);
+    all_blocks.value = await tanglit.parse_blocks(newValue);
   } catch (e) {
     alert("Error: " + e);
   }
@@ -111,11 +81,13 @@ async function run_block(line: number) {
     const block = all_blocks.value[i];
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
-      block_output.value = await execute_block(raw_markdown.value, block.tag);
+      block_execute.value = await tanglit.execute_block(raw_markdown.value, block.tag);
       break;
     }
   }
 }
+
+const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
 </script>
 
 <template>
@@ -126,14 +98,13 @@ async function run_block(line: number) {
           @run-block="run_block"
           v-model:raw_markdown="raw_markdown"
           v-model:slide_lines="slides"
-          v-model:block_lines="blocks"
+          :block_lines="block_lines"
           class="editor"
         />
       </div>
-      <div>
+      <div class="side-panels">
         <div class="exclusion_output">{{ exclusion_output }}</div>
-        <div class="block-output">Block output:</div>
-        <div class="block-output">{{ block_output }}</div>
+        <BlockExecutionResult :result="block_execute" />
       </div>
     </div>
     <div class="status-bar">
@@ -176,12 +147,11 @@ body {
   padding: 0;
   height: 100%;
 }
-.block-output {
-  font-family: monospace;
-  background-color: black;
-  color: white;
-  white-space: pre-wrap;
+
+.side-panels {
+  max-width: 50%;
 }
+
 .container {
   margin: 0;
   display: flex;

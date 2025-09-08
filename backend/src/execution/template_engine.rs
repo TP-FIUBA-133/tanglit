@@ -1,10 +1,11 @@
+use crate::errors::ExecutionError;
 use crate::utils::get_indentation_at_offset;
 use crate::utils::set_indentation;
+use log::debug;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
-use std::io;
-use std::path::PathBuf;
+use std::path::Path;
 
 const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
 
@@ -17,24 +18,25 @@ pub struct Template {
 
 impl Template {
     /// Loads a template from a file path.
-    pub fn load_from_file(file_path: PathBuf) -> io::Result<Self> {
-        let content = fs::read_to_string(file_path)?;
-        Self::load(&content).ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "No separator line found (5 or more dashes)",
-            )
-        })
+    pub fn load_from_file(
+        file_path: &Path,
+        placeholder_regex: Option<&str>,
+    ) -> Result<Self, ExecutionError> {
+        let content = fs::read_to_string(file_path)
+            .map_err(|e| ExecutionError::InternalError(format!("Error reading template: {}", e)))?;
+        Self::load(&content, placeholder_regex)
     }
 
     /// Loads a template from the contents of a template file.
-    pub fn load(content: &str) -> Option<Self> {
-        // TODO: parse this from a configuration file and leave this as a default fallback
-        let placeholder = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
+    pub fn load(content: &str, placeholder_regex: Option<&str>) -> Result<Self, ExecutionError> {
+        let placeholder = Regex::new(
+            placeholder_regex.unwrap_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN),
+        )
+        .map_err(|e| ExecutionError::InternalError(format!("Invalid placeholder regex: {}", e)))?;
 
         let template_content = content.to_string();
 
-        Some(Template {
+        Ok(Template {
             placeholder_pattern: placeholder,
             template_content,
         })
@@ -80,6 +82,7 @@ fn process_replacements(
         .replace_all(template, |caps: &regex::Captures| {
             // Extract the key from the first capture group
             if let Some(captured_key) = caps.get(1) {
+                debug!("Found placeholder key: {}", captured_key.as_str());
                 let replacement_value = replacements
                     .get(captured_key.as_str())
                     .cloned()
@@ -120,6 +123,7 @@ fn format_replacement(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     fn get_sample_template() -> String {
         r##"#<IMPORTS>#
@@ -134,14 +138,14 @@ void main(){
     #[test]
     fn test_parse_template_config() {
         let content = get_sample_template();
-        let config = Template::load(&content).unwrap();
+        let config = Template::load(&content, None).unwrap();
         assert!(config.template_content.contains("void main(){"));
     }
 
     #[test]
     fn test_render_with_replacements() {
         let content = get_sample_template();
-        let config = Template::load(&content).unwrap();
+        let config = Template::load(&content, Option::from("#<([A-Z]+)>#")).unwrap();
 
         // The template expects to replace #<IMPORTS># and #<BODY>#
         let rendered = config
@@ -201,7 +205,10 @@ void main(){
 
     #[test]
     fn test_parse_from_file_error() {
-        let result = Template::load_from_file(PathBuf::from("nonexistent_file.txt"));
+        let result = Template::load_from_file(
+            &PathBuf::from("nonexistent_file.txt"),
+            Option::from("<RWA>"),
+        );
         assert!(result.is_err());
     }
 }
