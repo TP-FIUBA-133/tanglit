@@ -205,7 +205,8 @@ mod tests {
 
         assert_eq!(
             tangle,
-            "print('config function')\nprint('Helper function')\nprint('Hello, world!')".to_string()
+            "print('config function')\nprint('Helper function')\nprint('Hello, world!')"
+                .to_string()
         );
     }
 
@@ -248,11 +249,8 @@ mod tests {
 
         let block = codeblocks.get_block("main").unwrap();
         let tangle = codeblocks.tangle_codeblock(block);
-    
+
         assert!(tangle.is_err());
-        assert_eq!(
-            tangle.unwrap_err(),
-            TangleError::CycleDetected()
-        );
+        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
     }
 }
