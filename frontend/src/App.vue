@@ -5,6 +5,8 @@ import { BlockExecute } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
 import BlockExecutionResult from "./BlockExecutionResult.vue";
 import MainMenu from "./MainMenu.vue";
+import { Splitpanes, Pane } from "splitpanes";
+import "splitpanes/dist/splitpanes.css";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
@@ -82,19 +84,27 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
 <template>
   <main class="container">
     <div class="main-container">
-      <div class="editor-wrapper">
-        <MarkdownEditor
-          @run-block="run_block"
-          v-model:raw_markdown="raw_markdown"
-          v-model:slide_lines="slides"
-          :block_lines="block_lines"
-          class="editor"
-        />
-      </div>
-      <div class="side-panels">
-        <div class="exclusion_output">{{ exclusion_output }}</div>
-        <BlockExecutionResult :result="block_execute" />
-      </div>
+      <splitpanes vertical class="default-theme">
+        <pane min-size="50" class="editor-wrapper">
+          <MarkdownEditor
+            @run-block="run_block"
+            v-model:raw_markdown="raw_markdown"
+            v-model:slide_lines="slides"
+            :block_lines="block_lines"
+            class="editor"
+          />
+        </pane>
+        <pane min-size="30">
+          <splitpanes horizontal class="default-theme">
+            <pane min-size="30">
+              <div class="exclusion_output">{{ exclusion_output }}</div>
+            </pane>
+            <pane min-size="30">
+              <BlockExecutionResult :result="block_execute" />
+            </pane>
+          </splitpanes>
+        </pane>
+      </splitpanes>
     </div>
     <MainMenu v-on:load_sample_markdown="load_sample_markdown" v-on:file_selected="file_selected" />
   </main>
@@ -106,10 +116,8 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
-
   color: #0f0f0f;
   background-color: #f6f6f6;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -122,19 +130,14 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-}
-
-.side-panels {
-  max-width: 50%;
+  overflow: hidden; /* Prevent body scrollbars */
 }
 
 .container {
   margin: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  text-align: center;
-  height: 100vh;
+  height: 100vh; /* Fill the entire viewport height */
 }
 
 .main-container {
@@ -145,12 +148,6 @@ body {
   background-color: #ffffff;
 }
 
-.editor-wrapper {
-  flex-grow: 1;
-  overflow: hidden;
-  margin: 0;
-}
-
 .exclusion_output {
   width: 100%;
   color: #5d8cec;
@@ -158,37 +155,5 @@ body {
   white-space: pre-wrap;
   text-align: left;
   font-family: monospace;
-}
-
-.status-bar {
-  flex-shrink: 0; /* Prevents the status bar from shrinking */
-  padding: 4px 10px;
-  border: none;
-  margin: 0;
-  background-color: #29587e;
-  color: white;
-  font-family: sans-serif;
-  font-size: 12px;
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
-  justify-content: center;
-  align-items: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
 }
 </style>
