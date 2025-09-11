@@ -1,19 +1,21 @@
 #[cfg(test)]
 mod tests;
 
-use markdown::mdast::Node;
+use markdown::mdast::{Node, Root};
 use serde::Serialize;
+
+use crate::doc::parser::ast_to_markdown;
 
 const REPEAT_TITLE: &str = "---";
 
 #[derive(Debug, Serialize, Eq, PartialEq)]
-pub struct Slide {
+pub struct SlideByIndex {
     title: Option<usize>, // index of the title node in the AST
     content: Vec<usize>,  // indices of the content node in the AST
     start_line: usize,    // start line in the raw markdown
 }
 
-pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
+pub fn parse_slides_index_from_ast(mdast: &Node, input: &str) -> Vec<SlideByIndex> {
     let mut slides = vec![];
     let Some(children) = mdast.children() else {
         return slides;
@@ -25,13 +27,13 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
                 let start_line = heading.position.as_ref().unwrap().start.line;
                 if heading.children.is_empty() {
                     // it's empty, we still have a slide, but with no title
-                    new_slide = Some(Slide {
+                    new_slide = Some(SlideByIndex {
                         title: None,
                         content: vec![],
                         start_line,
                     });
                 } else if let Node::Text(_) = &heading.children[0] {
-                    new_slide = Some(Slide {
+                    new_slide = Some(SlideByIndex {
                         title: Some(i),
                         content: vec![],
                         start_line,
@@ -50,7 +52,7 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
             if thematic_break_text == REPEAT_TITLE && !slides.is_empty() {
                 new_slide_title = slides[slides.len() - 1].title;
             }
-            new_slide = Some(Slide {
+            new_slide = Some(SlideByIndex {
                 title: new_slide_title,
                 content: vec![],
                 start_line: new_slide_start_line,
@@ -63,7 +65,7 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
         let slides_len = slides.len();
         if slides_len == 0 {
             // If the markdown starts without a title, we still have a slide
-            slides.push(Slide {
+            slides.push(SlideByIndex {
                 title: None,
                 content: vec![i],
                 start_line: child.position().unwrap().start.line,
@@ -73,4 +75,70 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
         }
     }
     slides
+}
+
+#[derive(Debug)]
+pub struct Slide {
+    pub content: Vec<Node>,
+}
+
+pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
+    let mut slides = Vec::new();
+    let mut last_title = None; // keep track of the last seen title
+
+    let Some(children) = mdast.children() else {
+        return slides;
+    };
+
+    for child in children {
+        let mut new_slide = None;
+
+        if let Node::Heading(heading) = child {
+            if heading.depth == 1 {
+                last_title = Some(child.clone()); // update the “last title”
+                new_slide = Some(Slide {
+                    content: vec![child.clone()],
+                });
+            }
+        } else if let Node::ThematicBreak(n) = child {
+            let pos = n.position.as_ref().unwrap();
+            let thematic_break_text = input[pos.start.offset..pos.end.offset].trim();
+
+            if thematic_break_text == REPEAT_TITLE {
+                if let Some(title) = &last_title {
+                    new_slide = Some(Slide {
+                        content: vec![title.clone()],
+                    });
+                } else {
+                    new_slide = Some(Slide { content: vec![] });
+                }
+            } else {
+                new_slide = Some(Slide { content: vec![] });
+            }
+        }
+
+        if let Some(slide) = new_slide {
+            slides.push(slide);
+            continue;
+        }
+
+        if slides.is_empty() {
+            slides.push(Slide {
+                content: vec![child.clone()],
+            });
+        } else {
+            slides.last_mut().unwrap().content.push(child.clone());
+        }
+    }
+    slides
+}
+
+impl Slide {
+    pub fn to_markdown(&self) -> Result<String, crate::doc::DocError> {
+        let node = Node::Root(Root {
+            children: self.content.clone(),
+            position: None,
+        });
+        Ok(ast_to_markdown(&node)?)
+    }
 }
