@@ -120,6 +120,7 @@ mod tests {
             "@[x]\nprintf(\"Hello, world!: %d\",x);".to_string(),
             "main".to_string(),
             vec!["io".to_string()],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -130,6 +131,7 @@ mod tests {
                 "#include <stdio.h>".to_string(),
                 "io".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -140,6 +142,7 @@ mod tests {
                 "int x;\nx = 42;".to_string(),
                 "x".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );

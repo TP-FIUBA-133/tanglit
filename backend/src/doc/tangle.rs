@@ -105,6 +105,7 @@ mod tests {
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
+                None,
                 0,
             ),
         );
@@ -115,6 +116,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -138,6 +140,7 @@ mod tests {
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
+                None,
                 0,
             ),
         );
@@ -156,6 +159,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -166,6 +170,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -189,6 +194,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -213,6 +219,7 @@ mod tests {
             "for i in range(2):\n    @[helper]\n    print('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -223,6 +230,7 @@ mod tests {
                 "print('Helper function')\nprint('second helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
