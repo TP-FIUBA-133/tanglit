@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-use markdown::mdast::Node;
+use markdown::mdast::{Node, Root};
 use serde::Serialize;
 
 const REPEAT_TITLE: &str = "---";
@@ -133,10 +133,10 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
 
 impl Slide {
     pub fn to_markdown(&self) -> Result<String, crate::doc::DocError> {
-        let mut slide_md = String::new();
-        for node in &self.content {
-            slide_md.push_str(&crate::doc::parser::ast_to_markdown(node)?);
-        }
-        Ok(slide_md)
+        let node = Node::Root(Root {
+            children: self.content.clone(),
+            position: None,
+        });
+        Ok(crate::doc::parser::ast_to_markdown(&node)?)
     }
 }
