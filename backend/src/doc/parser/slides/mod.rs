@@ -10,7 +10,6 @@ const REPEAT_TITLE: &str = "---";
 
 #[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct SlideByIndex {
-pub struct SlideByIndex {
     title: Option<usize>, // index of the title node in the AST
     content: Vec<usize>,  // indices of the content node in the AST
     start_line: usize,    // start line in the raw markdown
