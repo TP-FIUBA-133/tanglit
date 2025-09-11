@@ -382,4 +382,83 @@ mod tests {
         assert!(tangle.is_err());
         assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
     }
+
+    #[test]
+    fn test_no_cycle_repeated_dependency() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[B]\nprint('Block A')\n@[B]".to_string(),
+                "A".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Block B')".to_string(),
+                "B".to_string(),
+                vec![],
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("A").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block).unwrap();
+
+        assert_eq!(
+            tangle,
+            "print('Block B')\nprint('Block A')\nprint('Block B')".to_string()
+        );
+    }
+
+    #[test]
+    fn test_no_cycle_shared_dependency() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[B]\nprint('Block A')\n@[C]".to_string(),
+                "A".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Block B')".to_string(),
+                "B".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "C".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[B]\nprint('Block C')".to_string(),
+                "C".to_string(),
+                vec![],
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+        let block = codeblocks.get_block("A").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block).unwrap();
+
+        assert_eq!(
+            tangle,
+            "print('Block B')\nprint('Block A')\nprint('Block B')\nprint('Block C')".to_string()
+        );
+    }
 }
