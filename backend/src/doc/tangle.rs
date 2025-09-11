@@ -253,4 +253,133 @@ mod tests {
         assert!(tangle.is_err());
         assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
     }
+
+    #[test]
+    fn test_cycle_detection_two_level_indirect() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[B]\nprint('Block A')".to_string(),
+                "A".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[C]\nprint('Block B')".to_string(),
+                "B".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "C".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[A]\nprint('Block C')".to_string(),
+                "C".to_string(),
+                vec![],
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("A").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block);
+
+        assert!(tangle.is_err());
+        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+    }
+
+    #[test]
+    fn test_cycle_detection_one_level_indirect() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[B]\nprint('Block A')".to_string(),
+                "A".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[A]\nprint('Block B')".to_string(),
+                "B".to_string(),
+                vec![],
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("A").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block);
+
+        assert!(tangle.is_err());
+        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+    }
+
+    #[test]
+    fn test_cycle_detection_two_level_indirect_with_other_blocks() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "A".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[B]\nprint('Block A')".to_string(),
+                "A".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "B".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[C]\nprint('Block B')\n@[D]".to_string(),
+                "B".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "C".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "@[A]\nprint('Block C')".to_string(),
+                "C".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        blocks.insert(
+            "D".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Block D')".to_string(),
+                "D".to_string(),
+                vec![],
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("A").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block);
+
+        assert!(tangle.is_err());
+        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+    }
 }
