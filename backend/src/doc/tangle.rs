@@ -1,5 +1,3 @@
-//use crate::doc::macro_dependency::check_dependencies;
-
 use crate::doc::CodeBlock;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
