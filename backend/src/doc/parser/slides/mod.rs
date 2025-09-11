@@ -4,6 +4,8 @@ mod tests;
 use markdown::mdast::{Node, Root};
 use serde::Serialize;
 
+use crate::doc::parser::ast_to_markdown;
+
 const REPEAT_TITLE: &str = "---";
 
 #[derive(Debug, Serialize, Eq, PartialEq)]
@@ -137,6 +139,6 @@ impl Slide {
             children: self.content.clone(),
             position: None,
         });
-        Ok(crate::doc::parser::ast_to_markdown(&node)?)
+        Ok(ast_to_markdown(&node)?)
     }
 }
