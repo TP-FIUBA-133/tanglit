@@ -1,12 +1,15 @@
 #[cfg(test)]
 mod tests;
 
-use markdown::mdast::Node;
+use markdown::mdast::{Node, Root};
 use serde::Serialize;
+
+use crate::doc::parser::ast_to_markdown;
 
 const REPEAT_TITLE: &str = "---";
 
 #[derive(Debug, Serialize, Eq, PartialEq)]
+pub struct SlideByIndex {
 pub struct SlideByIndex {
     title: Option<usize>, // index of the title node in the AST
     content: Vec<usize>,  // indices of the content node in the AST
@@ -77,12 +80,13 @@ pub fn parse_slides_index_from_ast(mdast: &Node, input: &str) -> Vec<SlideByInde
 
 #[derive(Debug)]
 pub struct Slide {
-    pub title: Option<Node>,
     pub content: Vec<Node>,
 }
 
 pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
-    let mut slides = vec![];
+    let mut slides = Vec::new();
+    let mut last_title = None; // keep track of the last seen title
+
     let Some(children) = mdast.children() else {
         return slides;
     };
@@ -92,31 +96,26 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
 
         if let Node::Heading(heading) = child {
             if heading.depth == 1 {
-                if heading.children.is_empty() {
-                    new_slide = Some(Slide {
-                        title: None,
-                        content: vec![],
-                    });
-                } else if let Node::Text(_) = &heading.children[0] {
-                    new_slide = Some(Slide {
-                        title: Some(child.clone()),
-                        content: vec![],
-                    });
-                }
+                last_title = Some(child.clone()); // update the “last title”
+                new_slide = Some(Slide {
+                    content: vec![child.clone()],
+                });
             }
         } else if let Node::ThematicBreak(n) = child {
-            let mut new_slide_title: Option<Node> = None;
             let pos = n.position.as_ref().unwrap();
             let thematic_break_text = input[pos.start.offset..pos.end.offset].trim();
 
-            if thematic_break_text == REPEAT_TITLE && !slides.is_empty() {
-                new_slide_title = slides.last().unwrap().title.clone();
+            if thematic_break_text == REPEAT_TITLE {
+                if let Some(title) = &last_title {
+                    new_slide = Some(Slide {
+                        content: vec![title.clone()],
+                    });
+                } else {
+                    new_slide = Some(Slide { content: vec![] });
+                }
+            } else {
+                new_slide = Some(Slide { content: vec![] });
             }
-
-            new_slide = Some(Slide {
-                title: new_slide_title,
-                content: vec![],
-            });
         }
 
         if let Some(slide) = new_slide {
@@ -126,7 +125,6 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
 
         if slides.is_empty() {
             slides.push(Slide {
-                title: None,
                 content: vec![child.clone()],
             });
         } else {
@@ -138,16 +136,10 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
 
 impl Slide {
     pub fn to_markdown(&self) -> Result<String, crate::doc::DocError> {
-        let mut slide_md = String::new();
-
-        if let Some(title_node) = &self.title {
-            slide_md.push_str(&crate::doc::parser::ast_to_markdown(title_node)?);
-        }
-
-        for content_node in &self.content {
-            slide_md.push_str(&crate::doc::parser::ast_to_markdown(content_node)?);
-        }
-
-        Ok(slide_md)
+        let node = Node::Root(Root {
+            children: self.content.clone(),
+            position: None,
+        });
+        Ok(ast_to_markdown(&node)?)
     }
 }
