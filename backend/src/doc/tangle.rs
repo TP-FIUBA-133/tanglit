@@ -8,7 +8,7 @@ const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 pub enum TangleError {
     BlockNotFound(String),
     InternalError(String),
-    CycleDetected(),
+    CycleDetected(Vec<String>),
 }
 
 impl fmt::Display for TangleError {
@@ -16,7 +16,7 @@ impl fmt::Display for TangleError {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
             TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
-            TangleError::CycleDetected() => write!(f, "Cycle detected"),
+            TangleError::CycleDetected(cycle) => write!(f, "Cycle detected: {}", cycle.join(" -> ")),
         }
     }
 }
@@ -26,7 +26,7 @@ impl fmt::Debug for TangleError {
         match self {
             TangleError::BlockNotFound(msg) => write!(f, "Block tag not found: {}", msg),
             TangleError::InternalError(msg) => write!(f, "Internal error: {}", msg),
-            TangleError::CycleDetected() => write!(f, "Cycle detected"),
+            TangleError::CycleDetected(cycle) => write!(f, "Cycle detected: {}", cycle.join(" -> ")),
         }
     }
 }
@@ -46,7 +46,8 @@ impl CodeBlocks {
     /// Tangles a code block by resolving its macros and producing a
     /// string with all referenced blocks inlined.
     pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
-        let visited = &mut HashSet::new();
+        //let visited = &mut HashSet::new();
+        let visited = &mut Vec::new();
         let regex = &Regex::new(MACROS_REGEX)
             .map_err(|e| TangleError::InternalError(format!("Failed to compile regex: {}", e)))?;
 
@@ -56,14 +57,16 @@ impl CodeBlocks {
     fn expand_block(
         &self,
         target_codeblock_name: String,
-        visited: &mut HashSet<String>,
+        //visited: &mut HashSet<String>,
+        visited: &mut Vec<String>,
         regex: &Regex,
     ) -> Result<String, TangleError> {
         let target_block = self.get_code_block(&target_codeblock_name)?;
 
         Self::assert_no_cycle(visited, &target_codeblock_name)?;
 
-        visited.insert(target_codeblock_name.clone());
+        //visited.insert(target_codeblock_name.clone());
+        visited.push(target_codeblock_name.clone());
 
         let mut expanded_block_code = String::new();
         let mut final_index = 0;
@@ -82,7 +85,8 @@ impl CodeBlocks {
         }
         expanded_block_code.push_str(&target_block.code[final_index..]);
 
-        visited.remove(&target_codeblock_name);
+        //visited.remove(&target_codeblock_name);
+        visited.pop();
 
         Ok(expanded_block_code)
     }
@@ -99,11 +103,47 @@ impl CodeBlocks {
             .ok_or_else(|| TangleError::BlockNotFound(code_name.to_string()))
     }
 
+    /*
     fn assert_no_cycle(visited: &HashSet<String>, code_name: &str) -> Result<(), TangleError> {
         (!visited.contains(code_name))
             .then_some(())
             .ok_or(TangleError::CycleDetected())
     }
+     */
+    
+
+    fn assert_no_cycle(visited: &Vec<String>, node: &str) -> Result<(), TangleError> {
+        if let Some(start_idx) = visited.iter().position(|n| n == node) {
+            let cycle_path: Vec<String> = visited[start_idx..].to_vec();
+            let displayed_cycle = format_cycle_path(node, cycle_path);
+
+            return Err(TangleError::CycleDetected(displayed_cycle));
+        }
+        Ok(())
+    }
+
+
+}
+
+fn format_cycle_path(node: &str, mut cycle_path: Vec<String>) -> Vec<String> {
+    // to complete the cycle
+    cycle_path.push(node.to_string());
+
+    let cycle_len = cycle_path.len();
+    let preview_len = 3;
+
+    let displayed_cycle: Vec<String> = 
+        if cycle_len <= 2 * preview_len {
+            // short path: show entire
+            cycle_path
+        } else {
+            // large path: first 3 + "..." + last 3
+            let mut v = cycle_path[..preview_len].to_vec();
+            v.push("...".to_string());
+            v.extend_from_slice(&cycle_path[cycle_len - preview_len..]);
+            v
+        };
+    displayed_cycle
 }
 
 #[cfg(test)]
@@ -249,7 +289,7 @@ mod tests {
         let tangle = codeblocks.tangle_codeblock(block);
 
         assert!(tangle.is_err());
-        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+        assert!(matches!(tangle.unwrap_err(), TangleError::CycleDetected(_)));
     }
 
     #[test]
@@ -292,7 +332,7 @@ mod tests {
         let tangle = codeblocks.tangle_codeblock(block);
 
         assert!(tangle.is_err());
-        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+        assert!(matches!(tangle.unwrap_err(), TangleError::CycleDetected(_)));
     }
 
     #[test]
@@ -325,7 +365,7 @@ mod tests {
         let tangle = codeblocks.tangle_codeblock(block);
 
         assert!(tangle.is_err());
-        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+        assert!(matches!(tangle.unwrap_err(), TangleError::CycleDetected(_)));
     }
 
     #[test]
@@ -378,7 +418,7 @@ mod tests {
         let tangle = codeblocks.tangle_codeblock(block);
 
         assert!(tangle.is_err());
-        assert_eq!(tangle.unwrap_err(), TangleError::CycleDetected());
+        assert!(matches!(tangle.unwrap_err(), TangleError::CycleDetected(_)));
     }
 
     #[test]
@@ -459,4 +499,101 @@ mod tests {
             "print('Block B')\nprint('Block A')\nprint('Block B')\nprint('Block C')".to_string()
         );
     }
+
+    #[test]
+    fn test_cycle_detection_short_cycle_message() {
+        let mut blocks = HashMap::new();
+
+        // Ciclo: A -> B -> A
+        blocks.insert("A".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[B]".to_string(),
+            "A".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("B".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[A]".to_string(),
+            "B".to_string(),
+            vec![],
+            0,
+        ));
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+        let block = codeblocks.get_block("A").unwrap();
+        let err = codeblocks.tangle_codeblock(block).unwrap_err();
+
+        let msg = err.to_string();
+        assert!(msg.contains("Cycle detected"));
+        assert!(msg.contains("A -> B -> A"), "Unexpected cycle message: {}", msg);
+    }
+
+
+    #[test]
+    fn test_cycle_detection_long_cycle_message() {
+        let mut blocks = HashMap::new();
+
+        // Ciclo: A -> B -> C -> D -> E -> F -> G -> A
+        blocks.insert("A".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[B]".to_string(),
+            "A".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("B".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[C]".to_string(),
+            "B".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("C".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[D]".to_string(),
+            "C".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("D".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[E]".to_string(),
+            "D".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("E".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[F]".to_string(),
+            "E".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("F".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[G]".to_string(),
+            "F".to_string(),
+            vec![],
+            0,
+        ));
+        blocks.insert("G".to_string(), CodeBlock::new(
+            Some("rust".to_string()),
+            "@[A]".to_string(),
+            "G".to_string(),
+            vec![],
+            0,
+        ));
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+        let block = codeblocks.get_block("A").unwrap();
+        let err = codeblocks.tangle_codeblock(block).unwrap_err();
+
+        let msg = err.to_string();
+        assert!(msg.contains("Cycle detected"));
+        assert!(msg.contains("A -> B -> C"), "Should show first 3 nodes");
+        assert!(msg.contains("F -> G -> A"), "Should show last 3 nodes");
+        assert!(msg.contains("..."), "Should show ellipsis for skipped nodes");
+    }
+
 }
