@@ -21,6 +21,15 @@ function initReveal() {
     plugins: [Markdown, Highlight],
     embedded: true,
     hash: true,
+    // -- Adjust these values --
+    width: 1920,
+    height: 1080,
+    margin: 0.04, // A bit of breathing room
+
+    // Optional: Set scaling limits
+    minScale: 0.2,
+    maxScale: 2.0,
+    center: false, // Disables vertical centering
   });
 
   deck.on("ready", () => {
@@ -55,5 +64,10 @@ onMounted(() => {
   font-family: sans-serif !important;
   height: 100%;
   width: 100%;
+}
+
+.reveal .slides {
+  /* This overrides the theme's default text-align: center */
+  text-align: left;
 }
 </style>
