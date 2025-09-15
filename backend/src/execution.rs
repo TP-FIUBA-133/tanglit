@@ -9,8 +9,9 @@ use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
 use crate::execution::util::find_file_in_dir;
 use log::debug;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, Stdio};
 pub use wrappers::{make_executable_code, write_file};
 
 const EXECUTE_SCRIPT_FILENAME: &str = "execute";
@@ -22,7 +23,15 @@ const EXECUTE_SCRIPT_FILENAME: &str = "execute";
 /// * `target_block` - The name of the target code block to execute
 /// # Returns
 /// * Result containing the stdout of the execution or an error if something goes wrong
-pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionOutput {
+    pub status: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<ExecutionOutput, ExecutionError> {
     let blocks = doc.get_code_blocks()?;
 
     let block = blocks
@@ -60,16 +69,22 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
 pub fn execute_block(
     block_file_path: &Path,
     lang_config: &LanguageConfig,
-) -> Result<Output, ExecutionError> {
+) -> Result<ExecutionOutput, ExecutionError> {
     let execution_script_path = find_file_in_dir(&lang_config.config_dir, EXECUTE_SCRIPT_FILENAME)
         .ok_or(ExecutionError::InternalError(
             "Execution script not found".to_string(),
         ))?;
 
-    Command::new(execution_script_path)
+    let output = Command::new(execution_script_path)
         .arg(block_file_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .map_err(|e| ExecutionError::InternalError(e.to_string()))
+        .map_err(|e| ExecutionError::InternalError(e.to_string()))?;
+
+    Ok(ExecutionOutput {
+        status: output.status.code(),
+        stdout: String::from_utf8(output.stdout).expect("Error reading stdout"),
+        stderr: String::from_utf8(output.stderr).expect("Error reading stderr"),
+    })
 }

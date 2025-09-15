@@ -16,6 +16,7 @@ enum TANGLIT_COMMANDS {
   parse_slides = "tanglit_parse_slides",
   parse_blocks = "tanglit_parse_blocks",
   execute = "tanglit_execute_block",
+  format_output = "tanglit_format_output",
 }
 
 export async function exclude(raw_markdown: string): Promise<string> {
@@ -42,6 +43,16 @@ export async function execute_block(raw_markdown: string, block_name: string): P
   try {
     const r = await invoke(TANGLIT_COMMANDS.execute, { raw_markdown, block_name });
     return { output: r as ExecutionOutput };
+  } catch (e) {
+    return { error: e };
+  }
+}
+
+export async function format_output(raw_markdown: string, block_name: string, output): Promise<BlockExecute> {
+  try {
+    const r = await invoke(TANGLIT_COMMANDS.format_output, { raw_markdown, block_name, output });
+    console.log("RESULT: ", r);
+    return r;
   } catch (e) {
     return { error: e };
   }
