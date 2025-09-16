@@ -1,11 +1,12 @@
+use crate::errors::ExecutionError;
+use crate::utils::get_indentation_at_offset;
+use crate::utils::set_indentation;
+use log::debug;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
-use std::io;
-use std::path::PathBuf;
+use std::path::Path;
 
-const DEFAULT_INDENT_SIZE: usize = 4;
-const DEFAULT_INDENT_CHARACTER: char = ' ';
 const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
 
 #[derive(Debug, Clone)]
@@ -17,24 +18,25 @@ pub struct Template {
 
 impl Template {
     /// Loads a template from a file path.
-    pub fn load_from_file(file_path: PathBuf) -> io::Result<Self> {
-        let content = fs::read_to_string(file_path)?;
-        Self::load(&content).ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "No separator line found (5 or more dashes)",
-            )
-        })
+    pub fn load_from_file(
+        file_path: &Path,
+        placeholder_regex: Option<&str>,
+    ) -> Result<Self, ExecutionError> {
+        let content = fs::read_to_string(file_path)
+            .map_err(|e| ExecutionError::InternalError(format!("Error reading template: {}", e)))?;
+        Self::load(&content, placeholder_regex)
     }
 
     /// Loads a template from the contents of a template file.
-    pub fn load(content: &str) -> Option<Self> {
-        // TODO: parse this from a configuration file and leave this as a default fallback
-        let placeholder = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
+    pub fn load(content: &str, placeholder_regex: Option<&str>) -> Result<Self, ExecutionError> {
+        let placeholder = Regex::new(
+            placeholder_regex.unwrap_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN),
+        )
+        .map_err(|e| ExecutionError::InternalError(format!("Invalid placeholder regex: {}", e)))?;
 
         let template_content = content.to_string();
 
-        Some(Template {
+        Ok(Template {
             placeholder_pattern: placeholder,
             template_content,
         })
@@ -80,6 +82,7 @@ fn process_replacements(
         .replace_all(template, |caps: &regex::Captures| {
             // Extract the key from the first capture group
             if let Some(captured_key) = caps.get(1) {
+                debug!("Found placeholder key: {}", captured_key.as_str());
                 let replacement_value = replacements
                     .get(captured_key.as_str())
                     .cloned()
@@ -95,55 +98,6 @@ fn process_replacements(
     Ok(())
 }
 
-/// Sets indentation for each line in the code.
-/// This function modifies the input code by intentionally indenting all lines *after* the first.
-/// The first line is **not** indented to respect the indentation set by the template, otherwise
-/// the first line would get indented twice.
-///
-/// # Arguments
-/// * `code` - A mutable reference to the string containing the code to indent
-/// * `indent_size` - Optional number of indentation characters to use per level (defaults to 4)
-/// * `indent_character` - Optional character to use for indentation (defaults to space)
-///
-/// # examples
-/// if we have a snippet of code like:
-///
-/// ~~~text
-/// int x = 42;
-/// std::cout << "the meaning of life is " << x << std::endl;
-/// std::cout << "or something like that" << std::endl;
-/// ~~~
-/// and the desired indentation is 4 spaces, then the output string is actually:
-/// ~~~text
-/// int x = 42;
-///     std::cout << "the meaning of life is " << x << std::endl;
-///     std::cout << "or something like that" << std::endl;
-/// ~~~
-pub fn set_indentation(
-    code: &mut String,
-    indent_size: Option<usize>,
-    indent_character: Option<char>,
-) {
-    let indent_str = indent_character
-        .unwrap_or(DEFAULT_INDENT_CHARACTER)
-        .to_string()
-        .repeat(indent_size.unwrap_or(DEFAULT_INDENT_SIZE));
-
-    let mut lines = code.lines();
-    let mut result = String::new();
-
-    if let Some(first_line) = lines.next() {
-        result.push_str(first_line);
-    }
-
-    for line in lines {
-        result.push('\n');
-        result.push_str(&format!("{}{}", indent_str, line));
-    }
-
-    *code = result;
-}
-
 fn format_replacement(
     wrapper_template: &str,
     replacement_value: String,
@@ -151,14 +105,9 @@ fn format_replacement(
 ) -> String {
     // Find the start of the match in the result string to calculate indentation
     let mat = captures.get(0).unwrap();
-    let start = wrapper_template[..mat.start()]
-        .rfind('\n')
-        .map_or(0, |i| i + 1);
-    let line = &wrapper_template[start..mat.start()];
+    let start_offset = mat.start();
 
-    // Calculate indentation: count all characters from start of line to match
-    // Doesn't handle tabs correctly, but assumes spaces for simplicity
-    let indent_size = line.len();
+    let indent_size = get_indentation_at_offset(wrapper_template, start_offset);
 
     let mut replacement = replacement_value;
     if indent_size > 0 {
@@ -174,6 +123,7 @@ fn format_replacement(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     fn get_sample_template() -> String {
         r##"#<IMPORTS>#
@@ -188,14 +138,14 @@ void main(){
     #[test]
     fn test_parse_template_config() {
         let content = get_sample_template();
-        let config = Template::load(&content).unwrap();
+        let config = Template::load(&content, None).unwrap();
         assert!(config.template_content.contains("void main(){"));
     }
 
     #[test]
     fn test_render_with_replacements() {
         let content = get_sample_template();
-        let config = Template::load(&content).unwrap();
+        let config = Template::load(&content, Option::from("#<([A-Z]+)>#")).unwrap();
 
         // The template expects to replace #<IMPORTS># and #<BODY>#
         let rendered = config
@@ -255,7 +205,10 @@ void main(){
 
     #[test]
     fn test_parse_from_file_error() {
-        let result = Template::load_from_file(PathBuf::from("nonexistent_file.txt"));
+        let result = Template::load_from_file(
+            &PathBuf::from("nonexistent_file.txt"),
+            Option::from("<RWA>"),
+        );
         assert!(result.is_err());
     }
 }

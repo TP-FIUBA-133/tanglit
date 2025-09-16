@@ -4,6 +4,7 @@ mod parser;
 mod tangle;
 
 use crate::doc::generate_pdf::generate_pdf;
+use crate::doc::parser::slides::parse_slides_from_ast;
 use crate::doc::parser::{
     ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
 };
@@ -12,9 +13,10 @@ use markdown::mdast::Node;
 pub use parser::ParserError;
 pub use parser::code_block::CodeBlock;
 use parser::exclude::exclude_from_ast;
-pub use parser::slides::Slide;
-use parser::slides::parse_slides_from_ast;
+pub use parser::slides::SlideByIndex;
+use parser::slides::parse_slides_index_from_ast;
 use std::collections::HashMap;
+use std::fs;
 pub use tangle::CodeBlocks;
 pub use tangle::TangleError;
 
@@ -55,8 +57,19 @@ impl TanglitDoc {
             )))
     }
 
-    pub fn parse_slides(&self) -> Vec<Slide> {
-        parse_slides_from_ast(&self.ast, &self.raw_markdown)
+    pub fn parse_slides_index(&self) -> Vec<SlideByIndex> {
+        parse_slides_index_from_ast(&self.ast, &self.raw_markdown)
+    }
+
+    pub fn generate_md_slides(&self, output_dir: String) -> Result<(), DocError> {
+        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+
+        for (i, slide) in slides.iter().enumerate() {
+            let slide_md = slide.to_markdown()?;
+            fs::write(format!("{}/slide_{}.md", output_dir, i), slide_md)?;
+        }
+
+        Ok(())
     }
 
     pub fn exclude(&self) -> Result<String, DocError> {
@@ -69,9 +82,12 @@ impl TanglitDoc {
         Ok(CodeBlocks::from_codeblocks(blocks))
     }
 
-    pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+    pub fn generate_html(&self) -> Result<String, DocError> {
         let markdown_with_exclusions = self.exclude()?;
-        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
+        Ok(markdown_to_html(&markdown_with_exclusions))
+    }
+    pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+        let html_with_exclusions = self.generate_html()?;
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
     }

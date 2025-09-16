@@ -1,4 +1,5 @@
 use crate::doc::CodeBlock;
+use crate::utils::{get_indentation_at_offset, set_indentation};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -77,7 +78,11 @@ impl CodeBlocks {
 
             expanded_block_code.push_str(&target_block.code[final_index..macro_reference.start()]);
 
-            let macro_block_code = self.expand_block(block_called.to_string(), visited, regex)?;
+            let mut macro_block_code = self.expand_block(block_called.to_string(), visited, regex)?;
+
+            let placeholder_offset = macro_reference.start();
+            let indent_size = get_indentation_at_offset(&target_block.code, placeholder_offset);
+            set_indentation(&mut macro_block_code, Some(indent_size), Some(' '));
 
             expanded_block_code.push_str(&macro_block_code);
 
@@ -271,6 +276,44 @@ mod tests {
             TangleError::BlockNotFound("helper".to_string())
         );
     }
+
+    #[test]
+    fn test_insert_macro_with_correct_indentation() {
+        let mut blocks = HashMap::new();
+        let main = CodeBlock::new(
+            Option::from("python".to_string()),
+            "for i in range(2):\n    @[helper]\n    print('Hello, world!')".to_string(),
+            "main".to_string(),
+            vec![],
+            0,
+        );
+        blocks.insert("main".to_string(), main.clone());
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Helper function')\nprint('second helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+                0,
+            ),
+        );
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let block = codeblocks.get_block("main").unwrap();
+        let tangle = codeblocks.tangle_codeblock(block).unwrap();
+
+        assert_eq!(
+            tangle,
+                    r#"for i in range(2):
+    print('Helper function')
+    print('second helper function')
+    print('Hello, world!')"#
+                .to_string()
+        );
+    }
+
+        
 
     #[test]
     fn test_cycle_detection() {
