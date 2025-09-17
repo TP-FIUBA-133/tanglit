@@ -37,7 +37,6 @@ struct ExecutionOutput {
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<ExecutionOutput, String> {
-    init_configuration().map_err(|e| format!("Error initializing configuration: {}", e))?;
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
 
@@ -53,6 +52,8 @@ fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<Executi
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    init_configuration().expect("Error initializing configuration");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
