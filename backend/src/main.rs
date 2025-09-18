@@ -66,9 +66,9 @@ fn handle_execute_command(
     Ok(format!(
         "Output of block {}:\n{}\nstderr: {}\nexit code: {}",
         execute_args.target_block,
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr),
-        &output.status
+        output.stdout,
+        output.stderr,
+        output.status.unwrap_or(-1)
     ))
 }
 

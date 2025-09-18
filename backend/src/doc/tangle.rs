@@ -106,6 +106,7 @@ mod tests {
                 "main".to_string(),
                 vec!["helper".to_string()],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -115,6 +116,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -139,6 +141,7 @@ mod tests {
                 "main".to_string(),
                 vec!["helper".to_string()],
                 0,
+                0,
             ),
         );
         let codeblocks = CodeBlocks::from_codeblocks(blocks);
@@ -157,6 +160,7 @@ mod tests {
             "main".to_string(),
             vec![],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -166,6 +170,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -189,6 +194,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            0,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -214,6 +220,7 @@ mod tests {
             "main".to_string(),
             vec![],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -223,6 +230,7 @@ mod tests {
                 "print('Helper function')\nprint('second helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );

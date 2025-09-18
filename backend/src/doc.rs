@@ -8,6 +8,7 @@ use crate::doc::parser::slides::parse_slides_from_ast;
 use crate::doc::parser::{
     ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
 };
+use crate::execution::ExecutionOutput;
 pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
@@ -15,6 +16,7 @@ pub use parser::code_block::CodeBlock;
 use parser::exclude::exclude_from_ast;
 pub use parser::slides::SlideByIndex;
 use parser::slides::parse_slides_index_from_ast;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 pub use tangle::CodeBlocks;
@@ -23,6 +25,12 @@ pub use tangle::TangleError;
 pub struct TanglitDoc {
     raw_markdown: String,
     ast: Node,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Edit {
+    pub content: String,
+    pub line: usize,
 }
 
 impl TanglitDoc {
@@ -70,6 +78,27 @@ impl TanglitDoc {
         }
 
         Ok(())
+    }
+
+    pub fn format_output(
+        &self,
+        block_id: &str,
+        output: &ExecutionOutput,
+    ) -> Result<Edit, DocError> {
+        Ok(Edit {
+            content: format!(
+                "```output\nOutput:\n{}\n\nStderr:\n{}\n\nExit code: {}\n```",
+                output.stdout,
+                output.stderr,
+                output.status.map_or("None".to_string(), |s| s.to_string())
+            ),
+            line: self
+                .get_code_blocks()?
+                .get_block(block_id)
+                .unwrap()
+                .end_line
+                + 1,
+        })
     }
 
     pub fn exclude(&self) -> Result<String, DocError> {
