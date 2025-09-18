@@ -12,6 +12,7 @@ pub struct CodeBlock {
     pub code: String,
     pub tag: String,
     pub imports: Vec<String>,
+    pub export: Option<String>,
     pub start_line: usize,
 }
 
@@ -29,6 +30,7 @@ impl CodeBlock {
             code,
             tag,
             imports,
+            export,
             start_line,
         }
     }
@@ -41,7 +43,8 @@ impl CodeBlock {
     /// If the tag is not specified in the code block, it defaults to the line number of the code block.
     pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
         let language = code_block.lang;
-        let (tag, imports, export) = Self::parse_metadata(code_block.meta.unwrap_or_default().as_str());
+        let (tag, imports, export) =
+            Self::parse_metadata(code_block.meta.unwrap_or_default().as_str());
         let start_line = code_block
             .position
             .ok_or_else(|| ParserError::CodeBlockError("Block position not found".to_string()))?
@@ -80,15 +83,11 @@ impl CodeBlock {
 
         // Extract export
         let export_re = Regex::new(EXPORT_REGEX).expect("Failed to compile EXPORT_REGEX");
-        let export = export_re
-            .captures(metadata)
-            .map(|caps| caps[1].to_string());
-
+        let export = export_re.captures(metadata).map(|caps| caps[1].to_string());
 
         // Remove the `use=[...]` and `export=` part to get the block tag
         let metadata_without_use = use_re.replace(metadata, "");
         let metadata_clean = export_re.replace(&metadata_without_use, "");
-
 
         // Take the first word that is not part of `use=` and `export=` as the tag
         let tag = metadata_clean
