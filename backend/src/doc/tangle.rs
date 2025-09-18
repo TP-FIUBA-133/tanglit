@@ -88,6 +88,13 @@ impl CodeBlocks {
     pub fn get_block(&self, name: &str) -> Option<&CodeBlock> {
         self.blocks.get(name)
     }
+
+    pub fn get_all_blocks_to_tangle(&self) -> Vec<&CodeBlock> {
+        self.blocks
+            .values()
+            .filter(|block| block.export.is_some())
+            .collect()
+    }
 }
 
 #[cfg(test)]
