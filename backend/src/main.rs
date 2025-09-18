@@ -1,4 +1,4 @@
-use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleArgs};
+use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleAllArgs, TangleArgs};
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -84,6 +84,56 @@ fn handle_generate_pdf_command(
     ))
 }
 
+fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
+    let input_file_path = &tangle_all_command.general.input_file_path;
+    let doc = TanglitDoc::new_from_file(input_file_path)?;
+
+    let blocks = doc.get_code_blocks()?;
+    let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
+
+    for block in &blocks_to_tangle {
+        if let Err(e) = make_tangle_to_codeblock(&blocks, block, &tangle_all_command) {
+            return Err(WriteError(format!(
+                "Error writing block '{}' (line {}): {}",
+                block.export.clone().unwrap_or(block.tag.clone()),
+                block.start_line,
+                e,
+            )));
+        }
+    }
+
+    Ok(format!(
+        "All {} blocks tangled to {}",
+        blocks_to_tangle.len(),
+        tangle_all_command.output_dir
+    ))
+}
+
+fn make_tangle_to_codeblock(
+    blocks: &backend::doc::CodeBlocks,
+    target_block: &backend::doc::CodeBlock,
+    tangle_args: &TangleAllArgs,
+) -> Result<(), ExecutionError> {
+    let output = blocks.tangle_codeblock(target_block)?;
+
+    let lang = target_block.language.clone();
+    let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
+    let extension = lang_config.and_then(|cfg| cfg.extension);
+
+    write_file(
+        output,
+        &PathBuf::from(&tangle_args.output_dir),
+        &target_block
+            .export
+            .clone()
+            .unwrap_or(target_block.tag.clone()),
+        extension.as_deref(),
+    )
+    .map_err(|e| WriteError(format!("Error writing to file: {}", e)))?;
+
+    Ok(())
+}
+
 fn main() {
     init(); // Initialize the logger
 
@@ -99,6 +149,7 @@ fn main() {
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
+        Commands::TangleAll(args) => handle_tangle_all_command(args),
     };
     match result {
         Ok(message) => println!("{}", message),
