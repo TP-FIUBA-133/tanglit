@@ -2,8 +2,8 @@ mod template_engine;
 mod util;
 mod wrappers;
 
+use crate::configuration::get_temp_dir;
 use crate::configuration::language_config::LanguageConfig;
-use crate::configuration::{get_config_for_lang, get_temp_dir};
 use crate::doc::TangleError;
 use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
@@ -36,7 +36,7 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
             "No language specified".to_string(),
         ))?;
 
-    let lang_config = get_config_for_lang(lang)?;
+    let lang_config = LanguageConfig::load_for_lang(lang)?;
 
     // create the executable source code
     let output = make_executable_code(block, &blocks, &lang_config)?;
