@@ -3,13 +3,11 @@ use crate::doc::CodeBlock;
 use crate::doc::CodeBlocks;
 use crate::doc::DocError;
 use crate::errors::ExecutionError;
-use crate::execution::template_engine::Template;
-use crate::execution::util::find_file_in_dir;
+use crate::execution::render_engine::render;
+use regex::Regex;
 use std::fs::write;
 use std::io;
 use std::path::Path;
-
-const TEMPLATE_FILENAME: &str = "template";
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
     ext.as_ref()
@@ -33,24 +31,19 @@ pub fn write_file(
 
 /// Loads and applies a template wrapper for the given language
 fn add_wrapper(
-    template_path: &Path,
+    lang_config: &LanguageConfig,
     code: &str,
     imports: &str,
-    placeholder_regex: Option<&str>,
 ) -> Result<String, ExecutionError> {
-    // Try to load template file or error out if not found
-    Template::load_from_file(template_path, placeholder_regex)
-        .map_err(|e| {
-            ExecutionError::UnsupportedLanguage(format!(
-                "Unable to load template at path {}: {}",
-                template_path.display(),
-                e
-            ))
-        })
-        .and_then(|t| {
-            t.render(imports, code)
-                .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e)))
-        })
+    // TODO: This should be done in config
+    let Some(pattern) = &lang_config.placeholder_regex else {
+        return Err(ExecutionError::InternalError("Unable to get regex.".into()));
+    };
+
+    let regex = Regex::new(&pattern).map_err(|e| ExecutionError::InternalError(e.to_string()))?;
+
+    render(lang_config.template.clone(), &regex, imports, code)
+        .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e)))
 }
 
 pub fn tangle_imports(
@@ -91,17 +84,7 @@ pub fn make_executable_code(
         .tangle_codeblock(code_block)
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
-    // Use template-based wrapper with fallback to hardcoded ones
-    let template_path = find_file_in_dir(&lang_config.config_dir, TEMPLATE_FILENAME).ok_or(
-        ExecutionError::InternalError("No template file found in language config dir".to_string()),
-    )?;
-
-    add_wrapper(
-        &template_path,
-        &code,
-        &imports_output,
-        lang_config.placeholder_regex.as_deref(),
-    )
+    add_wrapper(lang_config, &code, &imports_output)
 }
 
 #[cfg(test)]

@@ -1,26 +1,60 @@
 use serde::Deserialize;
-use std::fs;
-use std::path::PathBuf;
+use std::fs::{self, read_to_string};
+use std::path::{Path, PathBuf};
+
+use crate::configuration::get_config_dir;
+use crate::errors::ConfigError;
+
+const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
+const TEMPLATE_FILENAME: &str = "template";
 
 #[derive(Deserialize, Clone)]
 pub struct LanguageConfig {
     pub extension: Option<String>,
-    #[serde(skip)]
-    pub config_dir: PathBuf,
     pub placeholder_regex: Option<String>, // If empty, we'll use the default
+    #[serde(skip)]
+    pub template: String,
 }
 
 impl LanguageConfig {
-    pub fn load_from_str(toml_str: &str) -> Result<LanguageConfig, Box<dyn std::error::Error>> {
-        let config: LanguageConfig = toml::from_str(toml_str)?;
+    pub fn load_for_lang(lang: &str) -> Result<LanguageConfig, ConfigError> {
+        let config_dir = get_config_dir();
+        let config_path = &config_dir.join("executors").join(lang).join("config.toml");
+        let mut config = LanguageConfig::load_from_file(config_path)?;
+        let template_path = find_file_in_dir(&config_dir, TEMPLATE_FILENAME).ok_or(
+            ConfigError::NotFound(format!("{config_dir:?}/{TEMPLATE_FILENAME}")),
+        )?;
+        config.template = read_to_string(template_path)?;
         Ok(config)
     }
-    pub fn load_from_file(path: &PathBuf) -> Result<LanguageConfig, Box<dyn std::error::Error>> {
+
+    pub fn load_from_file(path: &PathBuf) -> Result<LanguageConfig, ConfigError> {
         let content = fs::read_to_string(path)?;
-        let mut lang_config = LanguageConfig::load_from_str(&content)?;
-        lang_config.config_dir = path.parent().unwrap().to_path_buf();
-        Ok(lang_config)
+        LanguageConfig::load_from_str(&content)
     }
+
+    pub fn load_from_str(toml_str: &str) -> Result<LanguageConfig, ConfigError> {
+        let mut config: LanguageConfig = toml::from_str(toml_str)?;
+        config.placeholder_regex = Some(
+            config
+                .placeholder_regex
+                .unwrap_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN.into()),
+        );
+        Ok(config)
+    }
+}
+
+pub fn find_file_in_dir(dir: &Path, filename: &str) -> Option<PathBuf> {
+    fs::read_dir(dir).ok().and_then(|entries| {
+        entries
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .find(|path| {
+                path.file_stem()
+                    .map(|stem| stem == filename)
+                    .unwrap_or(false)
+            })
+    })
 }
 
 #[cfg(test)]
