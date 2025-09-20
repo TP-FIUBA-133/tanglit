@@ -22,6 +22,8 @@ pub enum Commands {
         about = "Tangle all code blocks marked for export from a markdown file and export to export files"
     )]
     TangleAll(TangleAllArgs),
+    #[command(about = "Generates markdown slides from a markdown file")]
+    GenerateSlidesMd(GenerateSlidesMdArgs),
 }
 
 #[derive(Args, Debug)]
@@ -102,6 +104,20 @@ pub struct GeneratePDFArgs {
 
 #[derive(Args)]
 pub struct TangleAllArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_DIR",
+        help = "Path to the directory where the output files will be saved.",
+        help_heading = "Tangle All Args",
+        env = "OUTPUT_DIR"
+    )]
+    pub output_dir: String,
+}
+
+#[derive(Args)]
+pub struct GenerateSlidesMdArgs {
     #[command(flatten)]
     pub general: GeneralArgs,
     #[arg(

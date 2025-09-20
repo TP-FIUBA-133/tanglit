@@ -1,4 +1,4 @@
-use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, TangleAllArgs, TangleArgs};
+use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs, TangleAllArgs};
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -119,6 +119,14 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
     ))
 }
 
+fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
+    doc.generate_md_slides(args.output_dir)?;
+
+    Ok("✅ Slides Generated".to_string())
+
+}
+
 fn main() {
     init(); // Initialize the logger
 
@@ -135,6 +143,7 @@ fn main() {
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
         Commands::TangleAll(args) => handle_tangle_all_command(args),
+        Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
     };
     match result {
         Ok(message) => println!("{}", message),
