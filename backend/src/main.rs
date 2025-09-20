@@ -1,4 +1,6 @@
-use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs, TangleAllArgs};
+use backend::cli::{
+    Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs,
+};
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -124,7 +126,6 @@ fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, Execu
     doc.generate_md_slides(args.output_dir)?;
 
     Ok("✅ Slides Generated".to_string())
-
 }
 
 fn main() {
