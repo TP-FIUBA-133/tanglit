@@ -42,7 +42,12 @@ fn add_wrapper(
 
     let regex = Regex::new(pattern).map_err(|e| ExecutionError::InternalError(e.to_string()))?;
 
-    render(lang_config.template.clone(), &regex, imports, code)
+    let template = lang_config
+        .template
+        .clone()
+        .ok_or(ExecutionError::TemplateNotFound)?;
+
+    render(template, &regex, imports, code)
         .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e)))
 }
 

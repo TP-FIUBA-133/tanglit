@@ -14,9 +14,9 @@ pub struct LanguageConfig {
     pub extension: Option<String>,
     pub placeholder_regex: Option<String>, // If empty, we'll use the default
     #[serde(skip)]
-    pub template: String,
+    pub template: Option<String>,
     #[serde(skip)]
-    pub execution_script_path: String,
+    pub execution_script_path: Option<PathBuf>,
 }
 
 impl LanguageConfig {
@@ -24,15 +24,10 @@ impl LanguageConfig {
         let lang_config_path = &get_config_dir().join("executors").join(lang);
         let toml_path = lang_config_path.join("config.toml");
         let mut config = LanguageConfig::load_from_file(&toml_path)?;
-        let template_path = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME).ok_or(
-            ConfigError::NotFound(format!("{:?}", lang_config_path.join(TEMPLATE_FILENAME))),
-        )?;
-        config.template = read_to_string(template_path)?;
-        let execution_script_path = find_file_in_dir(lang_config_path, EXECUTE_SCRIPT_FILENAME)
-            .ok_or(ConfigError::InternalError(
-                "Execution script not found".to_string(),
-            ))?;
-        config.execution_script_path = execution_script_path.to_string_lossy().to_string();
+        config.template = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME)
+            .map(read_to_string)
+            .transpose()?;
+        config.execution_script_path = find_file_in_dir(lang_config_path, EXECUTE_SCRIPT_FILENAME);
         Ok(config)
     }
 

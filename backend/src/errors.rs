@@ -8,6 +8,8 @@ pub enum ExecutionError {
     InternalError(String),
     ImportError(String),
     ConfigError(ConfigError),
+    ExecutionScriptNotFound,
+    TemplateNotFound,
 }
 
 impl fmt::Display for ExecutionError {
@@ -19,6 +21,12 @@ impl fmt::Display for ExecutionError {
             ExecutionError::InternalError(msg) => write!(f, "Internal error: {}", msg),
             ExecutionError::ImportError(msg) => write!(f, "Import codeblock error: {}", msg),
             ExecutionError::ConfigError(e) => write!(f, "Configuration error: {}", e),
+            ExecutionError::ExecutionScriptNotFound => {
+                write!(f, "Execution script not found in language configuration")
+            }
+            ExecutionError::TemplateNotFound => {
+                write!(f, "Template file not found in language configuration")
+            }
         }
     }
 }
@@ -32,6 +40,12 @@ impl fmt::Debug for ExecutionError {
             ExecutionError::InternalError(msg) => write!(f, "Internal error: {}", msg),
             ExecutionError::ImportError(msg) => write!(f, "Import codeblock error: {}", msg),
             ExecutionError::ConfigError(e) => write!(f, "Configuration error: {}", e),
+            ExecutionError::ExecutionScriptNotFound => {
+                write!(f, "Execution script not found in language configuration")
+            }
+            ExecutionError::TemplateNotFound => {
+                write!(f, "Template file not found in language configuration")
+            }
         }
     }
 }
