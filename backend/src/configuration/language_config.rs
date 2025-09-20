@@ -7,6 +7,7 @@ use crate::errors::ConfigError;
 
 const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
 const TEMPLATE_FILENAME: &str = "template";
+const EXECUTE_SCRIPT_FILENAME: &str = "execute";
 
 #[derive(Deserialize, Clone)]
 pub struct LanguageConfig {
@@ -14,6 +15,8 @@ pub struct LanguageConfig {
     pub placeholder_regex: Option<String>, // If empty, we'll use the default
     #[serde(skip)]
     pub template: String,
+    #[serde(skip)]
+    pub execution_script_path: String,
 }
 
 impl LanguageConfig {
@@ -25,6 +28,10 @@ impl LanguageConfig {
             ConfigError::NotFound(format!("{config_dir:?}/{TEMPLATE_FILENAME}")),
         )?;
         config.template = read_to_string(template_path)?;
+        let execution_script_path = find_file_in_dir(&config_dir, EXECUTE_SCRIPT_FILENAME).ok_or(
+            ConfigError::InternalError("Execution script not found".to_string()),
+        )?;
+        config.execution_script_path = execution_script_path.to_string_lossy().to_string();
         Ok(config)
     }
 
