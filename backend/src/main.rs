@@ -84,9 +84,7 @@ fn handle_generate_pdf_command(
     ))
 }
 
-fn handle_tangle_all_command(
-    tangle_all_command: TangleAllArgs,
-) -> Result<String, ExecutionError> {
+fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
     let input_file_path = &tangle_all_command.general.input_file_path;
     let doc = TanglitDoc::new_from_file(input_file_path)?;
 
@@ -102,10 +100,7 @@ fn handle_tangle_all_command(
             .and_then(|l| get_config_for_lang(l).ok())
             .and_then(|cfg| cfg.extension);
 
-        let file_name = block
-            .export
-            .clone()
-            .unwrap_or(block.tag.clone());
+        let file_name = block.export.clone().unwrap_or(block.tag.clone());
 
         // Manejo de error simple
         write_file(
@@ -123,7 +118,6 @@ fn handle_tangle_all_command(
         tangle_all_command.output_dir
     ))
 }
-
 
 fn main() {
     init(); // Initialize the logger
