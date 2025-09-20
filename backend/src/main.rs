@@ -84,7 +84,9 @@ fn handle_generate_pdf_command(
     ))
 }
 
-fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
+fn handle_tangle_all_command(
+    tangle_all_command: TangleAllArgs,
+) -> Result<String, ExecutionError> {
     let input_file_path = &tangle_all_command.general.input_file_path;
     let doc = TanglitDoc::new_from_file(input_file_path)?;
 
@@ -92,14 +94,27 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
     let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
 
     for block in &blocks_to_tangle {
-        if let Err(e) = make_tangle_to_codeblock(&blocks, block, &tangle_all_command) {
-            return Err(WriteError(format!(
-                "Error writing block '{}' (line {}): {}",
-                block.export.clone().unwrap_or(block.tag.clone()),
-                block.start_line,
-                e,
-            )));
-        }
+        let output = blocks.tangle_codeblock(block)?;
+
+        let lang = block.language.clone();
+        let extension = lang
+            .as_deref()
+            .and_then(|l| get_config_for_lang(l).ok())
+            .and_then(|cfg| cfg.extension);
+
+        let file_name = block
+            .export
+            .clone()
+            .unwrap_or(block.tag.clone());
+
+        // Manejo de error simple
+        write_file(
+            output,
+            &PathBuf::from(&tangle_all_command.output_dir),
+            &file_name,
+            extension.as_deref(),
+        )
+        .map_err(|e| WriteError(format!("Error writing to file: {}", e)))?;
     }
 
     Ok(format!(
@@ -109,30 +124,6 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
     ))
 }
 
-fn make_tangle_to_codeblock(
-    blocks: &backend::doc::CodeBlocks,
-    target_block: &backend::doc::CodeBlock,
-    tangle_args: &TangleAllArgs,
-) -> Result<(), ExecutionError> {
-    let output = blocks.tangle_codeblock(target_block)?;
-
-    let lang = target_block.language.clone();
-    let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
-    let extension = lang_config.and_then(|cfg| cfg.extension);
-
-    write_file(
-        output,
-        &PathBuf::from(&tangle_args.output_dir),
-        &target_block
-            .export
-            .clone()
-            .unwrap_or(target_block.tag.clone()),
-        extension.as_deref(),
-    )
-    .map_err(|e| WriteError(format!("Error writing to file: {}", e)))?;
-
-    Ok(())
-}
 
 fn main() {
     init(); // Initialize the logger
