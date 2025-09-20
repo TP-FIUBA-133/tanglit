@@ -1,5 +1,5 @@
 use crate::doc::{DocError, TangleError};
-use std::fmt;
+use std::{fmt, io};
 
 pub enum ExecutionError {
     DocError(DocError),
@@ -7,6 +7,7 @@ pub enum ExecutionError {
     UnsupportedLanguage(String),
     InternalError(String),
     ImportError(String),
+    ConfigError(ConfigError),
 }
 
 impl fmt::Display for ExecutionError {
@@ -17,6 +18,7 @@ impl fmt::Display for ExecutionError {
             ExecutionError::UnsupportedLanguage(msg) => write!(f, "Unsupported language: {}", msg),
             ExecutionError::InternalError(msg) => write!(f, "Internal error: {}", msg),
             ExecutionError::ImportError(msg) => write!(f, "Import codeblock error: {}", msg),
+            ExecutionError::ConfigError(e) => write!(f, "Configuration error: {}", e),
         }
     }
 }
@@ -29,6 +31,7 @@ impl fmt::Debug for ExecutionError {
             ExecutionError::UnsupportedLanguage(msg) => write!(f, "Unsupported language: {}", msg),
             ExecutionError::InternalError(msg) => write!(f, "Internal error: {}", msg),
             ExecutionError::ImportError(msg) => write!(f, "Import codeblock error: {}", msg),
+            ExecutionError::ConfigError(e) => write!(f, "Configuration error: {}", e),
         }
     }
 }
@@ -42,5 +45,51 @@ impl From<DocError> for ExecutionError {
 impl From<TangleError> for ExecutionError {
     fn from(error: TangleError) -> Self {
         ExecutionError::DocError(DocError::from(error))
+    }
+}
+
+impl From<ConfigError> for ExecutionError {
+    fn from(error: ConfigError) -> Self {
+        ExecutionError::ConfigError(error)
+    }
+}
+
+pub enum ConfigError {
+    IoError(String),
+    ParseError(String),
+    NotFound(String),
+    InternalError(String),
+}
+impl fmt::Display for ConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConfigError::IoError(msg) => write!(f, "I/O error: {}", msg),
+            ConfigError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+            ConfigError::NotFound(msg) => write!(f, "Not found: {}", msg),
+            ConfigError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+        }
+    }
+}
+
+impl From<io::Error> for ConfigError {
+    fn from(error: io::Error) -> Self {
+        ConfigError::IoError(error.to_string())
+    }
+}
+
+impl From<toml::de::Error> for ConfigError {
+    fn from(error: toml::de::Error) -> Self {
+        ConfigError::ParseError(error.to_string())
+    }
+}
+
+impl fmt::Debug for ConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConfigError::IoError(msg) => write!(f, "I/O error: {}", msg),
+            ConfigError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+            ConfigError::NotFound(msg) => write!(f, "Not found: {}", msg),
+            ConfigError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+        }
     }
 }

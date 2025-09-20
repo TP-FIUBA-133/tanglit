@@ -57,3 +57,5 @@ pub fn get_indentation_at_offset(code: &str, offset: usize) -> usize {
     // TODO: handle tabs (usually 4 spaces = 1 tab)
     line.len()
 }
+
+// TODO: This file could be moved under the render module

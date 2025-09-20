@@ -1,85 +1,51 @@
+use crate::configuration::language_config::LanguageConfig;
 use crate::errors::ExecutionError;
 use crate::utils::get_indentation_at_offset;
 use crate::utils::set_indentation;
 use log::debug;
 use regex::Regex;
 use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
 
-const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
+/// Renders the template with the provided replacements
+/// by interpolating the locations of the placeholders with their corresponding replacement values.  
+/// The interpolation takes into account indentation
+/// by indenting all lines after the first with the same amount of columns as the placeholder's position.
+/// Missing replacement values are removed from the template.
+/// This function assumes that the template contains 2 placeholder markers: IMPORTS and BODY.
+/// If any of these are missing, they will be replaced by empty strings.
+/// # Arguments
+/// * `imports` - contents of the imports section to be spliced
+///   into the IMPORTS placeholder marker of the template
+/// * `body` - contents of the codeblock to be spliced into
+///   the BODY placeholder marker of the template
+/// # Returns
+/// * A result with a string with the rendered template content
+///   or an error if rendering fails
+pub fn render(
+    template: String,
+    regex: &Regex,
+    imports: &str,
+    body: &str,
+) -> Result<String, ExecutionError> {
+    let replacements = HashMap::from([
+        ("IMPORTS".to_string(), imports.to_string()),
+        ("BODY".to_string(), body.to_string()),
+    ]);
 
-#[derive(Debug, Clone)]
-pub struct Template {
-    // TODO: add configuration field to configure template parameters
-    pub placeholder_pattern: Regex,
-    pub template_content: String,
+    let result = process_replacements(&replacements, &regex, template)?;
+
+    Ok(result)
 }
 
-impl Template {
-    /// Loads a template from a file path.
-    pub fn load_from_file(
-        file_path: &Path,
-        placeholder_regex: Option<&str>,
-    ) -> Result<Self, ExecutionError> {
-        let content = fs::read_to_string(file_path)
-            .map_err(|e| ExecutionError::InternalError(format!("Error reading template: {}", e)))?;
-        Self::load(&content, placeholder_regex)
-    }
-
-    /// Loads a template from the contents of a template file.
-    pub fn load(content: &str, placeholder_regex: Option<&str>) -> Result<Self, ExecutionError> {
-        let placeholder = Regex::new(
-            placeholder_regex.unwrap_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN),
-        )
-        .map_err(|e| ExecutionError::InternalError(format!("Invalid placeholder regex: {}", e)))?;
-
-        let template_content = content.to_string();
-
-        Ok(Template {
-            placeholder_pattern: placeholder,
-            template_content,
-        })
-    }
-
-    /// Renders the template with the provided replacements
-    /// by interpolating the locations of the placeholders with their corresponding replacement values.  
-    /// The interpolation takes into account indentation
-    /// by indenting all lines after the first with the same amount of columns as the placeholder's position.
-    /// Missing replacement values are removed from the template.
-    /// This function assumes that the template contains 2 placeholder markers: IMPORTS and BODY.
-    /// If any of these are missing, they will be replaced by empty strings.
-    /// # Arguments
-    /// * `imports` - contents of the imports section to be spliced
-    ///   into the IMPORTS placeholder marker of the template
-    /// * `body` - contents of the codeblock to be spliced into
-    ///   the BODY placeholder marker of the template
-    /// # Returns
-    /// * A result with a string with the rendered template content
-    ///   or an error if rendering fails
-    pub fn render(&self, imports: &str, body: &str) -> Result<String, String> {
-        let mut result = self.template_content.clone();
-        let pattern = &self.placeholder_pattern;
-
-        let replacements = HashMap::from([
-            ("IMPORTS".to_string(), imports.to_string()),
-            ("BODY".to_string(), body.to_string()),
-        ]);
-
-        process_replacements(&replacements, pattern, &mut result)?;
-
-        Ok(result)
-    }
-}
-
+// TODO: Remove unwraps.
 fn process_replacements(
     replacements: &HashMap<String, String>,
     regex: &Regex,
-    template: &mut String,
-) -> Result<(), String> {
+    template: String,
+) -> Result<String, ExecutionError> {
     // Replace all occurrences, adjusting indentation for each match
     let result = regex
-        .replace_all(template, |caps: &regex::Captures| {
+        .replace_all(&template, |caps: &regex::Captures| {
             // Extract the key from the first capture group
             if let Some(captured_key) = caps.get(1) {
                 debug!("Found placeholder key: {}", captured_key.as_str());
@@ -87,15 +53,14 @@ fn process_replacements(
                     .get(captured_key.as_str())
                     .cloned()
                     .unwrap_or("".to_string());
-                format_replacement(template, replacement_value, caps)
+                format_replacement(&template, replacement_value, caps)
             } else {
                 // If no capture group, keep the original match
                 caps.get(0).unwrap().as_str().to_string()
             }
         })
         .into_owned();
-    *template = result;
-    Ok(())
+    Ok(result)
 }
 
 fn format_replacement(
