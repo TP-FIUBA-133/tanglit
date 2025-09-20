@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use crate::configuration::get_config_dir;
 use crate::errors::ConfigError;
 
-const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
+pub const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
 const TEMPLATE_FILENAME: &str = "template";
 const EXECUTE_SCRIPT_FILENAME: &str = "execute";
 
@@ -21,16 +21,17 @@ pub struct LanguageConfig {
 
 impl LanguageConfig {
     pub fn load_for_lang(lang: &str) -> Result<LanguageConfig, ConfigError> {
-        let config_dir = get_config_dir();
-        let config_path = &config_dir.join("executors").join(lang).join("config.toml");
-        let mut config = LanguageConfig::load_from_file(config_path)?;
-        let template_path = find_file_in_dir(&config_dir, TEMPLATE_FILENAME).ok_or(
-            ConfigError::NotFound(format!("{config_dir:?}/{TEMPLATE_FILENAME}")),
+        let lang_config_path = &get_config_dir().join("executors").join(lang);
+        let toml_path = lang_config_path.join("config.toml");
+        let mut config = LanguageConfig::load_from_file(&toml_path)?;
+        let template_path = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME).ok_or(
+            ConfigError::NotFound(format!("{:?}", lang_config_path.join(TEMPLATE_FILENAME))),
         )?;
         config.template = read_to_string(template_path)?;
-        let execution_script_path = find_file_in_dir(&config_dir, EXECUTE_SCRIPT_FILENAME).ok_or(
-            ConfigError::InternalError("Execution script not found".to_string()),
-        )?;
+        let execution_script_path = find_file_in_dir(lang_config_path, EXECUTE_SCRIPT_FILENAME)
+            .ok_or(ConfigError::InternalError(
+                "Execution script not found".to_string(),
+            ))?;
         config.execution_script_path = execution_script_path.to_string_lossy().to_string();
         Ok(config)
     }
@@ -51,7 +52,7 @@ impl LanguageConfig {
     }
 }
 
-pub fn find_file_in_dir(dir: &Path, filename: &str) -> Option<PathBuf> {
+pub fn find_file_in_dir(dir: impl AsRef<Path>, filename: &str) -> Option<PathBuf> {
     fs::read_dir(dir).ok().and_then(|entries| {
         entries
             .filter_map(|entry| entry.ok())

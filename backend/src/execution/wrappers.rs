@@ -40,7 +40,7 @@ fn add_wrapper(
         return Err(ExecutionError::InternalError("Unable to get regex.".into()));
     };
 
-    let regex = Regex::new(&pattern).map_err(|e| ExecutionError::InternalError(e.to_string()))?;
+    let regex = Regex::new(pattern).map_err(|e| ExecutionError::InternalError(e.to_string()))?;
 
     render(lang_config.template.clone(), &regex, imports, code)
         .map_err(|e| ExecutionError::InternalError(format!("Template render error: {}", e)))
@@ -92,7 +92,6 @@ mod tests {
     use temp_env::with_var;
 
     use super::*;
-    use crate::configuration::get_config_for_lang;
     use std::collections::HashMap;
 
     #[test]
@@ -132,7 +131,7 @@ mod tests {
         );
         println!("Using config path: {}", config_path);
         with_var("TANGLIT_CONFIG_DIR", Some(config_path), || {
-            let lang_config = get_config_for_lang("c").unwrap();
+            let lang_config = LanguageConfig::load_for_lang("c").unwrap();
             let tangle =
                 make_executable_code(&main, &CodeBlocks::from_codeblocks(blocks), &lang_config)
                     .unwrap();

@@ -1,4 +1,3 @@
-use crate::configuration::language_config::LanguageConfig;
 use crate::errors::ExecutionError;
 use crate::utils::get_indentation_at_offset;
 use crate::utils::set_indentation;
@@ -32,7 +31,7 @@ pub fn render(
         ("BODY".to_string(), body.to_string()),
     ]);
 
-    let result = process_replacements(&replacements, &regex, template)?;
+    let result = process_replacements(&replacements, regex, template)?;
 
     Ok(result)
 }
@@ -87,8 +86,9 @@ fn format_replacement(
 
 #[cfg(test)]
 mod tests {
+    use crate::configuration::language_config::CONFIG_PLACEHOLDER_DEFAULT_PATTERN;
+
     use super::*;
-    use std::path::PathBuf;
 
     fn get_sample_template() -> String {
         r##"#<IMPORTS>#
@@ -101,21 +101,12 @@ void main(){
     }
 
     #[test]
-    fn test_parse_template_config() {
-        let content = get_sample_template();
-        let config = Template::load(&content, None).unwrap();
-        assert!(config.template_content.contains("void main(){"));
-    }
-
-    #[test]
     fn test_render_with_replacements() {
-        let content = get_sample_template();
-        let config = Template::load(&content, Option::from("#<([A-Z]+)>#")).unwrap();
+        let template = get_sample_template();
+        let regex = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
 
         // The template expects to replace #<IMPORTS># and #<BODY>#
-        let rendered = config
-            .render("use std::io;", "println!(\"Hello\");")
-            .unwrap();
+        let rendered = render(template, &regex, "use std::io;", "println!(\"Hello\");").unwrap();
 
         assert_eq!(
             rendered,
@@ -131,18 +122,17 @@ void main(){
     #[test]
     // missing replacements should remove placeholder patterns from the rendered output
     fn test_render_with_missing_replacements() {
-        let mut content = get_sample_template();
+        let template = get_sample_template();
         let placeholder = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
 
         let mut replacements = HashMap::new();
         replacements.insert("IMPORTS".to_string(), "use std::io;".to_string());
         // Missing BODY replacement
 
-        let result = process_replacements(&replacements, &placeholder, &mut content);
+        let result = process_replacements(&replacements, &placeholder, template).unwrap();
 
-        assert!(result.is_ok());
         assert_eq!(
-            content,
+            result,
             r##"use std::io;
 
 void main(){
@@ -166,14 +156,5 @@ void main(){
         set_indentation(&mut code, Some(2), Some('\t'));
         let expected = "let x = 1;\n\t\tlet y = 2;";
         assert_eq!(code, expected);
-    }
-
-    #[test]
-    fn test_parse_from_file_error() {
-        let result = Template::load_from_file(
-            &PathBuf::from("nonexistent_file.txt"),
-            Option::from("<RWA>"),
-        );
-        assert!(result.is_err());
     }
 }
