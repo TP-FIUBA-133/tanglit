@@ -1,4 +1,6 @@
-use backend::cli::{Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs};
+use backend::cli::{
+    Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs,
+};
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -84,6 +86,41 @@ fn handle_generate_pdf_command(
     ))
 }
 
+fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
+    let input_file_path = &tangle_all_command.general.input_file_path;
+    let doc = TanglitDoc::new_from_file(input_file_path)?;
+
+    let blocks = doc.get_code_blocks()?;
+    let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
+
+    for block in &blocks_to_tangle {
+        let output = blocks.tangle_codeblock(block)?;
+
+        let lang = block.language.clone();
+        let extension = lang
+            .as_deref()
+            .and_then(|l| get_config_for_lang(l).ok())
+            .and_then(|cfg| cfg.extension);
+
+        let file_name = block.export.clone().unwrap_or(block.tag.clone());
+
+        // Manejo de error simple
+        write_file(
+            output,
+            &PathBuf::from(&tangle_all_command.output_dir),
+            &file_name,
+            extension.as_deref(),
+        )
+        .map_err(|e| WriteError(format!("Error writing to file: {}", e)))?;
+    }
+
+    Ok(format!(
+        "All {} blocks tangled to {}",
+        blocks_to_tangle.len(),
+        tangle_all_command.output_dir
+    ))
+}
+
 fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
     doc.generate_md_slides(args.output_dir)?;
@@ -106,6 +143,7 @@ fn main() {
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
+        Commands::TangleAll(args) => handle_tangle_all_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
     };
     match result {
