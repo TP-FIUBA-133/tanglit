@@ -86,7 +86,7 @@ fn format_replacement(
 
 #[cfg(test)]
 mod tests {
-    use crate::configuration::language_config::CONFIG_PLACEHOLDER_DEFAULT_PATTERN;
+    use crate::configuration::language_config::PLACEHOLDER_DEFAULT_PATTERN;
 
     use super::*;
 
@@ -103,7 +103,7 @@ void main(){
     #[test]
     fn test_render_with_replacements() {
         let template = get_sample_template();
-        let regex = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
+        let regex = Regex::new(PLACEHOLDER_DEFAULT_PATTERN).unwrap();
 
         // The template expects to replace #<IMPORTS># and #<BODY>#
         let rendered = render(template, &regex, "use std::io;", "println!(\"Hello\");").unwrap();
@@ -123,7 +123,7 @@ void main(){
     // missing replacements should remove placeholder patterns from the rendered output
     fn test_render_with_missing_replacements() {
         let template = get_sample_template();
-        let placeholder = Regex::new(CONFIG_PLACEHOLDER_DEFAULT_PATTERN).unwrap();
+        let placeholder = Regex::new(PLACEHOLDER_DEFAULT_PATTERN).unwrap();
 
         let mut replacements = HashMap::new();
         replacements.insert("IMPORTS".to_string(), "use std::io;".to_string());

@@ -5,9 +5,11 @@ use std::path::{Path, PathBuf};
 use crate::configuration::get_config_dir;
 use crate::errors::ConfigError;
 
-pub const CONFIG_PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
+pub const PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
 const TEMPLATE_FILENAME: &str = "template";
-const EXECUTE_SCRIPT_FILENAME: &str = "execute";
+const EXECUTION_SCRIPT_FILENAME: &str = "execute";
+const EXECUTORS_DIRNAME: &str = "executors";
+const TOML_CONFIG_FILENAME: &str = "config.toml";
 
 #[derive(Deserialize, Clone)]
 pub struct LanguageConfig {
@@ -21,13 +23,14 @@ pub struct LanguageConfig {
 
 impl LanguageConfig {
     pub fn load_for_lang(lang: &str) -> Result<LanguageConfig, ConfigError> {
-        let lang_config_path = &get_config_dir().join("executors").join(lang);
-        let toml_path = lang_config_path.join("config.toml");
+        let lang_config_path = &get_config_dir().join(EXECUTORS_DIRNAME).join(lang);
+        let toml_path = lang_config_path.join(TOML_CONFIG_FILENAME);
         let mut config = LanguageConfig::load_from_file(&toml_path)?;
         config.template = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME)
             .map(read_to_string)
             .transpose()?;
-        config.execution_script_path = find_file_in_dir(lang_config_path, EXECUTE_SCRIPT_FILENAME);
+        config.execution_script_path =
+            find_file_in_dir(lang_config_path, EXECUTION_SCRIPT_FILENAME);
         Ok(config)
     }
 
@@ -41,7 +44,7 @@ impl LanguageConfig {
         config.placeholder_regex = Some(
             config
                 .placeholder_regex
-                .unwrap_or(CONFIG_PLACEHOLDER_DEFAULT_PATTERN.into()),
+                .unwrap_or(PLACEHOLDER_DEFAULT_PATTERN.into()),
         );
         Ok(config)
     }
