@@ -1,5 +1,6 @@
 use backend::cli::{Commands, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs};
-use backend::configuration::{get_config_for_lang, init_configuration};
+use backend::configuration::init_configuration;
+use backend::configuration::language_config::LanguageConfig;
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
@@ -24,7 +25,9 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     let lang = block.language.clone();
 
     // we can tangle even if we don't have a config for the language
-    let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
+    let lang_config = lang
+        .as_deref()
+        .and_then(|l| LanguageConfig::load_for_lang(l).ok());
     // we can tangle even if we don't have an extension
     let extension = lang_config.and_then(|cfg| cfg.extension);
 
