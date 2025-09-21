@@ -1,5 +1,6 @@
 use crate::doc::CodeBlock;
 use crate::utils::{get_indentation_at_offset, set_indentation};
+use indexmap::IndexSet;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
@@ -51,24 +52,27 @@ impl CodeBlocks {
     /// Tangles a code block by resolving its macros and producing a
     /// string with all referenced blocks inlined.
     pub fn tangle_codeblock(&self, target_codeblock: &CodeBlock) -> Result<String, TangleError> {
-        let visited = &mut Vec::new();
+        let mut visited = IndexSet::new();
         let regex = &Regex::new(MACROS_REGEX)
             .map_err(|e| TangleError::InternalError(format!("Failed to compile regex: {}", e)))?;
 
-        self.expand_block(target_codeblock.tag.clone(), visited, regex)
+        self.expand_block(target_codeblock.tag.clone(), &mut visited, regex)
     }
 
+    /// Recursively expands a code block by resolving its macros.
+    /// It keeps track of visited blocks to detect cycles and avoid infinite recursion.
+    /// It also adjusts the indentation of inserted blocks to match the context.
     fn expand_block(
         &self,
         target_codeblock_name: String,
-        visited: &mut Vec<String>,
+        visited: &mut IndexSet<String>,
         regex: &Regex,
     ) -> Result<String, TangleError> {
         let target_block = self.get_code_block(&target_codeblock_name)?;
 
         Self::assert_no_cycle(visited, &target_codeblock_name)?;
 
-        visited.push(target_codeblock_name.clone());
+        visited.insert(target_codeblock_name.clone());
 
         let mut expanded_block_code = String::new();
         let mut final_index = 0;
@@ -109,9 +113,9 @@ impl CodeBlocks {
             .ok_or_else(|| TangleError::BlockNotFound(code_name.to_string()))
     }
 
-    fn assert_no_cycle(visited: &[String], node: &str) -> Result<(), TangleError> {
-        if let Some(start_idx) = visited.iter().position(|n| n == node) {
-            let cycle_path: Vec<String> = visited[start_idx..].to_vec();
+    fn assert_no_cycle(visited: &IndexSet<String>, node: &str) -> Result<(), TangleError> {
+        if let Some(start_idx) = visited.get_index_of(node) {
+            let cycle_path: Vec<String> = visited.iter().skip(start_idx).cloned().collect();
             let displayed_cycle = format_cycle_path(node, cycle_path);
 
             return Err(TangleError::CycleDetected(displayed_cycle));
