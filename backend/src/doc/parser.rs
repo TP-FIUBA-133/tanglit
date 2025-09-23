@@ -137,14 +137,14 @@ pub fn markdown_to_html(input: &str) -> String {
     wrap_in_html_doc(
         &content_html,
         "Document", // TODO get title from arg or extract from markdown
-        vec![GITHUB_MARKDOWN_LIGHT_CSS.to_string()],
+        &[GITHUB_MARKDOWN_LIGHT_CSS.to_string()],
     )
 }
 
 /// Wraps an HTML fragment in a complete HTML5 document shell.
-fn wrap_in_html_doc(content: &str, title: &str, styles: Vec<String>) -> String {
+fn wrap_in_html_doc(content: &str, title: &str, styles: &[String]) -> String {
     let style_tags: String = styles
-        .into_iter()
+        .iter()
         .map(|s| format!(r#"<style>{}</style>"#, s))
         .collect();
     format!(
