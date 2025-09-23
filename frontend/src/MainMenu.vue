@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const emit = defineEmits(["load_sample_markdown", "file_selected"]);
+const emit = defineEmits(["load_sample_markdown", "file_selected", "preview_html"]);
 const fileInput = ref<HTMLInputElement | null>(null); // Template ref for the hidden input
 
 function triggerFileInput() {
@@ -26,7 +26,7 @@ function handleFileChange(event: Event) {
     <button title="Save">Save</button>
     <button title="Load sample markdown" @click="$emit('load_sample_markdown')">Sample markdown</button>
     <button title="Export slides">Export slides</button>
-    <button title="Export to doc">Export doc</button>
+    <button title="Export to doc" @click="$emit('preview_html')">Export doc</button>
     <button title="Tangle code">Tangle code</button>
   </div>
 </template>
