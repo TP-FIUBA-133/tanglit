@@ -50,6 +50,14 @@ fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<Executi
     }
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn tanglit_preview_html(raw_markdown: &str) -> Result<String, String> {
+    let doc = TanglitDoc::new_from_string(raw_markdown)
+        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
+    doc.generate_html()
+        .map_err(|e| format!("Error generating HTML: {}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_configuration().expect("Error initializing configuration");
@@ -60,7 +68,8 @@ pub fn run() {
             tanglit_exclude,
             tanglit_parse_slides,
             tanglit_parse_blocks,
-            tanglit_execute_block
+            tanglit_execute_block,
+            tanglit_preview_html
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
