@@ -136,7 +136,7 @@ pub fn markdown_to_html(input: &str) -> String {
 
     wrap_in_html_doc(
         &content_html,
-        "Document",
+        "Document", // TODO get title from arg or extract from markdown
         vec![GITHUB_MARKDOWN_LIGHT_CSS.to_string()],
     )
 }
