@@ -131,9 +131,34 @@ pub fn markdown_to_html(input: &str) -> String {
     plugins.render.codefence_syntax_highlighter = Some(&adapter);
 
     let inner_html = markdown_to_html_with_plugins(input, &options, &plugins);
+
+    let content_html = format!(r#"<div class="markdown-body">{inner_html}</div>"#);
+
+    wrap_in_html_doc(
+        &content_html,
+        "Document",
+        vec![GITHUB_MARKDOWN_LIGHT_CSS.to_string()],
+    )
+}
+
+/// Wraps an HTML fragment in a complete HTML5 document shell.
+fn wrap_in_html_doc(content: &str, title: &str, styles: Vec<String>) -> String {
+    let style_tags: String = styles
+        .into_iter()
+        .map(|s| format!(r#"<style>{}</style>"#, s))
+        .collect();
     format!(
-        r#"<style>{}</style><div class="markdown-body">{}</div>"#,
-        GITHUB_MARKDOWN_LIGHT_CSS, inner_html
+        r#"<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>{title}</title>
+                {style_tags}
+            </head>
+            <body>
+                {content}
+            </body>
+            </html>"#
     )
 }
 
