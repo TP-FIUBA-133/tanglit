@@ -86,21 +86,64 @@ impl TanglitDoc {
         block_id: &str,
         output: &ExecutionOutput,
     ) -> Result<Edit, DocError> {
-        Ok(Edit {
-            content: format!(
-                "```output\nOutput:\n{}\n\nStderr:\n{}\n\nExit code: {}\n```",
-                output.stdout,
-                output.stderr,
-                output.status.map_or("None".to_string(), |s| s.to_string())
-            ),
-            line: self
-                .get_code_blocks()?
-                .get_block(block_id)
-                .unwrap()
-                .end_line
-                + 1,
-            offset: 0,
-        })
+        let binding = self.get_code_blocks()?;
+        let code_block = binding.get_block(block_id).unwrap();
+
+        let output_content = format!(
+            "```output\nOutput:\n{}\n\nStderr:\n{}\n\nExit code: {}\n```",
+            output.stdout,
+            output.stderr,
+            output.status.map_or("None".to_string(), |s| s.to_string())
+        );
+
+        let lines: Vec<&str> = self.raw_markdown.lines().collect();
+        let code_end_line = code_block.end_line;
+
+        // Look for an existing output block starting after the code block
+        let mut output_start_line = None;
+        let mut output_end_line = None;
+
+        // Start searching from the line immediately after the code block
+        for (line_idx, line) in lines.iter().enumerate().skip(code_end_line) {
+            let trimmed = line.trim();
+
+            if trimmed == "```output" {
+                output_start_line = Some(line_idx);
+
+                // Find the closing ``` for this output block
+                for (end_idx, end_line) in lines.iter().enumerate().skip(line_idx + 1) {
+                    if end_line.trim() == "```" {
+                        output_end_line = Some(end_idx);
+                        break;
+                    }
+                }
+                break;
+            } else if !trimmed.is_empty() {
+                // Hit non-empty content that's not an output block, stop looking
+                break;
+            }
+        }
+
+        match (output_start_line, output_end_line) {
+            (Some(start), Some(end)) => {
+                // Replace existing output block
+                // Calculate how many lines to replace (inclusive of both start and end lines)
+                let lines_to_replace = end - start + 1;
+                Ok(Edit {
+                    content: output_content,
+                    line: start + 1, // Monaco uses 1-based line numbers
+                    offset: lines_to_replace,
+                })
+            }
+            _ => {
+                // Insert new output block after the code block
+                Ok(Edit {
+                    content: format!("\n{}", output_content),
+                    line: code_end_line + 1,
+                    offset: 0, // 0 means insert, don't replace
+                })
+            }
+        }
     }
 
     pub fn exclude(&self) -> Result<String, DocError> {
