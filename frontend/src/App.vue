@@ -97,7 +97,7 @@ async function add_output_to_markdown(block_line, output: string) {
   }
 
   let result = await tanglit.format_output(raw_markdown.value, block_name, output);
-  editor.add_output_to_markdown(result.content, result.line);
+  editor.add_output_to_markdown(result.content, result.line, result.offset);
 }
 
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));

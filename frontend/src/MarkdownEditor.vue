@@ -82,12 +82,12 @@ function makeBlockResult(line_number: number, result: BlockExecute) {
   editor.value?.addContentWidget(w);
 }
 
-function add_output_to_markdown(text: string, line_number: number) {
+function add_output_to_markdown(text: string, line_number: number, offset: number = 0) {
   console.log("text: ", text);
   console.log("line_number: ", line_number);
   editor.value?.executeEdits("embed-result", [
     {
-      range: new monaco.Range(line_number, 1, line_number, 1),
+      range: new monaco.Range(line_number, 1, line_number + offset, 1),
       text: text + "\n", // Add the text on the next line
       forceMoveMarkers: true,
     },

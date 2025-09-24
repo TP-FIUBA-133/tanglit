@@ -31,6 +31,7 @@ pub struct TanglitDoc {
 pub struct Edit {
     pub content: String,
     pub line: usize,
+    pub offset: usize,
 }
 
 impl TanglitDoc {
@@ -98,6 +99,7 @@ impl TanglitDoc {
                 .unwrap()
                 .end_line
                 + 1,
+            offset: 0,
         })
     }
 
