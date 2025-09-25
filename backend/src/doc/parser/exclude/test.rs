@@ -33,54 +33,54 @@ mod tests {
 
     #[test_log::test]
     fn test_exclusions_1() {
-        test_exclusions_file("pdf/test_1", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_1", FilterTarget::Doc);
         test_exclusions_file("slides/test_1", FilterTarget::Slides);
     }
     #[test_log::test]
     fn test_exclusions_2() {
-        test_exclusions_file("pdf/test_2", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_2", FilterTarget::Doc);
         test_exclusions_file("slides/test_2", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_3() {
-        test_exclusions_file("pdf/test_3", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_3", FilterTarget::Doc);
         test_exclusions_file("slides/test_3", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_4() {
-        test_exclusions_file("pdf/test_4", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_4", FilterTarget::Doc);
         test_exclusions_file("slides/test_4", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_5() {
-        test_exclusions_file("pdf/test_5", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_5", FilterTarget::Doc);
         test_exclusions_file("slides/test_5", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_6() {
-        test_exclusions_file("pdf/test_6", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_6", FilterTarget::Doc);
         test_exclusions_file("slides/test_6", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_7() {
-        test_exclusions_file("pdf/test_7", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_7", FilterTarget::Doc);
         test_exclusions_file("slides/test_7", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_8() {
-        test_exclusions_file("pdf/test_8", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_8", FilterTarget::Doc);
         test_exclusions_file("slides/test_8", FilterTarget::Slides);
     }
 
     #[test_log::test]
     fn test_exclusions_9() {
-        test_exclusions_file("pdf/test_9", FilterTarget::Pdf);
+        test_exclusions_file("pdf/test_9", FilterTarget::Doc);
         test_exclusions_file("slides/test_9", FilterTarget::Slides);
     }
 }

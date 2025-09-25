@@ -74,8 +74,8 @@ impl TanglitDoc {
         Ok(())
     }
 
-    pub fn filter_content_for_pdf(&self) -> Result<String, DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Pdf);
+    pub fn filter_content_for_doc(&self) -> Result<String, DocError> {
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Doc);
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
@@ -90,7 +90,7 @@ impl TanglitDoc {
     }
 
     pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
-        let markdown_with_exclusions = self.filter_content_for_pdf()?;
+        let markdown_with_exclusions = self.filter_content_for_doc()?;
         let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())

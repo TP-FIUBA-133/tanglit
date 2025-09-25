@@ -7,18 +7,18 @@ use regex::Regex;
 mod test;
 mod to_node;
 
-static PDF_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
+static DOC_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
 static SLIDES_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (&[ipl]?)").unwrap());
 
 pub enum FilterTarget {
-    Pdf,
+    Doc,
     Slides,
 }
 
 impl FilterTarget {
     fn code_marker(&self) -> &str {
         match self {
-            FilterTarget::Pdf => "%",
+            FilterTarget::Doc => "%",
             FilterTarget::Slides => "&",
         }
     }
@@ -27,25 +27,25 @@ impl FilterTarget {
     }
     fn list_marker(&self) -> &str {
         match self {
-            FilterTarget::Pdf => "%l",
+            FilterTarget::Doc => "%l",
             FilterTarget::Slides => "&l",
         }
     }
     fn list_item_marker(&self) -> &str {
         match self {
-            FilterTarget::Pdf => "%i",
+            FilterTarget::Doc => "%i",
             FilterTarget::Slides => "&i",
         }
     }
     fn paragraph_marker(&self) -> &str {
         match self {
-            FilterTarget::Pdf => "%p",
+            FilterTarget::Doc => "%p",
             FilterTarget::Slides => "&p",
         }
     }
     fn marker_regex(&self) -> &'static Regex {
         match self {
-            FilterTarget::Pdf => &PDF_MARKER_REGEX,
+            FilterTarget::Doc => &DOC_MARKER_REGEX,
             FilterTarget::Slides => &SLIDES_MARKER_REGEX,
         }
     }
