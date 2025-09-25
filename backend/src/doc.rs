@@ -1,13 +1,13 @@
 mod error;
+mod gen_html;
 mod generate_pdf;
 mod parser;
 mod tangle;
 
+use crate::doc::gen_html::markdown_to_html;
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::slides::parse_slides_from_ast;
-use crate::doc::parser::{
-    ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
-};
+use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
