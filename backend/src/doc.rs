@@ -75,7 +75,8 @@ impl TanglitDoc {
     }
 
     pub fn generate_md_slides_vec(&self) -> Result<Vec<String>, DocError> {
-        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
+        let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
         let mut v: Vec<String> = vec![];
         for slide in slides.iter() {
             let slide_md = slide.to_markdown()?;
