@@ -2,6 +2,7 @@ init:
 	npm install
 
 run-dev: init
+	TANGLIT_CONFIG_DIR=../backend/resources/config \
 	npm run tauri dev
 
 clean: init
