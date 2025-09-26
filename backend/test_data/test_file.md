@@ -22,6 +22,12 @@ for i in range(4):
     print(a)
 ```
 
+```noconfiglang foo
+a = 'SPAM'
+for i in range(4):
+    print(a)
+```
+
 Define main block `run`:
 
 ```c use=[headers,helper] main_block
