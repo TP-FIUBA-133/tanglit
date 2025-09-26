@@ -1,13 +1,13 @@
 mod error;
+mod gen_html;
 mod generate_pdf;
 mod parser;
 mod tangle;
 
+use crate::doc::gen_html::markdown_to_html;
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::slides::parse_slides_from_ast;
-use crate::doc::parser::{
-    ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
-};
+use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 use crate::execution::ExecutionOutput;
 pub use error::DocError;
 use markdown::mdast::Node;
@@ -78,6 +78,17 @@ impl TanglitDoc {
         }
 
         Ok(())
+    }
+
+    pub fn generate_md_slides_vec(&self) -> Result<Vec<String>, DocError> {
+        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+        let mut v: Vec<String> = vec![];
+        for slide in slides.iter() {
+            let slide_md = slide.to_markdown()?;
+            v.push(slide_md);
+        }
+
+        Ok(v)
     }
 
     pub fn format_output(
