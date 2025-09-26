@@ -7,9 +7,10 @@ use crate::doc::TangleError;
 use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
 use log::debug;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, Stdio};
 pub use wrappers::{make_executable_code, write_file};
 
 /// Executes a code block by tangling it and adding necessary wrappers to make it executable.
@@ -19,7 +20,15 @@ pub use wrappers::{make_executable_code, write_file};
 /// * `target_block` - The name of the target code block to execute
 /// # Returns
 /// * Result containing the stdout of the execution or an error if something goes wrong
-pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, ExecutionError> {
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionOutput {
+    pub status: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<ExecutionOutput, ExecutionError> {
     let blocks = doc.get_code_blocks()?;
 
     let block = blocks
@@ -62,11 +71,17 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
 pub fn execute_block(
     block_file_path: &Path,
     execution_script_path: &PathBuf,
-) -> Result<Output, ExecutionError> {
-    Command::new(execution_script_path)
+) -> Result<ExecutionOutput, ExecutionError> {
+    let output = Command::new(execution_script_path)
         .arg(block_file_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .map_err(|e| ExecutionError::InternalError(e.to_string()))
+        .map_err(|e| ExecutionError::InternalError(e.to_string()))?;
+
+    Ok(ExecutionOutput {
+        status: output.status.code(),
+        stdout: String::from_utf8(output.stdout).expect("Error reading stdout"),
+        stderr: String::from_utf8(output.stderr).expect("Error reading stderr"),
+    })
 }
