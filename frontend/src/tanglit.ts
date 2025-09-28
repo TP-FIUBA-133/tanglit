@@ -34,6 +34,7 @@ export async function parse_slides(raw_markdown: string): Promise<number[]> {
 
 export async function parse_blocks(raw_markdown: string) {
   const rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{
+    end_line: string;
     start_line: number;
     tag: string;
   }>;

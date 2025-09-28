@@ -121,6 +121,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
             v-model:raw_markdown="raw_markdown"
             v-model:slide_lines="slides"
             :block_lines="block_lines"
+            :blocks="all_blocks"
             :block_execute="block_execute"
             v-on:add_output_to_markdown="add_output_to_markdown"
             class="editor"
