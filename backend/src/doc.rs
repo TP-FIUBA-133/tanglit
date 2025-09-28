@@ -30,7 +30,8 @@ pub struct TanglitDoc {
 #[derive(Debug, Clone, Serialize)]
 pub struct Edit {
     pub content: String,
-    pub line: usize,
+    pub start_line: usize,
+    pub end_line: usize,
 }
 
 impl TanglitDoc {
@@ -103,7 +104,13 @@ impl TanglitDoc {
                 output.stderr,
                 output.status.map_or("None".to_string(), |s| s.to_string())
             ),
-            line: self
+            start_line: self
+                .get_code_blocks()?
+                .get_block(block_id)
+                .unwrap()
+                .end_line
+                + 1,
+            end_line: self // for the moment, same as start_line because we are always inserting
                 .get_code_blocks()?
                 .get_block(block_id)
                 .unwrap()

@@ -3,7 +3,7 @@ import { App, createApp, h, shallowRef, watch } from "vue";
 import VueMonacoEditor from "@guolao/vue-monaco-editor";
 import * as monaco from "monaco-editor";
 import BlockExecutionResult from "./BlockExecutionResult.vue";
-import { BlockExecute } from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 
 type ICodeEditor = monaco.editor.ICodeEditor;
 type IGlyphMarginWidget = monaco.editor.IGlyphMarginWidget;
@@ -107,13 +107,11 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
   });
 }
 
-function add_output_to_markdown(text: string, line_number: number) {
-  console.log("text: ", text);
-  console.log("line_number: ", line_number);
+function add_output_to_markdown(edit: Edit) {
   editor.value?.executeEdits("embed-result", [
     {
-      range: new monaco.Range(line_number, 1, line_number, 1),
-      text: text + "\n", // Add the text on the next line
+      range: new monaco.Range(edit.start_line, 1, edit.end_line, 1),
+      text: edit.content,
       forceMoveMarkers: true,
     },
   ]);

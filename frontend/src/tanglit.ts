@@ -11,6 +11,12 @@ export type BlockExecute = {
   output?: ExecutionOutput;
 };
 
+export type Edit = {
+  start_line: number;
+  end_line: number;
+  content: string;
+};
+
 enum TANGLIT_COMMANDS {
   exclude = "tanglit_exclude",
   parse_slides = "tanglit_parse_slides",
@@ -59,12 +65,7 @@ export async function gen_slides(raw_markdown: string): Promise<string[]> {
   }
 }
 
-export async function format_output(raw_markdown: string, block_name: string, output): Promise<BlockExecute> {
-  try {
-    const r = await invoke(TANGLIT_COMMANDS.format_output, { raw_markdown, block_name, output });
-    console.log("RESULT: ", r);
-    return r;
-  } catch (e) {
-    return { error: e };
-  }
+export async function format_output(raw_markdown: string, block_name: string, output: string): Promise<Edit> {
+  const r = (await invoke(TANGLIT_COMMANDS.format_output, { raw_markdown, block_name, output })) as Edit;
+  return r;
 }

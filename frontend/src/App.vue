@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { BlockExecute } from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
 import MainMenu from "./MainMenu.vue";
 import { Splitpanes, Pane } from "splitpanes";
@@ -103,8 +103,8 @@ async function add_output_to_markdown(block_line, output: string) {
     }
   }
 
-  let result = await tanglit.format_output(raw_markdown.value, block_name, output);
-  editor.add_output_to_markdown(result.content, result.line);
+  let edit: Edit = await tanglit.format_output(raw_markdown.value, block_name, output);
+  editor.add_output_to_markdown(edit);
 }
 
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
