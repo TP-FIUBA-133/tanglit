@@ -16,6 +16,7 @@ enum TANGLIT_COMMANDS {
   parse_slides = "tanglit_parse_slides",
   parse_blocks = "tanglit_parse_blocks",
   execute = "tanglit_execute_block",
+  gen_slides = "tanglit_gen_slides",
   preview_html = "tanglit_preview_html",
 }
 
@@ -45,6 +46,15 @@ export async function execute_block(raw_markdown: string, block_name: string): P
     return { output: r as ExecutionOutput };
   } catch (e) {
     return { error: e };
+  }
+}
+
+export async function gen_slides(raw_markdown: string): Promise<string[]> {
+  try {
+    const r = (await invoke(TANGLIT_COMMANDS.gen_slides, { raw_markdown })) as string[];
+    return r;
+  } catch {
+    return [];
   }
 }
 
