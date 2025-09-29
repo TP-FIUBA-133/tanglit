@@ -1,6 +1,5 @@
-use backend::cli::{
-    Commands, ExcludeArgs, GeneratePDFArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs,
-};
+use backend::cli::{Commands, ExcludeArgs, GenerateDocArgs, GenerateSlidesMdArgs, TangleArgs, TangleAllArgs};
+use backend::configuration::language_config::LanguageConfig;
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
@@ -29,7 +28,9 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     let lang = block.language.clone();
 
     // we can tangle even if we don't have a config for the language
-    let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
+    let lang_config = lang
+        .as_deref()
+        .and_then(|l| LanguageConfig::load_for_lang(l).ok());
     // we can tangle even if we don't have an extension
     let extension = lang_config.and_then(|cfg| cfg.extension);
 
@@ -74,8 +75,23 @@ fn handle_execute_command(
     ))
 }
 
+fn handle_generate_html_command(
+    generate_html_args: GenerateDocArgs,
+) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&generate_html_args.general.input_file_path)?;
+    let html = doc.generate_html()?;
+
+    match write(Path::new(&generate_html_args.output_file_path), html) {
+        Ok(_) => Ok(format!(
+            "✅ HTML saved to {}",
+            generate_html_args.output_file_path
+        )),
+        Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
+    }
+}
+
 fn handle_generate_pdf_command(
-    generate_pdf_args: GeneratePDFArgs,
+    generate_pdf_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&generate_pdf_args.general.input_file_path)?;
     doc.generate_pdf(&generate_pdf_args.output_file_path)?;
@@ -104,7 +120,6 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
 
         let file_name = block.export.clone().unwrap_or(block.tag.clone());
 
-        // Manejo de error simple
         write_file(
             output,
             &PathBuf::from(&tangle_all_command.output_dir),
@@ -143,6 +158,7 @@ fn main() {
         Commands::Exclude(args) => handle_exclude_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
+        Commands::GenerateHTML(args) => handle_generate_html_command(args),
         Commands::TangleAll(args) => handle_tangle_all_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
     };

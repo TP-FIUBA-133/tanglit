@@ -7,10 +7,12 @@ import BlockExecutionResult from "./BlockExecutionResult.vue";
 import MainMenu from "./MainMenu.vue";
 import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
+import SlideViewMain from "./SlideViewMain.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
+const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
 
@@ -78,6 +80,11 @@ async function run_block(line: number) {
   }
 }
 
+async function preview_slides() {
+  slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
+  console.log("Slides generated:", slides_markdown.value);
+}
+
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
 </script>
 
@@ -97,7 +104,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
         <pane min-size="30">
           <splitpanes horizontal class="default-theme">
             <pane min-size="30">
-              <div class="exclusion_output">{{ exclusion_output }}</div>
+              <SlideViewMain class="slide-view" :slides_markdown="slides_markdown" />
             </pane>
             <pane min-size="30">
               <BlockExecutionResult :result="block_execute" />
@@ -106,7 +113,11 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
         </pane>
       </splitpanes>
     </div>
-    <MainMenu v-on:load_sample_markdown="load_sample_markdown" v-on:file_selected="file_selected" />
+    <MainMenu
+      v-on:load_sample_markdown="load_sample_markdown"
+      v-on:file_selected="file_selected"
+      v-on:preview_slides="preview_slides"
+    />
   </main>
 </template>
 
@@ -123,6 +134,11 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+.slide-view {
+  height: 100%;
+  width: 600px;
 }
 
 html,

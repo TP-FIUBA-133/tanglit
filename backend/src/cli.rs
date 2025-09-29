@@ -16,12 +16,14 @@ pub enum Commands {
     Exclude(ExcludeArgs),
     #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
-    #[command(about = "Generates a PDF from an markdown file, skiping the items with % markers")]
-    GeneratePDF(GeneratePDFArgs),
     #[command(
         about = "Tangle all code blocks marked for export from a markdown file and export to export files"
     )]
     TangleAll(TangleAllArgs),
+    #[command(about = "Generates a PDF from an markdown file, skipping the items with % markers")]
+    GeneratePDF(GenerateDocArgs),
+    #[command(about = "Generates an HTML from an markdown file, skipping the items with % markers")]
+    GenerateHTML(GenerateDocArgs),
     #[command(about = "Generates markdown slides from a markdown file")]
     GenerateSlidesMd(GenerateSlidesMdArgs),
 }
@@ -89,7 +91,7 @@ pub struct ExecuteArgs {
 }
 
 #[derive(Args)]
-pub struct GeneratePDFArgs {
+pub struct GenerateDocArgs {
     #[command(flatten)]
     pub general: GeneralArgs,
     #[arg(
@@ -123,8 +125,8 @@ pub struct GenerateSlidesMdArgs {
     #[arg(
         long,
         value_name = "OUTPUT_DIR",
-        help = "Path to the directory where the output files will be saved.",
-        help_heading = "Tangle All Args",
+        help = "Path to the directory where the output file will be saved.",
+        help_heading = "Tangle Args",
         env = "OUTPUT_DIR"
     )]
     pub output_dir: String,
