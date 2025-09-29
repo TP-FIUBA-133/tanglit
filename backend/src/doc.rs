@@ -87,7 +87,9 @@ impl TanglitDoc {
         output: &ExecutionOutput,
     ) -> Result<Edit, DocError> {
         let binding = self.get_code_blocks()?;
-        let code_block = binding.get_block(block_id).unwrap();
+        let code_block = binding
+            .get_block(block_id)
+            .ok_or_else(|| TangleError::BlockNotFound(block_id.to_string()))?;
 
         let output_content = format!(
             "```output\nOutput:\n{}\n\nStderr:\n{}\n\nExit code: {}\n```",
