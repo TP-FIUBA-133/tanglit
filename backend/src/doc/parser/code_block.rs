@@ -1,10 +1,17 @@
 use super::ParserError;
 use markdown::mdast::Code;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Serialize;
 
+// Regex to capture `use=[...]`
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
+static USE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(USE_REGEX).expect("Failed to compile USE_REGEX"));
+
+// Regex to capture `export=`
 const EXPORT_REGEX: &str = r"export\s*=\s*([^\s]+)";
+static EXPORT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(EXPORT_REGEX).expect("Failed to compile EXPORT_REGEX"));
+
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CodeBlock {
@@ -66,11 +73,8 @@ impl CodeBlock {
     }
 
     fn parse_metadata(metadata: &str) -> (Option<String>, Vec<String>, Option<String>) {
-        // Regex to capture `use=[...]`
-        let use_re = Regex::new(USE_REGEX).expect("Failed to compile USE_REGEX");
-
         // Extract imports
-        let imports: Vec<String> = use_re
+        let imports: Vec<String> = USE_RE
             .captures(metadata)
             .map(|caps| {
                 caps[1]
@@ -82,12 +86,12 @@ impl CodeBlock {
             .unwrap_or_default();
 
         // Extract export
-        let export_re = Regex::new(EXPORT_REGEX).expect("Failed to compile EXPORT_REGEX");
-        let export = export_re.captures(metadata).map(|caps| caps[1].to_string());
+
+        let export = EXPORT_RE.captures(metadata).map(|caps| caps[1].to_string());
 
         // Remove the `use=[...]` and `export=` part to get the block tag
-        let metadata_without_use = use_re.replace(metadata, "");
-        let metadata_clean = export_re.replace(&metadata_without_use, "");
+        let metadata_without_use = USE_RE.replace(metadata, "");
+        let metadata_clean = EXPORT_RE.replace(&metadata_without_use, "");
 
         // Take the first word that is not part of `use=` and `export=` as the tag
         let tag = metadata_clean
@@ -106,25 +110,29 @@ mod tests {
     #[test]
     fn test_parse_metadata_with_use() {
         let metadata = "use=[block1,block2] tag1";
-        let (tag, imports, _) = CodeBlock::parse_metadata(metadata);
+        let (tag, imports, export) = CodeBlock::parse_metadata(metadata);
         assert_eq!(tag, Some("tag1".to_string()));
         assert_eq!(imports, vec!["block1".to_string(), "block2".to_string()]);
+        assert!(export.is_none());
+
     }
 
     #[test]
     fn test_parse_metadata_with_only_tag() {
         let metadata = "tag2";
-        let (tag, imports, _) = CodeBlock::parse_metadata(metadata);
+        let (tag, imports, export) = CodeBlock::parse_metadata(metadata);
         assert_eq!(tag, Some("tag2".to_string()));
         assert!(imports.is_empty());
+        assert!(export.is_none());
     }
 
     #[test]
     fn test_parse_metadata_empty() {
         let metadata = "";
-        let (tag, imports, _) = CodeBlock::parse_metadata(metadata);
+        let (tag, imports, export) = CodeBlock::parse_metadata(metadata);
         assert!(tag.is_none());
         assert!(imports.is_empty());
+        assert!(export.is_none());
     }
 
     #[test]

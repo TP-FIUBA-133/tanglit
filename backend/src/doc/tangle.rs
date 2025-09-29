@@ -256,4 +256,78 @@ mod tests {
                 .to_string()
         );
     }
+
+    #[test]
+    fn get_all_blocks_to_tangle_handles_empty_collection() {
+        let blocks = HashMap::new();
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let result = codeblocks.get_all_blocks_to_tangle();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn get_all_blocks_to_tangle_returns_empty_when_no_blocks_have_export() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Hello, world!')".to_string(),
+                "main".to_string(),
+                vec![],
+                None,
+                0,
+            ),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+                None,
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let result = codeblocks.get_all_blocks_to_tangle();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn get_all_blocks_to_tangle_returns_only_blocks_with_export() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Hello, world!')".to_string(),
+                "main".to_string(),
+                vec![],
+                Some("main_export".to_string()),
+                0,
+            ),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+                None,
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let result = codeblocks.get_all_blocks_to_tangle();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].tag, "main");
+    }
 }

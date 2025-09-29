@@ -96,7 +96,7 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
     for block in &blocks_to_tangle {
         let output = blocks.tangle_codeblock(block)?;
 
-        let lang = block.language.clone();
+        let lang = block.language.as_deref();
         let extension = lang
             .as_deref()
             .and_then(|l| get_config_for_lang(l).ok())
