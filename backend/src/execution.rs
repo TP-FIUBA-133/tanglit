@@ -8,10 +8,29 @@ use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
 use log::debug;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::sync::{Mutex, OnceLock};
 pub use wrappers::{make_executable_code, write_file};
+
+type ConfigMap = HashMap<String, LanguageConfig>;
+static CONFIG_CACHE: OnceLock<Mutex<ConfigMap>> = OnceLock::new();
+
+fn get_cached_config(lang: &str) -> Result<LanguageConfig, crate::errors::ConfigError> {
+    let cache = CONFIG_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut configs = cache.lock().unwrap();
+
+    if let Some(config) = configs.get(lang) {
+        return Ok(config.clone());
+    }
+
+    let config = LanguageConfig::load_for_lang(lang)?;
+    debug!("Loaded config for {}", lang);
+    configs.insert(lang.to_string(), config.clone());
+    Ok(config)
+}
 
 /// Executes a code block by tangling it and adding necessary wrappers to make it executable.
 /// Prints both the resulting stdout and sterr from the execution and returns the stdout as a String.
@@ -42,7 +61,8 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<ExecutionOutput, 
             "No language specified".to_string(),
         ))?;
 
-    let lang_config = LanguageConfig::load_for_lang(lang)?;
+    // Use cached config instead of loading every time
+    let lang_config = get_cached_config(lang).map_err(ExecutionError::ConfigError)?;
 
     // create the executable source code
     let output = make_executable_code(block, &blocks, &lang_config)?;
