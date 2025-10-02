@@ -24,6 +24,12 @@ pub struct LanguageConfig {
 impl LanguageConfig {
     pub fn load_for_lang(lang: &str) -> Result<LanguageConfig, ConfigError> {
         let lang_config_path = &get_config_dir().join(EXECUTORS_DIRNAME).join(lang);
+        if !lang_config_path.exists() {
+            return Err(ConfigError::ConfigMissingForLanguage(
+                lang.to_string(),
+                lang_config_path.to_string_lossy().to_string(),
+            ));
+        }
         let toml_path = lang_config_path.join(TOML_CONFIG_FILENAME);
         let mut config = LanguageConfig::load_from_file(&toml_path)?;
         config.template = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME)
@@ -66,6 +72,7 @@ pub fn find_file_in_dir(dir: impl AsRef<Path>, filename: &str) -> Option<PathBuf
 #[cfg(test)]
 mod tests {
     use crate::configuration::language_config::LanguageConfig;
+    use crate::errors::ConfigError;
 
     #[test]
     fn test_load_config() {
@@ -77,5 +84,15 @@ mod tests {
         .unwrap();
         assert_eq!(config.extension, Option::from("rs".to_string()));
         assert_eq!(config.placeholder_regex, Option::from("<WAWA>".to_string()));
+    }
+
+    #[test]
+    fn test_config_missing_for_language_error() {
+        let result = LanguageConfig::load_for_lang("nonexistent_language_12345");
+        assert!(matches!(
+            result,
+            Err(ConfigError::ConfigMissingForLanguage(lang, _))
+            if lang == "nonexistent_language_12345"
+        ));
     }
 }

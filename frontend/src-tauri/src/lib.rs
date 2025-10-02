@@ -59,6 +59,14 @@ fn tanglit_gen_slides(raw_markdown: &str) -> Result<Vec<String>, String> {
     Ok(slides)
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn tanglit_preview_html(raw_markdown: &str) -> Result<String, String> {
+    let doc = TanglitDoc::new_from_string(raw_markdown)
+        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
+    doc.generate_html()
+        .map_err(|e| format!("Error generating HTML: {}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_configuration().expect("Error initializing configuration");
@@ -71,7 +79,8 @@ pub fn run() {
             tanglit_parse_blocks,
             tanglit_execute_block,
             tanglit_format_output,
-            tanglit_gen_slides
+            tanglit_gen_slides,
+            tanglit_preview_html,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
