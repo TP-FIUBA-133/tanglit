@@ -4,6 +4,7 @@ use indexmap::IndexSet;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
+
 const MACROS_REGEX: &str = r"@\[([a-zA-Z0-9_]+)\]";
 
 #[derive(PartialEq)]
@@ -107,6 +108,13 @@ impl CodeBlocks {
         self.blocks.get(name)
     }
 
+    pub fn get_all_blocks_to_tangle(&self) -> Vec<&CodeBlock> {
+        self.blocks
+            .values()
+            .filter(|block| block.export.is_some())
+            .collect()
+    }
+
     fn get_code_block(&self, code_name: &str) -> Result<&CodeBlock, TangleError> {
         self.blocks
             .get(code_name)
@@ -159,6 +167,7 @@ mod tests {
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
+                None,
                 0,
             ),
         );
@@ -169,6 +178,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -192,6 +202,7 @@ mod tests {
                 "print('Hello, world!')".to_string(),
                 "main".to_string(),
                 vec!["helper".to_string()],
+                None,
                 0,
             ),
         );
@@ -210,6 +221,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -220,6 +232,7 @@ mod tests {
                 "@[config]\nprint('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -230,6 +243,7 @@ mod tests {
                 "print('config function')".to_string(),
                 "config".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -254,6 +268,7 @@ mod tests {
             "@[helper]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -278,6 +293,7 @@ mod tests {
             "for i in range(2):\n    @[helper]\n    print('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main.clone());
@@ -288,9 +304,11 @@ mod tests {
                 "print('Helper function')\nprint('second helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
+
         let codeblocks = CodeBlocks::from_codeblocks(blocks);
 
         let block = codeblocks.get_block("main").unwrap();
@@ -314,6 +332,7 @@ mod tests {
             "@[main]\nprint('Hello, world!')".to_string(),
             "main".to_string(),
             vec![],
+            None,
             0,
         );
         blocks.insert("main".to_string(), main);
@@ -336,6 +355,7 @@ mod tests {
                 "@[B]\nprint('Block A')".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -346,6 +366,7 @@ mod tests {
                 "@[C]\nprint('Block B')".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -356,6 +377,7 @@ mod tests {
                 "@[A]\nprint('Block C')".to_string(),
                 "C".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -379,6 +401,7 @@ mod tests {
                 "@[B]\nprint('Block A')".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -389,6 +412,7 @@ mod tests {
                 "@[A]\nprint('Block B')".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -412,6 +436,7 @@ mod tests {
                 "@[B]\nprint('Block A')".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -422,6 +447,7 @@ mod tests {
                 "@[C]\nprint('Block B')\n@[D]".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -432,6 +458,7 @@ mod tests {
                 "@[A]\nprint('Block C')".to_string(),
                 "C".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -442,6 +469,7 @@ mod tests {
                 "print('Block D')".to_string(),
                 "D".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -465,6 +493,7 @@ mod tests {
                 "@[B]\nprint('Block A')\n@[B]".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -475,6 +504,7 @@ mod tests {
                 "print('Block B')".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -500,6 +530,7 @@ mod tests {
                 "@[B]\nprint('Block A')\n@[C]".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -510,6 +541,7 @@ mod tests {
                 "print('Block B')".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -520,6 +552,7 @@ mod tests {
                 "@[B]\nprint('Block C')".to_string(),
                 "C".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -546,6 +579,7 @@ mod tests {
                 "@[B]".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -556,6 +590,7 @@ mod tests {
                 "@[A]".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -585,6 +620,7 @@ mod tests {
                 "@[B]".to_string(),
                 "A".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -595,6 +631,7 @@ mod tests {
                 "@[C]".to_string(),
                 "B".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -605,6 +642,7 @@ mod tests {
                 "@[D]".to_string(),
                 "C".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -615,6 +653,7 @@ mod tests {
                 "@[E]".to_string(),
                 "D".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -625,6 +664,7 @@ mod tests {
                 "@[F]".to_string(),
                 "E".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -635,6 +675,7 @@ mod tests {
                 "@[G]".to_string(),
                 "F".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -645,6 +686,7 @@ mod tests {
                 "@[A]".to_string(),
                 "G".to_string(),
                 vec![],
+                None,
                 0,
             ),
         );
@@ -661,5 +703,79 @@ mod tests {
             msg.contains("..."),
             "Should show ellipsis for skipped nodes"
         );
+    }
+
+    #[test]
+    fn get_all_blocks_to_tangle_handles_empty_collection() {
+        let blocks = HashMap::new();
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let result = codeblocks.get_all_blocks_to_tangle();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn get_all_blocks_to_tangle_returns_empty_when_no_blocks_have_export() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Hello, world!')".to_string(),
+                "main".to_string(),
+                vec![],
+                None,
+                0,
+            ),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+                None,
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let result = codeblocks.get_all_blocks_to_tangle();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn get_all_blocks_to_tangle_returns_only_blocks_with_export() {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            "main".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Hello, world!')".to_string(),
+                "main".to_string(),
+                vec![],
+                Some("main_export".to_string()),
+                0,
+            ),
+        );
+        blocks.insert(
+            "helper".to_string(),
+            CodeBlock::new(
+                Option::from("python".to_string()),
+                "print('Helper function')".to_string(),
+                "helper".to_string(),
+                vec![],
+                None,
+                0,
+            ),
+        );
+
+        let codeblocks = CodeBlocks::from_codeblocks(blocks);
+
+        let result = codeblocks.get_all_blocks_to_tangle();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].tag, "main");
     }
 }

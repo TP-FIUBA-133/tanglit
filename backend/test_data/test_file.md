@@ -36,7 +36,7 @@ You can also import blocks using macros inside the code block:
 
 Define a variable:
 
-```c config
+```c config export=all
 const char* language = "C";
 ```
 or even just a plain value:
@@ -46,7 +46,7 @@ or even just a plain value:
 
 Import and use the variable using macros:
 
-```c variable_user use=[headers]
+```c variable_user use=[headers] export=main
 @[config]
 printf("This program is written in %s.\n", language);
 printf("and the meaning of life is %d\n", @[a_value]);

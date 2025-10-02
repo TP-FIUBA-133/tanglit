@@ -1,6 +1,8 @@
-use backend::cli::{Commands, ExcludeArgs, GenerateDocArgs, GenerateSlidesMdArgs, TangleArgs};
-use backend::configuration::init_configuration;
+use backend::cli::{
+    Commands, ExcludeArgs, GenerateDocArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs,
+};
 use backend::configuration::language_config::LanguageConfig;
+use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
@@ -102,6 +104,39 @@ fn handle_generate_pdf_command(
     ))
 }
 
+fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
+    let input_file_path = &tangle_all_command.general.input_file_path;
+    let doc = TanglitDoc::new_from_file(input_file_path)?;
+
+    let blocks = doc.get_code_blocks()?;
+    let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
+
+    for block in &blocks_to_tangle {
+        let output = blocks.tangle_codeblock(block)?;
+
+        let lang = block.language.as_deref();
+        let extension = lang
+            .and_then(|l| get_config_for_lang(l).ok())
+            .and_then(|cfg| cfg.extension);
+
+        let file_name = block.export.clone().unwrap_or(block.tag.clone());
+
+        write_file(
+            output,
+            &PathBuf::from(&tangle_all_command.output_dir),
+            &file_name,
+            extension.as_deref(),
+        )
+        .map_err(|e| WriteError(format!("Error writing to file: {}", e)))?;
+    }
+
+    Ok(format!(
+        "All {} blocks tangled to {}",
+        blocks_to_tangle.len(),
+        tangle_all_command.output_dir
+    ))
+}
+
 fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
     doc.generate_md_slides(args.output_dir)?;
@@ -125,6 +160,7 @@ fn main() {
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
         Commands::GenerateHTML(args) => handle_generate_html_command(args),
+        Commands::TangleAll(args) => handle_tangle_all_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
     };
     match result {
