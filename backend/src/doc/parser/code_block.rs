@@ -6,12 +6,13 @@ use serde::Serialize;
 
 // Regex to capture `use=[...]`
 const USE_REGEX: &str = r"use=\[([^\]]*)\]";
-static USE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(USE_REGEX).expect("Failed to compile USE_REGEX"));
+static USE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(USE_REGEX).expect("Failed to compile USE_REGEX"));
 
 // Regex to capture `export=`
 const EXPORT_REGEX: &str = r"export\s*=\s*([^\s]+)";
-static EXPORT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(EXPORT_REGEX).expect("Failed to compile EXPORT_REGEX"));
-
+static EXPORT_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(EXPORT_REGEX).expect("Failed to compile EXPORT_REGEX"));
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CodeBlock {
@@ -114,7 +115,6 @@ mod tests {
         assert_eq!(tag, Some("tag1".to_string()));
         assert_eq!(imports, vec!["block1".to_string(), "block2".to_string()]);
         assert!(export.is_none());
-
     }
 
     #[test]

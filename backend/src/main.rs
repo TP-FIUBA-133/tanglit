@@ -1,4 +1,6 @@
-use backend::cli::{Commands, ExcludeArgs, GenerateDocArgs, GenerateSlidesMdArgs, TangleArgs, TangleAllArgs};
+use backend::cli::{
+    Commands, ExcludeArgs, GenerateDocArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs,
+};
 use backend::configuration::language_config::LanguageConfig;
 use backend::configuration::{get_config_for_lang, init_configuration};
 use backend::doc::{TangleError, TanglitDoc};
@@ -114,7 +116,6 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
 
         let lang = block.language.as_deref();
         let extension = lang
-            .as_deref()
             .and_then(|l| get_config_for_lang(l).ok())
             .and_then(|cfg| cfg.extension);
 
