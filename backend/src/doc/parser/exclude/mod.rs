@@ -53,8 +53,8 @@ impl FilterTarget {
     }
     fn marker_cleaner(&self) -> &'static Regex {
         match self {
-            FilterTarget::Doc => &SLIDES_MARKER_CLEANER,
-            FilterTarget::Slides => &DOC_MARKER_CLEANER,
+            FilterTarget::Doc => &DOC_MARKER_CLEANER,
+            FilterTarget::Slides => &SLIDES_MARKER_CLEANER,
         }
     }
 }

@@ -26,7 +26,7 @@ mod tests {
             .expect("Failed to convert to markdown");
         let actual_output = actual_output.trim();
         assert_eq!(
-            actual_output, expected_output,
+            expected_output, actual_output,
             "Output does not match expected for {file}"
         );
     }
