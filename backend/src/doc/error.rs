@@ -1,6 +1,7 @@
 use crate::doc::{ParserError, TangleError, generate_pdf::GeneratePdfError};
 use std::fmt;
 
+#[derive(Debug)]
 pub enum DocError {
     ParseError(ParserError),
     TangleError(TangleError),
