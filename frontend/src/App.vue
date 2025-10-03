@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { BlockExecute } from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
-import BlockExecutionResult from "./BlockExecutionResult.vue";
 import MainMenu from "./MainMenu.vue";
 import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
@@ -15,7 +14,7 @@ const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
+const block_execute = ref<BlockExecute>({ error: undefined, result: undefined, line: undefined });
 const html_preview = ref("");
 
 function load_sample_markdown() {
@@ -77,6 +76,7 @@ async function run_block(line: number) {
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
       block_execute.value = await tanglit.execute_block(raw_markdown.value, block.tag);
+      block_execute.value.line = line;
       break;
     }
   }
@@ -93,6 +93,28 @@ async function preview_html() {
   });
 }
 
+const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
+
+async function add_output_to_markdown(block_line, output: string) {
+  const editor = markdown_editor.value;
+  if (!editor) return;
+  console.log("Adding output to markdown:", output);
+  let block_name = "";
+  console.log("Run block at line:", block_line);
+  // find the corresponding block name
+  for (let i = 0; i < all_blocks.value.length; i++) {
+    const block = all_blocks.value[i];
+    if (block.start_line == block_line) {
+      // Here you can execute the block or do whatever you need with it
+      block_name = block.tag;
+      break;
+    }
+  }
+
+  let edit: Edit = await tanglit.format_output(raw_markdown.value, block_name, output);
+  editor.add_output_to_markdown(edit);
+}
+
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
 </script>
 
@@ -102,10 +124,14 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
       <splitpanes vertical class="default-theme">
         <pane min-size="50" class="editor-wrapper">
           <MarkdownEditor
+            ref="markdown_editor"
             @run-block="run_block"
             v-model:raw_markdown="raw_markdown"
             v-model:slide_lines="slides"
             :block_lines="block_lines"
+            :blocks="all_blocks"
+            :block_execute="block_execute"
+            v-on:add_output_to_markdown="add_output_to_markdown"
             class="editor"
           />
         </pane>
@@ -113,9 +139,6 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
           <splitpanes horizontal class="default-theme">
             <pane min-size="30">
               <SlideViewMain class="slide-view" :slides_markdown="slides_markdown" />
-            </pane>
-            <pane min-size="30">
-              <BlockExecutionResult :result="block_execute" />
             </pane>
             <pane min-size="30" v-if="html_preview">
               <HtmlPreview :html="html_preview" />

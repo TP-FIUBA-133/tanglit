@@ -108,6 +108,7 @@ mod tests {
             "main".to_string(),
             vec!["io".to_string()],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -118,6 +119,7 @@ mod tests {
                 "io".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -127,6 +129,7 @@ mod tests {
                 "int x;\nx = 42;".to_string(),
                 "x".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );

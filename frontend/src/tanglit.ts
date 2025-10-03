@@ -11,11 +11,18 @@ export type BlockExecute = {
   output?: ExecutionOutput;
 };
 
+export type Edit = {
+  start_line: number;
+  end_line: number;
+  content: string;
+};
+
 enum TANGLIT_COMMANDS {
   exclude = "tanglit_exclude",
   parse_slides = "tanglit_parse_slides",
   parse_blocks = "tanglit_parse_blocks",
   execute = "tanglit_execute_block",
+  format_output = "tanglit_format_output",
   gen_slides = "tanglit_gen_slides",
   preview_html = "tanglit_preview_html",
 }
@@ -34,6 +41,7 @@ export async function parse_slides(raw_markdown: string): Promise<number[]> {
 
 export async function parse_blocks(raw_markdown: string) {
   const rv = (await invoke(TANGLIT_COMMANDS.parse_blocks, { raw_markdown })) as Array<{
+    end_line: string;
     start_line: number;
     tag: string;
   }>;
@@ -56,6 +64,11 @@ export async function gen_slides(raw_markdown: string): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+export async function format_output(raw_markdown: string, block_name: string, output: string): Promise<Edit> {
+  const r = (await invoke(TANGLIT_COMMANDS.format_output, { raw_markdown, block_name, output })) as Edit;
+  return r;
 }
 
 export async function preview_html(raw_markdown: string) {
