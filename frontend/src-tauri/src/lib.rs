@@ -30,7 +30,6 @@ fn tanglit_parse_blocks(raw_markdown: &str) -> Result<Vec<CodeBlock>, String> {
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<ExecutionOutput, String> {
-    init_configuration().map_err(|e| format!("Error initializing configuration: {}", e))?;
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
 
@@ -44,15 +43,26 @@ fn tanglit_format_output(
     block_name: &str,
     output: ExecutionOutput,
 ) -> Result<Edit, String> {
-    init_configuration().map_err(|e| format!("Error initializing configuration: {}", e))?;
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
     doc.format_output(block_name, &output)
         .map_err(|e| format!("Error formatting output: {}", e))
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn tanglit_gen_slides(raw_markdown: &str) -> Result<Vec<String>, String> {
+    let doc = TanglitDoc::new_from_string(raw_markdown)
+        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
+    let slides = doc
+        .generate_md_slides_vec()
+        .map_err(|e| format!("Error generating Md slides: {}", e))?;
+    Ok(slides)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    init_configuration().expect("Error initializing configuration");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
@@ -60,7 +70,8 @@ pub fn run() {
             tanglit_parse_slides,
             tanglit_parse_blocks,
             tanglit_execute_block,
-            tanglit_format_output
+            tanglit_format_output,
+            tanglit_gen_slides
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

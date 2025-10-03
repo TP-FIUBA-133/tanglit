@@ -24,7 +24,9 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
         <div class="output-title">stderr</div>
         <div class="output-content">{{ props.result.output.stderr }}</div>
       </div>
-      <button @click="$emit('add_output_to_markdown', props.result.output)">Add to markdown</button>
+      <button class="add-to-markdown-btn" @click="$emit('add_output_to_markdown', props.result.output)">
+        Add to markdown
+      </button>
     </div>
   </div>
 </template>
@@ -39,7 +41,7 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
 .close {
   position: absolute;
   top: 5pt;
-  right: 5pt;
+  right: 20pt;
   background-color: #4a4a4a;
   color: white;
   border: none;
@@ -50,8 +52,9 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
 .result {
   display: flex;
   flex-direction: column;
-  background-color: #454545;
+  background-color: #2b2b2b;
   color: #d3d3d3;
+  width: calc(100% - 20pt);
   padding: 5pt;
 }
 
@@ -89,5 +92,9 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
   justify-content: left;
   text-align: left;
   padding: 5px;
+}
+
+.add-to-markdown-btn {
+  width: fit-content;
 }
 </style>

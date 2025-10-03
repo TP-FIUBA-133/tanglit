@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { BlockExecute } from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
 import MainMenu from "./MainMenu.vue";
 import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
+import SlideViewMain from "./SlideViewMain.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
+const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ error: undefined, result: undefined, line: undefined });
 
@@ -78,6 +80,11 @@ async function run_block(line: number) {
   }
 }
 
+async function preview_slides() {
+  slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
+  console.log("Slides generated:", slides_markdown.value);
+}
+
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
 
 async function add_output_to_markdown(block_line, output: string) {
@@ -96,8 +103,8 @@ async function add_output_to_markdown(block_line, output: string) {
     }
   }
 
-  let result = await tanglit.format_output(raw_markdown.value, block_name, output);
-  editor.add_output_to_markdown(result.content, result.line, result.offset);
+  let edit: Edit = await tanglit.format_output(raw_markdown.value, block_name, output);
+  editor.add_output_to_markdown(edit);
 }
 
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
@@ -114,6 +121,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
             v-model:raw_markdown="raw_markdown"
             v-model:slide_lines="slides"
             :block_lines="block_lines"
+            :blocks="all_blocks"
             :block_execute="block_execute"
             v-on:add_output_to_markdown="add_output_to_markdown"
             class="editor"
@@ -122,7 +130,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
         <pane min-size="30">
           <splitpanes horizontal class="default-theme">
             <pane min-size="30">
-              <div class="exclusion_output">{{ exclusion_output }}</div>
+              <SlideViewMain class="slide-view" :slides_markdown="slides_markdown" />
             </pane>
             <pane min-size="30">
               <!--              <BlockExecutionResult :line="2" :result="block_execute" v-on:add_output_to_markdown="add_output_to_markdown" />-->
@@ -131,7 +139,11 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
         </pane>
       </splitpanes>
     </div>
-    <MainMenu v-on:load_sample_markdown="load_sample_markdown" v-on:file_selected="file_selected" />
+    <MainMenu
+      v-on:load_sample_markdown="load_sample_markdown"
+      v-on:file_selected="file_selected"
+      v-on:preview_slides="preview_slides"
+    />
   </main>
 </template>
 
@@ -148,6 +160,11 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+.slide-view {
+  height: 100%;
+  width: 600px;
 }
 
 html,

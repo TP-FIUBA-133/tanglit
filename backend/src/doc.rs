@@ -1,13 +1,13 @@
 mod error;
+mod gen_html;
 mod generate_pdf;
 mod parser;
 mod tangle;
 
+use crate::doc::gen_html::markdown_to_html;
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::slides::parse_slides_from_ast;
-use crate::doc::parser::{
-    ast_to_markdown, markdown_to_html, parse_code_blocks_from_ast, parse_from_string,
-};
+use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 use crate::execution::ExecutionOutput;
 pub use error::DocError;
 use markdown::mdast::Node;
@@ -30,8 +30,8 @@ pub struct TanglitDoc {
 #[derive(Debug, Clone, Serialize)]
 pub struct Edit {
     pub content: String,
-    pub line: usize,
-    pub offset: usize,
+    pub start_line: usize,
+    pub end_line: usize,
 }
 
 impl TanglitDoc {
@@ -79,6 +79,17 @@ impl TanglitDoc {
         }
 
         Ok(())
+    }
+
+    pub fn generate_md_slides_vec(&self) -> Result<Vec<String>, DocError> {
+        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+        let mut v: Vec<String> = vec![];
+        for slide in slides.iter() {
+            let slide_md = slide.to_markdown()?;
+            v.push(slide_md);
+        }
+
+        Ok(v)
     }
 
     pub fn format_output(
@@ -133,16 +144,16 @@ impl TanglitDoc {
                 let lines_to_replace = end - start + 1;
                 Ok(Edit {
                     content: output_content,
-                    line: start + 1, // Monaco uses 1-based line numbers
-                    offset: lines_to_replace,
+                    start_line: start + 1, // Monaco uses 1-based line numbers
+                    end_line: lines_to_replace + start + 1,
                 })
             }
             _ => {
                 // Insert new output block after the code block
                 Ok(Edit {
                     content: format!("\n{}", output_content),
-                    line: code_end_line + 1,
-                    offset: 0, // 0 means insert, don't replace
+                    start_line: code_end_line + 1,
+                    end_line: code_end_line + 1, // 0 means insert, don't replace
                 })
             }
         }

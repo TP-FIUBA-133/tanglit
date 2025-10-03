@@ -1,18 +1,19 @@
 <script lang="ts" setup>
-import { createApp, h, ref, shallowRef, watch } from "vue";
+import { App, createApp, h, shallowRef, watch } from "vue";
 import VueMonacoEditor from "@guolao/vue-monaco-editor";
 import * as monaco from "monaco-editor";
 import BlockExecutionResult from "./BlockExecutionResult.vue";
-import { BlockExecute } from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 
 type ICodeEditor = monaco.editor.ICodeEditor;
 type IGlyphMarginWidget = monaco.editor.IGlyphMarginWidget;
 type IGlyphMarginWidgetPosition = monaco.editor.IGlyphMarginWidgetPosition;
-type IContentWidgetPosition = monaco.editor.IContentWidgetPosition;
 
 const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
-const props = defineProps(["block_lines", "block_execute"]);
+const props = defineProps(["block_lines", "block_execute", "blocks"]);
+const zone_ids: Record<number, string> = {};
+const zone_apps: Record<number, App> = {};
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
 const emit = defineEmits(["run-block", "add_output_to_markdown"]);
@@ -22,8 +23,6 @@ const MONACO_EDITOR_OPTIONS = {
   formatOnPaste: true,
   glyphMargin: true,
 };
-
-const my_widget = ref();
 
 const editor = shallowRef<ICodeEditor>();
 const handleMount = (editorInstance: ICodeEditor) => (editor.value = editorInstance);
@@ -36,59 +35,83 @@ watch(
   },
 );
 
-function close_widget() {
+function close_zone(zone_id) {
   if (!editor.value) return;
-  console.log("close_widget: ", my_widget.value);
-  editor.value.removeContentWidget(my_widget.value.widget);
-  my_widget.value.unmount();
-  my_widget.value = "";
+  editor.value?.changeViewZones((accessor) => {
+    accessor.removeZone(zone_id);
+    zone_apps[zone_id].unmount();
+  });
 }
 
-function makeBlockResult(line_number: number, result: BlockExecute) {
-  if (my_widget.value) {
-    close_widget();
+async function makeBlockResult(line_number: number, result: BlockExecute) {
+  let viewzone_line = line_number;
+  for (let block of props.blocks) {
+    // find the end_line of the code block that starts at this line
+    // we'll be showing the widget *after* the code block
+    if (block.start_line == line_number) {
+      let end_line = block.end_line;
+      viewzone_line = end_line;
+    }
   }
-  let widget_dom = document.createElement("div");
+  if (zone_ids[line_number]) {
+    // the widget is not dynamic, we need to close the existing one
+    // and create another one
+    close_zone(zone_ids[line_number]);
+  }
+  // Create a SINGLE div for everything.
+  const domNode = document.createElement("div");
+  domNode.className = "block-result-widget";
+
+  // Create and mount a new Vue app onto this div.
   const app = createApp(
     h(BlockExecutionResult, {
       result: result,
       line: line_number,
       onRun_block: () => emit("run-block", line_number),
-      onClose: close_widget,
+      onClose: () => close_zone(zone_ids[line_number]),
       onAdd_output_to_markdown: () => emit("add_output_to_markdown", line_number, result.output),
     }),
   );
+  app.mount(domNode);
 
-  app.mount(widget_dom);
-  widget_dom.className = "block-result-widget";
-  let random_suffix = Math.floor(Math.random() * 1000000);
-  let widget_id = "block_result_widget" + random_suffix;
-  let w = {
-    getId: function () {
-      return widget_id;
-    },
-    getDomNode: function () {
-      return widget_dom;
-    },
-    getPosition: function (): IContentWidgetPosition {
-      return {
-        position: { lineNumber: line_number, column: 1 },
-        // Place it below the current line
-        preference: [monaco.editor.ContentWidgetPositionPreference.BELOW],
-      };
-    },
+  // Measure the height
+  document.body.appendChild(domNode);
+  const height = domNode.offsetHeight;
+  document.body.removeChild(domNode);
+  console.log("Calculated height:", height);
+
+  // Measure the width
+  const layoutInfo = editor.value?.getLayoutInfo();
+  if (layoutInfo) {
+    const availableWidth = layoutInfo.minimap.minimapLeft - layoutInfo.contentLeft;
+    domNode.style.width = `${availableWidth}px`;
+  }
+
+  // This prevents clicks inside the widget to affect the editor
+  domNode.addEventListener("mousedown", (event) => {
+    event.stopPropagation();
+  });
+
+  // 5. Create the ViewZone using this single div as the domNode.
+  const myZoneObject = {
+    afterLineNumber: viewzone_line,
+    heightInPx: height,
+    domNode: domNode, // Use the single div here
+    suppressMouseDown: true, // This will now correctly protect the editor
   };
-  my_widget.value = { widget: w, unmount: app.unmount, line: line_number };
-  editor.value?.addContentWidget(w);
+
+  editor.value?.changeViewZones((accessor) => {
+    const zoneId = accessor.addZone(myZoneObject);
+    zone_ids[line_number] = zoneId;
+    zone_apps[zoneId] = app;
+  });
 }
 
-function add_output_to_markdown(text: string, line_number: number, offset: number = 0) {
-  console.log("text: ", text);
-  console.log("line_number: ", line_number);
+function add_output_to_markdown(edit: Edit) {
   editor.value?.executeEdits("embed-result", [
     {
-      range: new monaco.Range(line_number, 1, line_number + offset, 1),
-      text: text + "\n", // Add the text on the next line
+      range: new monaco.Range(edit.start_line, 1, edit.end_line, 1),
+      text: edit.content + '\n',
       forceMoveMarkers: true,
     },
   ]);
@@ -218,13 +241,10 @@ watch(
 }
 
 .block-result-widget {
-  background-color: #272727;
-  border: 1px solid #5e5e5e;
   padding: 8px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-width: 20em;
   z-index: 10000;
+  box-sizing: border-box;
+  max-width: 800px;
 }
 
 .run-block-widget button {
