@@ -24,6 +24,7 @@ enum TANGLIT_COMMANDS {
   execute = "tanglit_execute_block",
   format_output = "tanglit_format_output",
   gen_slides = "tanglit_gen_slides",
+  preview_html = "tanglit_preview_html",
 }
 
 export async function exclude(raw_markdown: string): Promise<string> {
@@ -68,4 +69,8 @@ export async function gen_slides(raw_markdown: string): Promise<string[]> {
 export async function format_output(raw_markdown: string, block_name: string, output: string): Promise<Edit> {
   const r = (await invoke(TANGLIT_COMMANDS.format_output, { raw_markdown, block_name, output })) as Edit;
   return r;
+}
+
+export async function preview_html(raw_markdown: string) {
+  return (await invoke(TANGLIT_COMMANDS.preview_html, { raw_markdown })) as string;
 }

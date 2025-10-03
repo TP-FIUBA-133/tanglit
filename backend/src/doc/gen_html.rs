@@ -55,6 +55,14 @@ fn wrap_in_html_doc(content: &str, title: &str, styles: &[String]) -> String {
                 <meta charset="UTF-8">
                 <title>{title}</title>
                 {style_tags}
+                <style>
+                    html, body {{
+                      height: 100%;
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box; /* Optional, but good practice */
+                    }}
+                </style>
             </head>
             <body>
                 {content}

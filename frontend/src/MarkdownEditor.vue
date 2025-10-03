@@ -111,7 +111,7 @@ function add_output_to_markdown(edit: Edit) {
   editor.value?.executeEdits("embed-result", [
     {
       range: new monaco.Range(edit.start_line, 1, edit.end_line, 1),
-      text: edit.content + "\n",
+      text: edit.content,
       forceMoveMarkers: true,
     },
   ]);
