@@ -79,7 +79,7 @@ impl fmt::Display for ConfigError {
         match self {
             ConfigError::IoError(msg) => write!(f, "I/O error: {}", msg),
             ConfigError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            ConfigError::NotFound(msg) => write!(f, "Not found: {}", msg),
+            ConfigError::NotFound(msg) => write!(f, "Config not found for lang: {}", msg),
             ConfigError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }
     }

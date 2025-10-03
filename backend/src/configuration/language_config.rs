@@ -1,8 +1,10 @@
+mod default;
 use serde::Deserialize;
 use std::fs::{self, read_to_string};
 use std::path::{Path, PathBuf};
 
 use crate::configuration::get_config_dir;
+use crate::configuration::language_config::default::{default_config, get_default_toml};
 use crate::errors::ConfigError;
 
 pub const PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
@@ -25,7 +27,7 @@ impl LanguageConfig {
     pub fn load_for_lang(lang: &str) -> Result<LanguageConfig, ConfigError> {
         let lang_config_path = &get_config_dir().join(EXECUTORS_DIRNAME).join(lang);
         let toml_path = lang_config_path.join(TOML_CONFIG_FILENAME);
-        let mut config = LanguageConfig::load_from_file(&toml_path)?;
+        let mut config = LanguageConfig::load_from_file(&toml_path, lang)?;
         config.template = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME)
             .map(read_to_string)
             .transpose()?;
@@ -34,8 +36,12 @@ impl LanguageConfig {
         Ok(config)
     }
 
-    pub fn load_from_file(path: &PathBuf) -> Result<LanguageConfig, ConfigError> {
-        let content = fs::read_to_string(path)?;
+    pub fn load_from_file(path: &PathBuf, lang: &str) -> Result<LanguageConfig, ConfigError> {
+        let content = match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => get_default_toml(lang)?,
+        };
+
         LanguageConfig::load_from_str(&content)
     }
 
