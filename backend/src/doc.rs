@@ -91,11 +91,6 @@ impl TanglitDoc {
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
-    pub fn filter_content_for_slides(&self) -> Result<String, DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
-        Ok(ast_to_markdown(&ast_with_exclusions)?)
-    }
-
     pub fn get_code_blocks(&self) -> Result<CodeBlocks, DocError> {
         let blocks = self.parse_blocks()?;
         Ok(CodeBlocks::from_codeblocks(blocks))
