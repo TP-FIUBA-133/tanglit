@@ -1,4 +1,4 @@
-use backend::cli::{Commands, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs};
+use backend::cli::{Commands, GenerateDocArgs, GenerateSlidesMdArgs, TangleArgs};
 use backend::configuration::init_configuration;
 use backend::configuration::language_config::LanguageConfig;
 use backend::doc::{TangleError, TanglitDoc};
@@ -6,7 +6,8 @@ use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
 use clap::Parser;
-use std::path::PathBuf;
+use std::fs::write;
+use std::path::{Path, PathBuf};
 
 use backend::execution::write_file;
 use env_logger::init;
