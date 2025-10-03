@@ -6,7 +6,7 @@ use backend::execution::ExecutionOutput;
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    doc.exclude()
+    doc.filter_content_for_doc()
         .map_err(|e| format!("Error excluding content: {}", e))
 }
 

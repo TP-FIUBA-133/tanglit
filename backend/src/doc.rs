@@ -6,6 +6,7 @@ mod tangle;
 
 use crate::doc::gen_html::markdown_to_html;
 use crate::doc::generate_pdf::generate_pdf;
+use crate::doc::parser::exclude::FilterTarget;
 use crate::doc::parser::slides::parse_slides_from_ast;
 use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 use crate::execution::ExecutionOutput;
@@ -71,7 +72,8 @@ impl TanglitDoc {
     }
 
     pub fn generate_md_slides(&self, output_dir: String) -> Result<(), DocError> {
-        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
+        let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
 
         for (i, slide) in slides.iter().enumerate() {
             let slide_md = slide.to_markdown()?;
@@ -82,7 +84,8 @@ impl TanglitDoc {
     }
 
     pub fn generate_md_slides_vec(&self) -> Result<Vec<String>, DocError> {
-        let slides = parse_slides_from_ast(&self.ast, &self.raw_markdown);
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
+        let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
         let mut v: Vec<String> = vec![];
         for slide in slides.iter() {
             let slide_md = slide.to_markdown()?;
@@ -119,8 +122,8 @@ impl TanglitDoc {
         })
     }
 
-    pub fn exclude(&self) -> Result<String, DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast);
+    pub fn filter_content_for_doc(&self) -> Result<String, DocError> {
+        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Doc);
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
@@ -130,11 +133,13 @@ impl TanglitDoc {
     }
 
     pub fn generate_html(&self) -> Result<String, DocError> {
-        let markdown_with_exclusions = self.exclude()?;
+        let markdown_with_exclusions = self.filter_content_for_doc()?;
         Ok(markdown_to_html(&markdown_with_exclusions))
     }
+
     pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
-        let html_with_exclusions = self.generate_html()?;
+        let markdown_with_exclusions = self.filter_content_for_doc()?;
+        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
     }
