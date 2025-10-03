@@ -14,8 +14,10 @@ pub enum Commands {
     Tangle(TangleArgs),
     #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
-    #[command(about = "Generates a PDF from an markdown file, skiping the items with % markers")]
-    GeneratePDF(GeneratePDFArgs),
+    #[command(about = "Generates a PDF from an markdown file, skipping the items with % markers")]
+    GeneratePDF(GenerateDocArgs),
+    #[command(about = "Generates an HTML from an markdown file, skipping the items with % markers")]
+    GenerateHTML(GenerateDocArgs),
     #[command(about = "Generates markdown slides from a markdown file")]
     GenerateSlidesMd(GenerateSlidesMdArgs),
 }
@@ -69,7 +71,7 @@ pub struct ExecuteArgs {
 }
 
 #[derive(Args)]
-pub struct GeneratePDFArgs {
+pub struct GenerateDocArgs {
     #[command(flatten)]
     pub general: GeneralArgs,
     #[arg(

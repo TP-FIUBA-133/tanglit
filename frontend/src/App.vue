@@ -8,6 +8,7 @@ import MainMenu from "./MainMenu.vue";
 import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import SlideViewMain from "./SlideViewMain.vue";
+import HtmlPreview from "./HtmlPreview.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
@@ -15,6 +16,7 @@ const slides = ref<number[]>([]);
 const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
+const html_preview = ref("");
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -85,6 +87,12 @@ async function preview_slides() {
   console.log("Slides generated:", slides_markdown.value);
 }
 
+async function preview_html() {
+  await tanglit.preview_html(raw_markdown.value).then((html: string) => {
+    html_preview.value = html;
+  });
+}
+
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
 </script>
 
@@ -109,6 +117,9 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
             <pane min-size="30">
               <BlockExecutionResult :result="block_execute" />
             </pane>
+            <pane min-size="30" v-if="html_preview">
+              <HtmlPreview :html="html_preview" />
+            </pane>
           </splitpanes>
         </pane>
       </splitpanes>
@@ -117,6 +128,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
       v-on:load_sample_markdown="load_sample_markdown"
       v-on:file_selected="file_selected"
       v-on:preview_slides="preview_slides"
+      v-on:preview_html="preview_html"
     />
   </main>
 </template>
