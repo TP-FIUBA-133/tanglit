@@ -97,7 +97,7 @@ impl TanglitDoc {
     }
 
     pub fn generate_html(&self) -> Result<String, DocError> {
-        let markdown_with_exclusions = self.exclude()?;
+        let markdown_with_exclusions = self.filter_content_for_doc()?;
         Ok(markdown_to_html(&markdown_with_exclusions))
     }
 
