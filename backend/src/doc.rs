@@ -205,8 +205,8 @@ Some other content here.
 
         let edit = doc.format_output("hello", &output).unwrap();
 
-        assert_eq!(edit.line, 6); // Line after the code block
-        assert_eq!(edit.offset, 0); // Insert, don't replace
+        assert_eq!(edit.start_line, 6); // Line after the code block
+        assert_eq!(edit.end_line, 6); // Insert, don't replace
         assert!(edit.content.contains("```output"));
         assert!(edit.content.contains("Hello, world!"));
         assert!(edit.content.contains("Exit code: 0"));
@@ -242,8 +242,8 @@ Some other content here.
 
         let edit = doc.format_output("hello", &output).unwrap();
 
-        assert_eq!(edit.line, 7); // Start of existing output block (1-based)
-        assert_eq!(edit.offset, 9); // Replace 8 lines (from ```output to ```)
+        assert_eq!(edit.start_line, 7); // Start of existing output block (1-based)
+        assert_eq!(edit.end_line, 16); // Replace 9 lines (from ```output to ```)
         assert!(edit.content.contains("New output!"));
         assert!(edit.content.contains("Some warning"));
         assert!(edit.content.contains("Exit code: 1"));
@@ -274,8 +274,8 @@ Some other content here.
 
         let edit = doc.format_output("hello", &output).unwrap();
 
-        assert_eq!(edit.line, 6); // Line after the code block
-        assert_eq!(edit.offset, 0); // Insert, don't replace (didn't find output block)
+        assert_eq!(edit.start_line, 6); // Line after the code block
+        assert_eq!(edit.end_line, 6); // Insert, don't replace (didn't find output block)
     }
 
     #[test]
@@ -307,8 +307,8 @@ Exit code: 0
 
         let edit = doc.format_output("hello", &output).unwrap();
 
-        assert_eq!(edit.line, 8); // Start of existing output block (1-based)
-        assert_eq!(edit.offset, 9); // Replace the output block
+        assert_eq!(edit.start_line, 8); // Start of existing output block (1-based)
+        assert_eq!(edit.end_line, 17); // Replace the output block
         assert!(edit.content.contains("New output!"));
     }
 
@@ -359,7 +359,8 @@ Exit code: 0
 
         let edit = doc.format_output("counter", &output).unwrap();
 
-        assert_eq!(edit.offset, 9); // Should replace the existing block
+        assert_eq!(edit.start_line, 7);
+        assert_eq!(edit.end_line, 16); // Should replace the existing block
         assert!(edit.content.contains("42"));
         assert!(edit.content.contains("some warning"));
         assert!(!edit.content.contains("1\n")); // Old output shouldn't be there
