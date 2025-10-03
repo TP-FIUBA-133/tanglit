@@ -96,6 +96,11 @@ impl TanglitDoc {
         Ok(CodeBlocks::from_codeblocks(blocks))
     }
 
+    pub fn generate_html(&self) -> Result<String, DocError> {
+        let markdown_with_exclusions = self.filter_content_for_doc()?;
+        Ok(markdown_to_html(&markdown_with_exclusions))
+    }
+
     pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
         let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
