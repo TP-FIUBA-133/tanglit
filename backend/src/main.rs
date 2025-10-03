@@ -1,11 +1,13 @@
-use backend::cli::{Commands, GeneratePDFArgs, GenerateSlidesMdArgs, TangleArgs};
-use backend::configuration::{get_config_for_lang, init_configuration};
+use backend::cli::{Commands, GenerateDocArgs, GenerateSlidesMdArgs, TangleArgs};
+use backend::configuration::init_configuration;
+use backend::configuration::language_config::LanguageConfig;
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
 use clap::Parser;
-use std::path::PathBuf;
+use std::fs::write;
+use std::path::{Path, PathBuf};
 
 use backend::execution::write_file;
 use env_logger::init;
@@ -24,7 +26,9 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     let lang = block.language.clone();
 
     // we can tangle even if we don't have a config for the language
-    let lang_config = lang.as_deref().and_then(|l| get_config_for_lang(l).ok());
+    let lang_config = lang
+        .as_deref()
+        .and_then(|l| LanguageConfig::load_for_lang(l).ok());
     // we can tangle even if we don't have an extension
     let extension = lang_config.and_then(|cfg| cfg.extension);
 
@@ -48,14 +52,29 @@ fn handle_execute_command(
     Ok(format!(
         "Output of block {}:\n{}\nstderr: {}\nexit code: {}",
         execute_args.target_block,
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr),
-        &output.status
+        output.stdout,
+        output.stderr,
+        output.status.unwrap_or(-1)
     ))
 }
 
+fn handle_generate_html_command(
+    generate_html_args: GenerateDocArgs,
+) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&generate_html_args.general.input_file_path)?;
+    let html = doc.generate_html()?;
+
+    match write(Path::new(&generate_html_args.output_file_path), html) {
+        Ok(_) => Ok(format!(
+            "✅ HTML saved to {}",
+            generate_html_args.output_file_path
+        )),
+        Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
+    }
+}
+
 fn handle_generate_pdf_command(
-    generate_pdf_args: GeneratePDFArgs,
+    generate_pdf_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&generate_pdf_args.general.input_file_path)?;
     doc.generate_pdf(&generate_pdf_args.output_file_path)?;
@@ -87,6 +106,7 @@ fn main() {
         Commands::Tangle(args) => handle_tangle_command(args),
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
+        Commands::GenerateHTML(args) => handle_generate_html_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
     };
     match result {

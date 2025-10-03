@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { BlockExecute } from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
-import BlockExecutionResult from "./BlockExecutionResult.vue";
+import MainMenu from "./MainMenu.vue";
+import { Splitpanes, Pane } from "splitpanes";
+import "splitpanes/dist/splitpanes.css";
+import SlideViewMain from "./SlideViewMain.vue";
+import HtmlPreview from "./HtmlPreview.vue";
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
 const slides = ref<number[]>([]);
+const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, result: undefined });
+const block_execute = ref<BlockExecute>({ error: undefined, result: undefined, line: undefined });
+const html_preview = ref("");
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -38,21 +44,10 @@ watch(raw_markdown, async (newValue) => {
   time_to_process.value = Math.floor(end_time - start_time);
 });
 
-const fileInput = ref<HTMLInputElement | null>(null); // Template ref for the hidden input
 const selectedFileName = ref("No file chosen.");
 
-// This function is called when the custom button is clicked
-function triggerFileInput() {
-  if (!fileInput.value) {
-    return;
-  }
-  fileInput.value.click(); // Programmatically clicks the hidden input
-}
-
 // This function is called when a file is selected in the dialog
-function handleFileChange(event: Event) {
-  const input_element = event.target as HTMLInputElement;
-  const file = input_element?.files?.[0]; // Get the first selected file
+function file_selected(file) {
   if (file) {
     selectedFileName.value = file.name;
     // You can now read the file or do whatever you need with it
@@ -68,7 +63,6 @@ function handleFileChange(event: Event) {
       alert("Error reading file: " + e);
     };
     reader.readAsText(file); // Read the file as text
-    input_element.value = ""; // Reset the input to allow re-selection of the same file
   } else {
     selectedFileName.value = "No file chosen.";
   }
@@ -82,9 +76,43 @@ async function run_block(line: number) {
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
       block_execute.value = await tanglit.execute_block(raw_markdown.value, block.tag);
+      block_execute.value.line = line;
       break;
     }
   }
+}
+
+async function preview_slides() {
+  slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
+  console.log("Slides generated:", slides_markdown.value);
+}
+
+async function preview_html() {
+  await tanglit.preview_html(raw_markdown.value).then((html: string) => {
+    html_preview.value = html;
+  });
+}
+
+const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
+
+async function add_output_to_markdown(block_line, output: string) {
+  const editor = markdown_editor.value;
+  if (!editor) return;
+  console.log("Adding output to markdown:", output);
+  let block_name = "";
+  console.log("Run block at line:", block_line);
+  // find the corresponding block name
+  for (let i = 0; i < all_blocks.value.length; i++) {
+    const block = all_blocks.value[i];
+    if (block.start_line == block_line) {
+      // Here you can execute the block or do whatever you need with it
+      block_name = block.tag;
+      break;
+    }
+  }
+
+  let edit: Edit = await tanglit.format_output(raw_markdown.value, block_name, output);
+  editor.add_output_to_markdown(edit);
 }
 
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
@@ -93,34 +121,38 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
 <template>
   <main class="container">
     <div class="main-container">
-      <div class="editor-wrapper">
-        <MarkdownEditor
-          @run-block="run_block"
-          v-model:raw_markdown="raw_markdown"
-          v-model:slide_lines="slides"
-          :block_lines="block_lines"
-          class="editor"
-        />
-      </div>
-      <div class="side-panels">
-        <div class="exclusion_output">{{ exclusion_output }}</div>
-        <BlockExecutionResult :result="block_execute" />
-      </div>
+      <splitpanes vertical class="default-theme">
+        <pane min-size="50" class="editor-wrapper">
+          <MarkdownEditor
+            ref="markdown_editor"
+            @run-block="run_block"
+            v-model:raw_markdown="raw_markdown"
+            v-model:slide_lines="slides"
+            :block_lines="block_lines"
+            :blocks="all_blocks"
+            :block_execute="block_execute"
+            v-on:add_output_to_markdown="add_output_to_markdown"
+            class="editor"
+          />
+        </pane>
+        <pane min-size="30">
+          <splitpanes horizontal class="default-theme">
+            <pane min-size="30">
+              <SlideViewMain class="slide-view" :slides_markdown="slides_markdown" />
+            </pane>
+            <pane min-size="30" v-if="html_preview">
+              <HtmlPreview :html="html_preview" />
+            </pane>
+          </splitpanes>
+        </pane>
+      </splitpanes>
     </div>
-    <div class="status-bar">
-      <div class="buttons">
-        <div>
-          <button @click="triggerFileInput" class="custom-file-upload">Open</button>
-          <input type="file" ref="fileInput" @change="handleFileChange" style="display: none" accept=".md,.txt" />
-        </div>
-        <button title="Save">Save</button>
-        <button title="Load sample markdown" @click="load_sample_markdown">Sample markdown</button>
-        <button title="Export slides">Export slides</button>
-        <button title="Export to doc">Export doc</button>
-        <button title="Tangle code">Tangle code</button>
-      </div>
-      <div>Time to process: {{ time_to_process }} ms</div>
-    </div>
+    <MainMenu
+      v-on:load_sample_markdown="load_sample_markdown"
+      v-on:file_selected="file_selected"
+      v-on:preview_slides="preview_slides"
+      v-on:preview_html="preview_html"
+    />
   </main>
 </template>
 
@@ -130,10 +162,8 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
-
   color: #0f0f0f;
   background-color: #f6f6f6;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -141,25 +171,24 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
   -webkit-text-size-adjust: 100%;
 }
 
+.slide-view {
+  height: 100%;
+  width: 600px;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
   height: 100%;
-}
-
-.side-panels {
-  max-width: 50%;
+  overflow: hidden; /* Prevent body scrollbars */
 }
 
 .container {
   margin: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  text-align: center;
-  background-color: #00931f;
-  height: 100vh;
+  height: 100vh; /* Fill the entire viewport height */
 }
 
 .main-container {
@@ -170,12 +199,6 @@ body {
   background-color: #ffffff;
 }
 
-.editor-wrapper {
-  flex-grow: 1;
-  overflow: hidden;
-  margin: 0;
-}
-
 .exclusion_output {
   width: 100%;
   color: #5d8cec;
@@ -183,115 +206,5 @@ body {
   white-space: pre-wrap;
   text-align: left;
   font-family: monospace;
-}
-
-.status-bar {
-  flex-shrink: 0; /* Prevents the status bar from shrinking */
-  padding: 4px 10px;
-  border: none;
-  margin: 0;
-  background-color: #29587e;
-  color: white;
-  font-family: sans-serif;
-  font-size: 12px;
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
-  justify-content: center;
-  align-items: center;
-}
-
-.buttons {
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
-}
-
-.buttons button {
-  background-color: #003974;
-  border-radius: 0;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
-}
-
-input,
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #396cd8;
-}
-
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
-
-  a:hover {
-    color: #24c8db;
-  }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-
-  button:active {
-    background-color: #0f0f0f69;
-  }
 }
 </style>

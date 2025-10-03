@@ -12,6 +12,7 @@ pub struct CodeBlock {
     pub tag: String,
     pub imports: Vec<String>,
     pub start_line: usize,
+    pub end_line: usize,
 }
 
 impl CodeBlock {
@@ -21,6 +22,7 @@ impl CodeBlock {
         tag: String,
         imports: Vec<String>,
         start_line: usize,
+        end_line: usize,
     ) -> Self {
         Self {
             language,
@@ -28,11 +30,12 @@ impl CodeBlock {
             tag,
             imports,
             start_line,
+            end_line,
         }
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(None, code, "".to_string(), Vec::new(), 0)
+        Self::new(None, code, "".to_string(), Vec::new(), 0, 0)
     }
 
     /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
@@ -40,10 +43,14 @@ impl CodeBlock {
     pub fn from_code_node(code_block: Code) -> Result<Self, ParserError> {
         let language = code_block.lang;
         let (tag, imports) = Self::parse_metadata(code_block.meta.unwrap_or_default().as_str());
-        let start_line = code_block
-            .position
+        let position = code_block.position.as_ref();
+        let start_line = position
             .ok_or_else(|| ParserError::CodeBlockError("Block position not found".to_string()))?
             .start
+            .line;
+        let end_line = position
+            .ok_or_else(|| ParserError::CodeBlockError("Block position not found".to_string()))?
+            .end
             .line;
         let tag = match tag {
             Some(t) => t,
@@ -56,6 +63,7 @@ impl CodeBlock {
             tag,
             imports,
             start_line,
+            end_line,
         ))
     }
 
