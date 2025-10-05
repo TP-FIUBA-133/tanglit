@@ -83,7 +83,10 @@ pub fn find_file_in_dir(dir: impl AsRef<Path>, filename: &str) -> Option<PathBuf
 
 #[cfg(test)]
 mod tests {
+    use temp_env::with_var;
+
     use crate::configuration::language_config::LanguageConfig;
+    use crate::configuration::user::CONFIG_DIR_ENVVAR;
     use crate::errors::ConfigError;
 
     #[test]
@@ -106,5 +109,60 @@ mod tests {
             Err(ConfigError::ConfigMissingForLanguage(lang, _))
             if lang == "nonexistent_language_12345"
         ));
+    }
+
+    #[test]
+    fn test_load_default_config_rust() {
+        // Use a random directory to ensure it doesn't exist
+        let random_dir = "/tmp/tanglit_test_config";
+        with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
+            let config = LanguageConfig::load_for_lang("rust").unwrap();
+            assert_eq!(config.extension, Some("rs".to_string()));
+            assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
+            assert_eq!(
+                config.template.unwrap(),
+                include_str!("../../resources/config/executors/rust/template")
+            );
+            assert_eq!(
+                config.execution_script.unwrap(),
+                include_str!("../../resources/config/executors/rust/execute.sh")
+            );
+        });
+    }
+    #[test]
+    fn test_load_default_config_python() {
+        // Use a random directory to ensure it doesn't exist
+        let random_dir = "/tmp/tanglit_test_config";
+        with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
+            let config = LanguageConfig::load_for_lang("python").unwrap();
+            assert_eq!(config.extension, Some("rs".to_string()));
+            assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
+            assert_eq!(
+                config.template.unwrap(),
+                include_str!("../../resources/config/executors/python/template")
+            );
+            assert_eq!(
+                config.execution_script.unwrap(),
+                include_str!("../../resources/config/executors/python/execute.sh")
+            );
+        });
+    }
+    #[test]
+    fn test_load_default_config_c() {
+        // Use a random directory to ensure it doesn't exist
+        let random_dir = "/tmp/tanglit_test_config";
+        with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
+            let config = LanguageConfig::load_for_lang("c").unwrap();
+            assert_eq!(config.extension, Some("rs".to_string()));
+            assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
+            assert_eq!(
+                config.template.unwrap(),
+                include_str!("../../resources/config/executors/c/template")
+            );
+            assert_eq!(
+                config.execution_script.unwrap(),
+                include_str!("../../resources/config/executors/c/execute.sh")
+            );
+        });
     }
 }
