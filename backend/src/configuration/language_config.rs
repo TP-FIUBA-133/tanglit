@@ -4,7 +4,9 @@ use std::fs::{self, read_to_string};
 use std::path::{Path, PathBuf};
 
 use crate::configuration::get_config_dir;
-use crate::configuration::language_config::default::{default_config, get_default_toml};
+use crate::configuration::language_config::default::{
+    get_default_execution_script, get_default_template, get_default_toml,
+};
 use crate::errors::ConfigError;
 
 pub const PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
@@ -20,7 +22,7 @@ pub struct LanguageConfig {
     #[serde(skip)]
     pub template: Option<String>,
     #[serde(skip)]
-    pub execution_script_path: Option<PathBuf>,
+    pub execution_script: Option<String>,
 }
 
 impl LanguageConfig {
@@ -28,11 +30,16 @@ impl LanguageConfig {
         let lang_config_path = &get_config_dir().join(EXECUTORS_DIRNAME).join(lang);
         let toml_path = lang_config_path.join(TOML_CONFIG_FILENAME);
         let mut config = LanguageConfig::load_from_file(&toml_path, lang)?;
-        config.template = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME)
-            .map(read_to_string)
-            .transpose()?;
-        config.execution_script_path =
-            find_file_in_dir(lang_config_path, EXECUTION_SCRIPT_FILENAME);
+        config.template = match find_file_in_dir(lang_config_path, TEMPLATE_FILENAME) {
+            Some(path) => read_to_string(path).ok(),
+            None => get_default_template(lang),
+        };
+        config.execution_script =
+            match find_file_in_dir(lang_config_path, EXECUTION_SCRIPT_FILENAME) {
+                Some(path) => read_to_string(path).ok(),
+                None => get_default_execution_script(lang),
+            };
+
         Ok(config)
     }
 

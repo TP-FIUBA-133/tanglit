@@ -8,7 +8,6 @@ use crate::doc::TanglitDoc;
 use crate::errors::ExecutionError;
 use log::debug;
 use std::path::Path;
-use std::path::PathBuf;
 use std::process::{Command, Output, Stdio};
 pub use wrappers::{make_executable_code, write_file};
 
@@ -51,18 +50,26 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<Output, Execution
 
     debug!("Wrote tangled code to file: {}", block_file_path.display());
 
-    let execution_script_path = lang_config
-        .execution_script_path
+    let execution_script = lang_config
+        .execution_script
         .as_ref()
         .ok_or(ExecutionError::ExecutionScriptNotFound)?;
 
-    execute_block(&block_file_path, execution_script_path)
+    execute_block(&block_file_path, execution_script)
 }
 
 pub fn execute_block(
     block_file_path: &Path,
-    execution_script_path: &PathBuf,
+    execution_script: &String,
 ) -> Result<Output, ExecutionError> {
+    let execution_script_path = write_file(
+        execution_script.clone(),
+        &get_temp_dir(),
+        "execute_script",
+        Some("sh"),
+    )
+    .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
+
     Command::new(execution_script_path)
         .arg(block_file_path)
         .stdout(Stdio::piped())
