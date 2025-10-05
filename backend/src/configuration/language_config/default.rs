@@ -2,9 +2,9 @@
 pub const DEFAULT_TOML_CONFIG_RUST: &str =
     include_str!("../../../resources/config/executors/rust/config.toml");
 pub const DEFAULT_TOML_CONFIG_PYTHON: &str =
-    include_str!("../../../resources/config/executors/rust/config.toml");
+    include_str!("../../../resources/config/executors/python/config.toml");
 pub const DEFAULT_TOML_CONFIG_C: &str =
-    include_str!("../../../resources/config/executors/rust/config.toml");
+    include_str!("../../../resources/config/executors/c/config.toml");
 
 // Default templates content for supported languages
 pub const DEFAULT_TEMPLATE_RUST: &str =

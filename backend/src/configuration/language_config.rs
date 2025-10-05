@@ -135,8 +135,8 @@ mod tests {
         let random_dir = "/tmp/tanglit_test_config";
         with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
             let config = LanguageConfig::load_for_lang("python").unwrap();
-            assert_eq!(config.extension, Some("rs".to_string()));
-            assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
+            assert_eq!(config.extension, Some("py".to_string()));
+            assert_eq!(config.placeholder_regex, Some("@<([A-Z]+)>@".to_string()));
             assert_eq!(
                 config.template.unwrap(),
                 include_str!("../../resources/config/executors/python/template")
@@ -153,7 +153,7 @@ mod tests {
         let random_dir = "/tmp/tanglit_test_config";
         with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
             let config = LanguageConfig::load_for_lang("c").unwrap();
-            assert_eq!(config.extension, Some("rs".to_string()));
+            assert_eq!(config.extension, Some("c".to_string()));
             assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
             assert_eq!(
                 config.template.unwrap(),
