@@ -1,5 +1,3 @@
-use crate::errors::ConfigError;
-
 // Default toml configurations for supported languages
 pub const DEFAULT_TOML_CONFIG_RUST: &str =
     include_str!("../../../resources/config/executors/rust/config.toml");
@@ -23,14 +21,14 @@ pub const DEFAULT_EXECUTION_SCRIPT_PYTHON: &str =
 pub const DEFAULT_EXECUTION_SCRIPT_C: &str =
     include_str!("../../../resources/config/executors/c/execute.sh");
 
-pub fn get_default_toml(lang: &str) -> Result<String, ConfigError> {
+pub fn get_default_toml(lang: &str) -> Option<String> {
     let content = match lang {
         "rust" => DEFAULT_TOML_CONFIG_RUST.into(),
         "python" => DEFAULT_TOML_CONFIG_PYTHON.into(),
         "c" => DEFAULT_TOML_CONFIG_C.into(),
-        _ => Err(ConfigError::NotFound(lang.into()))?,
+        _ => return None,
     };
-    Ok(content)
+    Some(content)
 }
 
 /// Returns the default template for a given language, if available.

@@ -160,6 +160,7 @@ mod tests {
                 "main".to_string(),
                 vec!["helper".to_string()],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -169,6 +170,7 @@ mod tests {
                 "print('Helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -193,6 +195,7 @@ mod tests {
                 "main".to_string(),
                 vec!["helper".to_string()],
                 0,
+                0,
             ),
         );
         let codeblocks = CodeBlocks::from_codeblocks(blocks);
@@ -211,6 +214,7 @@ mod tests {
             "main".to_string(),
             vec![],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -221,6 +225,7 @@ mod tests {
                 "helper".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -230,6 +235,7 @@ mod tests {
                 "print('config function')".to_string(),
                 "config".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -255,6 +261,7 @@ mod tests {
             "main".to_string(),
             vec![],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
 
@@ -279,6 +286,7 @@ mod tests {
             "main".to_string(),
             vec![],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -288,6 +296,7 @@ mod tests {
                 "print('Helper function')\nprint('second helper function')".to_string(),
                 "helper".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -315,6 +324,7 @@ mod tests {
             "main".to_string(),
             vec![],
             0,
+            0,
         );
         blocks.insert("main".to_string(), main);
         let codeblocks = CodeBlocks::from_codeblocks(blocks);
@@ -337,6 +347,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -347,6 +358,7 @@ mod tests {
                 "B".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -356,6 +368,7 @@ mod tests {
                 "@[A]\nprint('Block C')".to_string(),
                 "C".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -380,6 +393,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -389,6 +403,7 @@ mod tests {
                 "@[A]\nprint('Block B')".to_string(),
                 "B".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -413,6 +428,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -422,6 +438,7 @@ mod tests {
                 "@[C]\nprint('Block B')\n@[D]".to_string(),
                 "B".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -433,6 +450,7 @@ mod tests {
                 "C".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -442,6 +460,7 @@ mod tests {
                 "print('Block D')".to_string(),
                 "D".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -466,6 +485,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -475,6 +495,7 @@ mod tests {
                 "print('Block B')".to_string(),
                 "B".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -501,6 +522,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -511,6 +533,7 @@ mod tests {
                 "B".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -520,6 +543,7 @@ mod tests {
                 "@[B]\nprint('Block C')".to_string(),
                 "C".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -547,6 +571,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -556,6 +581,7 @@ mod tests {
                 "@[A]".to_string(),
                 "B".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -586,6 +612,7 @@ mod tests {
                 "A".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -595,6 +622,7 @@ mod tests {
                 "@[C]".to_string(),
                 "B".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -606,6 +634,7 @@ mod tests {
                 "C".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -615,6 +644,7 @@ mod tests {
                 "@[E]".to_string(),
                 "D".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );
@@ -626,6 +656,7 @@ mod tests {
                 "E".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -636,6 +667,7 @@ mod tests {
                 "F".to_string(),
                 vec![],
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -645,6 +677,7 @@ mod tests {
                 "@[A]".to_string(),
                 "G".to_string(),
                 vec![],
+                0,
                 0,
             ),
         );

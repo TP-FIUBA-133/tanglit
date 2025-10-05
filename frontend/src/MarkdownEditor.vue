@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-import { shallowRef, watch } from "vue";
+import { App, createApp, h, shallowRef, watch } from "vue";
 import VueMonacoEditor from "@guolao/vue-monaco-editor";
 import * as monaco from "monaco-editor";
+import BlockExecutionResult from "./BlockExecutionResult.vue";
+import { BlockExecute, Edit } from "./tanglit.ts";
 
 type ICodeEditor = monaco.editor.ICodeEditor;
 type IGlyphMarginWidget = monaco.editor.IGlyphMarginWidget;
@@ -9,10 +11,12 @@ type IGlyphMarginWidgetPosition = monaco.editor.IGlyphMarginWidgetPosition;
 
 const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
-const props = defineProps(["block_lines"]);
+const props = defineProps(["block_lines", "block_execute", "blocks"]);
+const zone_ids: Record<number, string> = {};
+const zone_apps: Record<number, App> = {};
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
-const emit = defineEmits(["run-block"]);
+const emit = defineEmits(["run-block", "add_output_to_markdown"]);
 const MONACO_EDITOR_OPTIONS = {
   automaticLayout: true,
   formatOnType: true,
@@ -22,6 +26,98 @@ const MONACO_EDITOR_OPTIONS = {
 
 const editor = shallowRef<ICodeEditor>();
 const handleMount = (editorInstance: ICodeEditor) => (editor.value = editorInstance);
+watch(
+  () => props.block_execute,
+  (new_value, old_value) => {
+    console.log("new block_execute: ", new_value);
+    console.log("old block_execute: ", old_value);
+    makeBlockResult(new_value.line, new_value);
+  },
+);
+
+function close_zone(zone_id) {
+  if (!editor.value) return;
+  editor.value?.changeViewZones((accessor) => {
+    accessor.removeZone(zone_id);
+    zone_apps[zone_id].unmount();
+  });
+}
+
+async function makeBlockResult(line_number: number, result: BlockExecute) {
+  let viewzone_line = line_number;
+  for (let block of props.blocks) {
+    // find the end_line of the code block that starts at this line
+    // we'll be showing the widget *after* the code block
+    if (block.start_line == line_number) {
+      let end_line = block.end_line;
+      viewzone_line = end_line;
+    }
+  }
+  if (zone_ids[line_number]) {
+    // the widget is not dynamic, we need to close the existing one
+    // and create another one
+    close_zone(zone_ids[line_number]);
+  }
+  // Create a SINGLE div for everything.
+  const domNode = document.createElement("div");
+  domNode.className = "block-result-widget";
+
+  // Create and mount a new Vue app onto this div.
+  const app = createApp(
+    h(BlockExecutionResult, {
+      result: result,
+      line: line_number,
+      onRun_block: () => emit("run-block", line_number),
+      onClose: () => close_zone(zone_ids[line_number]),
+      onAdd_output_to_markdown: () => emit("add_output_to_markdown", line_number, result.output),
+    }),
+  );
+  app.mount(domNode);
+
+  // Measure the height
+  document.body.appendChild(domNode);
+  const height = domNode.offsetHeight;
+  document.body.removeChild(domNode);
+  console.log("Calculated height:", height);
+
+  // Measure the width
+  const layoutInfo = editor.value?.getLayoutInfo();
+  if (layoutInfo) {
+    const availableWidth = layoutInfo.minimap.minimapLeft - layoutInfo.contentLeft;
+    domNode.style.width = `${availableWidth}px`;
+  }
+
+  // This prevents clicks inside the widget to affect the editor
+  domNode.addEventListener("mousedown", (event) => {
+    event.stopPropagation();
+  });
+
+  // 5. Create the ViewZone using this single div as the domNode.
+  const myZoneObject = {
+    afterLineNumber: viewzone_line,
+    heightInPx: height,
+    domNode: domNode, // Use the single div here
+    suppressMouseDown: true, // This will now correctly protect the editor
+  };
+
+  editor.value?.changeViewZones((accessor) => {
+    const zoneId = accessor.addZone(myZoneObject);
+    zone_ids[line_number] = zoneId;
+    zone_apps[zoneId] = app;
+  });
+}
+
+function add_output_to_markdown(edit: Edit) {
+  editor.value?.executeEdits("embed-result", [
+    {
+      range: new monaco.Range(edit.start_line, 1, edit.end_line, 1),
+      text: edit.content,
+      forceMoveMarkers: true,
+    },
+  ]);
+}
+
+defineExpose({ makeBlockResult: makeBlockResult, add_output_to_markdown: add_output_to_markdown });
 
 function makeGlyphWidget(line: number, widget_id: string, widget_dom: HTMLElement): IGlyphMarginWidget {
   return {
@@ -54,7 +150,8 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.className = "run-block-widget";
   widgetNode.onclick = () => {
     // emit an event to run the block
-    emit("run-block", line);
+    // emit("run-block", line);
+    makeBlockResult(line, { line: line, output: null, error: null });
   };
   return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
@@ -141,6 +238,13 @@ watch(
 
 .run-block-widget {
   padding: 0;
+}
+
+.block-result-widget {
+  padding: 8px;
+  z-index: 10000;
+  box-sizing: border-box;
+  max-width: 800px;
 }
 
 .run-block-widget button {

@@ -46,7 +46,12 @@ impl LanguageConfig {
     pub fn load_from_file(path: &PathBuf, lang: &str) -> Result<LanguageConfig, ConfigError> {
         let content = match fs::read_to_string(path) {
             Ok(c) => c,
-            Err(_) => get_default_toml(lang)?,
+            Err(_) => get_default_toml(lang).ok_or_else(|| {
+                ConfigError::ConfigMissingForLanguage(
+                    lang.to_string(),
+                    path.to_string_lossy().to_string(),
+                )
+            })?,
         };
 
         LanguageConfig::load_from_str(&content)
@@ -79,6 +84,7 @@ pub fn find_file_in_dir(dir: impl AsRef<Path>, filename: &str) -> Option<PathBuf
 #[cfg(test)]
 mod tests {
     use crate::configuration::language_config::LanguageConfig;
+    use crate::errors::ConfigError;
 
     #[test]
     fn test_load_config() {
@@ -90,5 +96,15 @@ mod tests {
         .unwrap();
         assert_eq!(config.extension, Option::from("rs".to_string()));
         assert_eq!(config.placeholder_regex, Option::from("<WAWA>".to_string()));
+    }
+
+    #[test]
+    fn test_config_missing_for_language_error() {
+        let result = LanguageConfig::load_for_lang("nonexistent_language_12345");
+        assert!(matches!(
+            result,
+            Err(ConfigError::ConfigMissingForLanguage(lang, _))
+            if lang == "nonexistent_language_12345"
+        ));
     }
 }

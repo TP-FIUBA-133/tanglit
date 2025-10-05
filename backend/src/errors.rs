@@ -71,7 +71,7 @@ impl From<ConfigError> for ExecutionError {
 pub enum ConfigError {
     IoError(String),
     ParseError(String),
-    NotFound(String),
+    ConfigMissingForLanguage(String, String),
     InternalError(String),
 }
 impl fmt::Display for ConfigError {
@@ -79,7 +79,11 @@ impl fmt::Display for ConfigError {
         match self {
             ConfigError::IoError(msg) => write!(f, "I/O error: {}", msg),
             ConfigError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            ConfigError::NotFound(msg) => write!(f, "Config not found for lang: {}", msg),
+            ConfigError::ConfigMissingForLanguage(lang, path) => write!(
+                f,
+                "Config missing for language '{}', expected at path '{}'",
+                lang, path
+            ),
             ConfigError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }
     }
@@ -102,7 +106,11 @@ impl fmt::Debug for ConfigError {
         match self {
             ConfigError::IoError(msg) => write!(f, "I/O error: {}", msg),
             ConfigError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            ConfigError::NotFound(msg) => write!(f, "Not found: {}", msg),
+            ConfigError::ConfigMissingForLanguage(lang, path) => write!(
+                f,
+                "Config missing for language '{}', expected at path '{}'",
+                lang, path
+            ),
             ConfigError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }
     }
