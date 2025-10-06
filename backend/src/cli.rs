@@ -16,9 +16,7 @@ pub enum Commands {
     Exclude(ExcludeArgs),
     #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
-    #[command(
-        about = "Tangle all code blocks marked for export from a markdown file and export to export files"
-    )]
+    #[command(about = "Tangle and export all marked code blocks from a markdown file")]
     TangleAll(TangleAllArgs),
     #[command(about = "Generates a PDF from an markdown file, skipping the items with % markers")]
     GeneratePDF(GenerateDocArgs),

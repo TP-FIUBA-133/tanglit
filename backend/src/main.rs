@@ -116,7 +116,8 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
 
         let lang = block.language.as_deref();
         let extension = lang
-            .and_then(|l| get_config_for_lang(l).ok())
+            .as_deref()
+            .and_then(|l| LanguageConfig::load_for_lang(l).ok())
             .and_then(|cfg| cfg.extension);
 
         let file_name = block.export.clone().unwrap_or(block.tag.clone());
@@ -131,7 +132,7 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
     }
 
     Ok(format!(
-        "All {} blocks tangled to {}",
+        "✅ {} blocks tangled to {}",
         blocks_to_tangle.len(),
         tangle_all_command.output_dir
     ))
