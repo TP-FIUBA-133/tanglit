@@ -109,6 +109,7 @@ mod tests {
             vec!["io".to_string()],
             None,
             0,
+            0,
         );
         blocks.insert("main".to_string(), main.clone());
         blocks.insert(
@@ -120,6 +121,7 @@ mod tests {
                 vec![],
                 None,
                 0,
+                0,
             ),
         );
         blocks.insert(
@@ -130,6 +132,7 @@ mod tests {
                 "x".to_string(),
                 vec![],
                 None,
+                0,
                 0,
             ),
         );

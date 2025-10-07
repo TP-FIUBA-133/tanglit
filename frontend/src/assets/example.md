@@ -10,7 +10,13 @@ This slide has the same title as the first slide.
 This slide has a code block:
 
 ```python
-print("Hello, world!")
+import random
+print("One random number:", random.randint(1, 2**32))
+```
+
+```python
+import random
+print("Another random number:", random.randint(1, 2**32))
 ```
 
 --- ---
