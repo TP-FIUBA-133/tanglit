@@ -1,12 +1,17 @@
-use std::{fs, io, path::PathBuf, sync::OnceLock};
+#[cfg(not(test))]
+use std::sync::OnceLock;
+use std::{fs, io, path::PathBuf};
 
 use directories;
 
 const DEFAULT_PROJECT_NAME: &str = "tanglit";
-static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
-static TEMP_DIR: OnceLock<PathBuf> = OnceLock::new();
 const TEMP_DIR_ENVVAR: &str = "TANGLIT_TEMP_DIR";
-const CONFIG_DIR_ENVVAR: &str = "TANGLIT_CONFIG_DIR";
+pub const CONFIG_DIR_ENVVAR: &str = "TANGLIT_CONFIG_DIR";
+
+#[cfg(not(test))]
+static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
+#[cfg(not(test))]
+static TEMP_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 fn calculate_config_dir() -> PathBuf {
     std::env::var(CONFIG_DIR_ENVVAR)

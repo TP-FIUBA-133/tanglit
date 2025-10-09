@@ -9,7 +9,6 @@ use crate::errors::ExecutionError;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use std::path::PathBuf;
 use std::process::{Command, Stdio};
 pub use wrappers::{make_executable_code, write_code_to_file, write_file};
 
@@ -60,19 +59,35 @@ pub fn execute(doc: &TanglitDoc, target_block: &str) -> Result<ExecutionOutput, 
 
     debug!("Wrote tangled code to file: {}", block_file_path.display());
 
-    let execution_script_path = lang_config
-        .execution_script_path
+    let execution_script = lang_config
+        .execution_script
         .as_ref()
         .ok_or(ExecutionError::ExecutionScriptNotFound)?;
 
-    execute_block(&block_file_path, execution_script_path)
+    execute_block(&block_file_path, execution_script)
 }
 
 pub fn execute_block(
     block_file_path: &Path,
-    execution_script_path: &PathBuf,
+    execution_script: &str,
 ) -> Result<ExecutionOutput, ExecutionError> {
-    let output = Command::new(execution_script_path)
+    let execution_script_path = write_file(
+        execution_script.into(),
+        get_temp_dir().as_path(),
+        "execute_script",
+        Some("sh"),
+    )
+    .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
+
+    // Make the script executable
+    Command::new("chmod")
+        .arg("+x")
+        .arg(&execution_script_path)
+        .status()
+        .map_err(|e| ExecutionError::InternalError(format!("chmod failed: {e}")))?;
+
+    // Execute the script
+    let output = Command::new(&execution_script_path)
         .arg(block_file_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

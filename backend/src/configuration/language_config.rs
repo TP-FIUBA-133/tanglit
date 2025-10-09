@@ -1,8 +1,12 @@
+mod default;
 use serde::Deserialize;
 use std::fs::{self, read_to_string};
 use std::path::{Path, PathBuf};
 
 use crate::configuration::get_config_dir;
+use crate::configuration::language_config::default::{
+    get_default_execution_script, get_default_template, get_default_toml,
+};
 use crate::errors::ConfigError;
 
 pub const PLACEHOLDER_DEFAULT_PATTERN: &str = "#<([^#<>]+)>#";
@@ -18,30 +22,38 @@ pub struct LanguageConfig {
     #[serde(skip)]
     pub template: Option<String>,
     #[serde(skip)]
-    pub execution_script_path: Option<PathBuf>,
+    pub execution_script: Option<String>,
 }
 
 impl LanguageConfig {
     pub fn load_for_lang(lang: &str) -> Result<LanguageConfig, ConfigError> {
         let lang_config_path = &get_config_dir().join(EXECUTORS_DIRNAME).join(lang);
-        if !lang_config_path.exists() {
-            return Err(ConfigError::ConfigMissingForLanguage(
-                lang.to_string(),
-                lang_config_path.to_string_lossy().to_string(),
-            ));
-        }
         let toml_path = lang_config_path.join(TOML_CONFIG_FILENAME);
-        let mut config = LanguageConfig::load_from_file(&toml_path)?;
-        config.template = find_file_in_dir(lang_config_path, TEMPLATE_FILENAME)
-            .map(read_to_string)
-            .transpose()?;
-        config.execution_script_path =
-            find_file_in_dir(lang_config_path, EXECUTION_SCRIPT_FILENAME);
+        let mut config = LanguageConfig::load_from_file(&toml_path, lang)?;
+        config.template = match find_file_in_dir(lang_config_path, TEMPLATE_FILENAME) {
+            Some(path) => read_to_string(path).ok(),
+            None => get_default_template(lang),
+        };
+        config.execution_script =
+            match find_file_in_dir(lang_config_path, EXECUTION_SCRIPT_FILENAME) {
+                Some(path) => read_to_string(path).ok(),
+                None => get_default_execution_script(lang),
+            };
+
         Ok(config)
     }
 
-    pub fn load_from_file(path: &PathBuf) -> Result<LanguageConfig, ConfigError> {
-        let content = fs::read_to_string(path)?;
+    pub fn load_from_file(path: &PathBuf, lang: &str) -> Result<LanguageConfig, ConfigError> {
+        let content = match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => get_default_toml(lang).ok_or_else(|| {
+                ConfigError::ConfigMissingForLanguage(
+                    lang.to_string(),
+                    path.to_string_lossy().to_string(),
+                )
+            })?,
+        };
+
         LanguageConfig::load_from_str(&content)
     }
 
@@ -71,7 +83,14 @@ pub fn find_file_in_dir(dir: impl AsRef<Path>, filename: &str) -> Option<PathBuf
 
 #[cfg(test)]
 mod tests {
+    use temp_env::with_var;
+
     use crate::configuration::language_config::LanguageConfig;
+    use crate::configuration::language_config::default::{
+        DEFAULT_EXECUTION_SCRIPT_C, DEFAULT_EXECUTION_SCRIPT_PYTHON, DEFAULT_EXECUTION_SCRIPT_RUST,
+        DEFAULT_TEMPLATE_C, DEFAULT_TEMPLATE_PYTHON, DEFAULT_TEMPLATE_RUST,
+    };
+    use crate::configuration::user::CONFIG_DIR_ENVVAR;
     use crate::errors::ConfigError;
 
     #[test]
@@ -94,5 +113,48 @@ mod tests {
             Err(ConfigError::ConfigMissingForLanguage(lang, _))
             if lang == "nonexistent_language_12345"
         ));
+    }
+
+    #[test]
+    fn test_load_default_config_rust() {
+        // Use a random directory to ensure it doesn't exist
+        let random_dir = "/tmp/tanglit_test_config";
+        with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
+            let config = LanguageConfig::load_for_lang("rust").unwrap();
+            assert_eq!(config.extension, Some("rs".to_string()));
+            assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
+            assert_eq!(config.template.unwrap(), DEFAULT_TEMPLATE_RUST);
+            assert_eq!(
+                config.execution_script.unwrap(),
+                DEFAULT_EXECUTION_SCRIPT_RUST
+            );
+        });
+    }
+    #[test]
+    fn test_load_default_config_python() {
+        // Use a random directory to ensure it doesn't exist
+        let random_dir = "/tmp/tanglit_test_config";
+        with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
+            let config = LanguageConfig::load_for_lang("python").unwrap();
+            assert_eq!(config.extension, Some("py".to_string()));
+            assert_eq!(config.placeholder_regex, Some("@<([A-Z]+)>@".to_string()));
+            assert_eq!(config.template.unwrap(), DEFAULT_TEMPLATE_PYTHON);
+            assert_eq!(
+                config.execution_script.unwrap(),
+                DEFAULT_EXECUTION_SCRIPT_PYTHON
+            );
+        });
+    }
+    #[test]
+    fn test_load_default_config_c() {
+        // Use a random directory to ensure it doesn't exist
+        let random_dir = "/tmp/tanglit_test_config";
+        with_var(CONFIG_DIR_ENVVAR, Some(random_dir), || {
+            let config = LanguageConfig::load_for_lang("c").unwrap();
+            assert_eq!(config.extension, Some("c".to_string()));
+            assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
+            assert_eq!(config.template.unwrap(), DEFAULT_TEMPLATE_C);
+            assert_eq!(config.execution_script.unwrap(), DEFAULT_EXECUTION_SCRIPT_C);
+        });
     }
 }
