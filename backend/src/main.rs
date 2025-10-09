@@ -1,5 +1,6 @@
 use backend::cli::{
-    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs, TangleArgs,
+    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs,
+    TangleArgs,
 };
 use backend::configuration::init_configuration;
 use backend::configuration::language_config::LanguageConfig;
