@@ -86,6 +86,10 @@ mod tests {
     use temp_env::with_var;
 
     use crate::configuration::language_config::LanguageConfig;
+    use crate::configuration::language_config::default::{
+        DEFAULT_EXECUTION_SCRIPT_C, DEFAULT_EXECUTION_SCRIPT_PYTHON, DEFAULT_EXECUTION_SCRIPT_RUST,
+        DEFAULT_TEMPLATE_C, DEFAULT_TEMPLATE_PYTHON, DEFAULT_TEMPLATE_RUST,
+    };
     use crate::configuration::user::CONFIG_DIR_ENVVAR;
     use crate::errors::ConfigError;
 
@@ -119,13 +123,10 @@ mod tests {
             let config = LanguageConfig::load_for_lang("rust").unwrap();
             assert_eq!(config.extension, Some("rs".to_string()));
             assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
-            assert_eq!(
-                config.template.unwrap(),
-                include_str!("../../resources/config/executors/rust/template")
-            );
+            assert_eq!(config.template.unwrap(), DEFAULT_TEMPLATE_RUST);
             assert_eq!(
                 config.execution_script.unwrap(),
-                include_str!("../../resources/config/executors/rust/execute.sh")
+                DEFAULT_EXECUTION_SCRIPT_RUST
             );
         });
     }
@@ -137,13 +138,10 @@ mod tests {
             let config = LanguageConfig::load_for_lang("python").unwrap();
             assert_eq!(config.extension, Some("py".to_string()));
             assert_eq!(config.placeholder_regex, Some("@<([A-Z]+)>@".to_string()));
-            assert_eq!(
-                config.template.unwrap(),
-                include_str!("../../resources/config/executors/python/template")
-            );
+            assert_eq!(config.template.unwrap(), DEFAULT_TEMPLATE_PYTHON);
             assert_eq!(
                 config.execution_script.unwrap(),
-                include_str!("../../resources/config/executors/python/execute.sh")
+                DEFAULT_EXECUTION_SCRIPT_PYTHON
             );
         });
     }
@@ -155,14 +153,8 @@ mod tests {
             let config = LanguageConfig::load_for_lang("c").unwrap();
             assert_eq!(config.extension, Some("c".to_string()));
             assert_eq!(config.placeholder_regex, Some("#<([A-Z]+)>#".to_string()));
-            assert_eq!(
-                config.template.unwrap(),
-                include_str!("../../resources/config/executors/c/template")
-            );
-            assert_eq!(
-                config.execution_script.unwrap(),
-                include_str!("../../resources/config/executors/c/execute.sh")
-            );
+            assert_eq!(config.template.unwrap(), DEFAULT_TEMPLATE_C);
+            assert_eq!(config.execution_script.unwrap(), DEFAULT_EXECUTION_SCRIPT_C);
         });
     }
 }

@@ -1,25 +1,44 @@
 // Default toml configurations for supported languages
-pub const DEFAULT_TOML_CONFIG_RUST: &str =
-    include_str!("../../../resources/config/executors/rust/config.toml");
-pub const DEFAULT_TOML_CONFIG_PYTHON: &str =
-    include_str!("../../../resources/config/executors/python/config.toml");
-pub const DEFAULT_TOML_CONFIG_C: &str =
-    include_str!("../../../resources/config/executors/c/config.toml");
+pub const DEFAULT_TOML_CONFIG_RUST: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/rust/config.toml"
+));
+pub const DEFAULT_TOML_CONFIG_PYTHON: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/python/config.toml"
+));
+pub const DEFAULT_TOML_CONFIG_C: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/c/config.toml"
+));
 
 // Default templates content for supported languages
-pub const DEFAULT_TEMPLATE_RUST: &str =
-    include_str!("../../../resources/config/executors/rust/template");
-pub const DEFAULT_TEMPLATE_PYTHON: &str =
-    include_str!("../../../resources/config/executors/python/template");
-pub const DEFAULT_TEMPLATE_C: &str = include_str!("../../../resources/config/executors/c/template");
+pub const DEFAULT_TEMPLATE_RUST: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/rust/template"
+));
+pub const DEFAULT_TEMPLATE_PYTHON: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/python/template"
+));
+pub const DEFAULT_TEMPLATE_C: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/c/template"
+));
 
 // Default execution scripts for supported languages
-pub const DEFAULT_EXECUTION_SCRIPT_RUST: &str =
-    include_str!("../../../resources/config/executors/rust/execute.sh");
-pub const DEFAULT_EXECUTION_SCRIPT_PYTHON: &str =
-    include_str!("../../../resources/config/executors/python/execute.sh");
-pub const DEFAULT_EXECUTION_SCRIPT_C: &str =
-    include_str!("../../../resources/config/executors/c/execute.sh");
+pub const DEFAULT_EXECUTION_SCRIPT_RUST: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/rust/execute.sh"
+));
+pub const DEFAULT_EXECUTION_SCRIPT_PYTHON: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/python/execute.sh"
+));
+pub const DEFAULT_EXECUTION_SCRIPT_C: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/resources/config/executors/c/execute.sh"
+));
 
 pub fn get_default_toml(lang: &str) -> Option<String> {
     let content = match lang {
