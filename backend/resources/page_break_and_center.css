@@ -1,0 +1,28 @@
+.slide {
+    page-break-after: always;
+    /* one per page */
+    break-after: page;
+    /* modern alias */
+    min-height: 100vh;
+    /* use full page height */
+    display: flex;
+    /* center the slide box */
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    /* small breathing room */
+    box-sizing: border-box;
+}
+
+/* keep content from getting too wide; tweak 960px if you want */
+.slide .markdown-body {
+    width: 100%;
+    max-width: 960px;
+}
+
+/* common offenders: don't overflow horizontally */
+.slide img,
+.slide table,
+.slide pre {
+    max-width: 100%;
+}

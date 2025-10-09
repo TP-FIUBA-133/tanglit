@@ -1,4 +1,6 @@
-use backend::cli::{Commands, GenerateDocArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs};
+use backend::cli::{
+    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs, TangleArgs,
+};
 use backend::configuration::init_configuration;
 use backend::configuration::language_config::LanguageConfig;
 use backend::doc::{TangleError, TanglitDoc};
@@ -6,7 +8,7 @@ use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
 use backend::{cli::Cli, execution};
 use clap::Parser;
-use std::fs::write;
+use std::fs::{self, write};
 use std::path::{Path, PathBuf};
 
 use backend::execution::write_file;
@@ -77,7 +79,7 @@ fn handle_generate_pdf_command(
     generate_pdf_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&generate_pdf_args.general.input_file_path)?;
-    doc.generate_pdf(&generate_pdf_args.output_file_path)?;
+    doc.generate_doc_pdf(&generate_pdf_args.output_file_path)?;
 
     Ok(format!(
         "✅ PDF saved to {}",
@@ -97,9 +99,25 @@ fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String
 
 fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
-    doc.generate_md_slides(args.output_dir)?;
+    let slides_md = doc.generate_md_slides_vec()?;
+
+    for (i, slide_md) in slides_md.iter().enumerate() {
+        fs::write(format!("{}/slide_{}.md", args.output_dir, i), slide_md)?;
+    }
 
     Ok("✅ Slides Generated".to_string())
+}
+
+fn handle_generate_slides_pdf(
+    generate_slides_args: GenerateSlidesPdfArgs,
+) -> Result<String, ExecutionError> {
+    let doc = TanglitDoc::new_from_file(&generate_slides_args.general.input_file_path)?;
+    doc.generate_slides_pdf(&generate_slides_args.output_file_path)?;
+
+    Ok(format!(
+        "✅ Slides PDF saved to {}",
+        &generate_slides_args.output_file_path
+    ))
 }
 
 fn main() {
@@ -112,6 +130,7 @@ fn main() {
         std::process::exit(1);
     }
 
+    // TODO: use a general error instead of ExecutionError
     let result = match cli.command {
         Commands::Tangle(args) => handle_tangle_command(args),
         Commands::Execute(args) => handle_execute_command(args),
@@ -119,6 +138,7 @@ fn main() {
         Commands::GenerateHTML(args) => handle_generate_html_command(args),
         Commands::TangleAll(args) => handle_tangle_all_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
+        Commands::GenerateSlidesPdf(args) => handle_generate_slides_pdf(args),
     };
     match result {
         Ok(message) => println!("{}", message),
