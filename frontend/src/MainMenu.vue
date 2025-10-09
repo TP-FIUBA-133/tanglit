@@ -17,9 +17,9 @@ defineEmits([
     <button title="Save" @click="$emit('save_file')">Save</button>
     <button title="Load sample markdown" @click="$emit('load_sample_markdown')">Sample markdown</button>
     <button title="Preview slides" @click="$emit('preview_slides')">Preview slides</button>
-    <button title="Export to doc" @click="$emit('preview_html')">Preview doc</button>
-    <button title="Save" @click="$emit('save_html')">Save doc as HTML</button>
-    <button title="Save" @click="$emit('save_pdf')">Save doc as PDF</button>
+    <button title="Preview doc" @click="$emit('preview_html')">Preview doc</button>
+    <button title="Save the doc as HTML" @click="$emit('save_html')">Save doc as HTML</button>
+    <button title="Save the doc as PDF" @click="$emit('save_pdf')">Save doc as PDF</button>
     <button title="Tangle code">Tangle code</button>
   </div>
 </template>
