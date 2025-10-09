@@ -100,26 +100,66 @@ impl TanglitDoc {
         block_id: &str,
         output: &ExecutionOutput,
     ) -> Result<Edit, DocError> {
-        Ok(Edit {
-            content: format!(
-                "```output\nOutput:\n{}\n\nStderr:\n{}\n\nExit code: {}\n```",
-                output.stdout,
-                output.stderr,
-                output.status.map_or("None".to_string(), |s| s.to_string())
-            ),
-            start_line: self
-                .get_code_blocks()?
-                .get_block(block_id)
-                .unwrap()
-                .end_line
-                + 1,
-            end_line: self // for the moment, same as start_line because we are always inserting
-                .get_code_blocks()?
-                .get_block(block_id)
-                .unwrap()
-                .end_line
-                + 1,
-        })
+        let binding = self.get_code_blocks()?;
+        let code_block = binding
+            .get_block(block_id)
+            .ok_or_else(|| TangleError::BlockNotFound(block_id.to_string()))?;
+
+        let output_content = format!(
+            "```output\nOutput:\n{}\n\nStderr:\n{}\n\nExit code: {}\n```",
+            output.stdout,
+            output.stderr,
+            output.status.map_or("None".to_string(), |s| s.to_string())
+        );
+
+        let lines: Vec<&str> = self.raw_markdown.lines().collect();
+        let code_end_line = code_block.end_line;
+
+        // Look for an existing output block starting after the code block
+        let mut output_start_line = None;
+        let mut output_end_line = None;
+
+        // Start searching from the line immediately after the code block
+        for (line_idx, line) in lines.iter().enumerate().skip(code_end_line) {
+            let trimmed = line.trim();
+
+            if trimmed == "```output" {
+                output_start_line = Some(line_idx);
+
+                // Find the closing ``` for this output block
+                for (end_idx, end_line) in lines.iter().enumerate().skip(line_idx + 1) {
+                    if end_line.trim() == "```" {
+                        output_end_line = Some(end_idx);
+                        break;
+                    }
+                }
+                break;
+            } else if !trimmed.is_empty() {
+                // Hit non-empty content that's not an output block, stop looking
+                break;
+            }
+        }
+
+        match (output_start_line, output_end_line) {
+            (Some(start), Some(end)) => {
+                // Replace existing output block
+                // Calculate how many lines to replace (inclusive of both start and end lines)
+                let lines_to_replace = end - start + 1;
+                Ok(Edit {
+                    content: output_content,
+                    start_line: start + 1, // Monaco uses 1-based line numbers
+                    end_line: lines_to_replace + start + 1,
+                })
+            }
+            _ => {
+                // Insert new output block after the code block
+                Ok(Edit {
+                    content: format!("\n{}", output_content),
+                    start_line: code_end_line + 1,
+                    end_line: code_end_line + 1, // 0 means insert, don't replace
+                })
+            }
+        }
     }
 
     pub fn filter_content_for_doc(&self) -> Result<String, DocError> {
@@ -142,5 +182,210 @@ impl TanglitDoc {
         let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::execution::ExecutionOutput;
+
+    #[test]
+    fn test_format_output_insert_new_block() {
+        let markdown = r#"# Test Document
+
+```rust hello
+println!("Hello, world!");
+```
+
+Some other content here.
+"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "Hello, world!\n".to_string(),
+            stderr: "".to_string(),
+            status: Some(0),
+        };
+
+        let edit = doc.format_output("hello", &output).unwrap();
+
+        assert_eq!(edit.start_line, 6); // Line after the code block
+        assert_eq!(edit.end_line, 6); // Insert, don't replace
+        assert!(edit.content.contains("```output"));
+        assert!(edit.content.contains("Hello, world!"));
+        assert!(edit.content.contains("Exit code: 0"));
+    }
+
+    #[test]
+    fn test_format_output_replace_existing_block() {
+        let markdown = r#"# Test Document
+
+```rust hello
+println!("Hello, world!");
+```
+
+```output
+Output:
+Old output
+
+Stderr:
+
+
+Exit code: 0
+```
+
+Some other content here.
+"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "New output!\n".to_string(),
+            stderr: "Some warning".to_string(),
+            status: Some(1),
+        };
+
+        let edit = doc.format_output("hello", &output).unwrap();
+
+        assert_eq!(edit.start_line, 7); // Start of existing output block (1-based)
+        assert_eq!(edit.end_line, 16); // Replace 9 lines (from ```output to ```)
+        assert!(edit.content.contains("New output!"));
+        assert!(edit.content.contains("Some warning"));
+        assert!(edit.content.contains("Exit code: 1"));
+    }
+
+    #[test]
+    fn test_format_output_skip_non_output_blocks() {
+        let markdown = r#"# Test Document
+
+```rust hello
+println!("Hello, world!");
+```
+
+```python
+# This is not an output block
+print("Different block")
+```
+
+Some other content here.
+"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "Hello, world!\n".to_string(),
+            stderr: "".to_string(),
+            status: Some(0),
+        };
+
+        let edit = doc.format_output("hello", &output).unwrap();
+
+        assert_eq!(edit.start_line, 6); // Line after the code block
+        assert_eq!(edit.end_line, 6); // Insert, don't replace (didn't find output block)
+    }
+
+    #[test]
+    fn test_format_output_with_empty_lines_before_output() {
+        let markdown = r#"# Test Document
+
+```rust hello
+println!("Hello, world!");
+```
+
+
+```output
+Output:
+Old output
+
+Stderr:
+
+
+Exit code: 0
+```
+"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "New output!\n".to_string(),
+            stderr: "".to_string(),
+            status: Some(0),
+        };
+
+        let edit = doc.format_output("hello", &output).unwrap();
+
+        assert_eq!(edit.start_line, 8); // Start of existing output block (1-based)
+        assert_eq!(edit.end_line, 17); // Replace the output block
+        assert!(edit.content.contains("New output!"));
+    }
+
+    #[test]
+    fn test_format_output_with_multiline_output() {
+        let markdown = r#"```rust multiline
+for i in 1..=3 {
+    println!("Line {}", i);
+}
+```"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "Line 1\nLine 2\nLine 3\n".to_string(),
+            stderr: "".to_string(),
+            status: Some(0),
+        };
+
+        let edit = doc.format_output("multiline", &output).unwrap();
+
+        assert!(edit.content.contains("Line 1\nLine 2\nLine 3"));
+    }
+
+    #[test]
+    fn test_format_output_replace_with_different_content() {
+        let markdown = r#"```rust counter
+let mut count = 0;
+count += 1;
+println!("{}", count);
+```
+
+```output
+Output:
+1
+
+Stderr:
+
+
+Exit code: 0
+```"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "42".to_string(),
+            stderr: "some warning".to_string(),
+            status: Some(0),
+        };
+
+        let edit = doc.format_output("counter", &output).unwrap();
+
+        assert_eq!(edit.start_line, 7);
+        assert_eq!(edit.end_line, 16); // Should replace the existing block
+        assert!(edit.content.contains("42"));
+        assert!(edit.content.contains("some warning"));
+        assert!(!edit.content.contains("1\n")); // Old output shouldn't be there
+    }
+
+    #[test]
+    #[should_panic] // This test expects the current behavior where unwrap() panics
+    fn test_format_output_nonexistent_block() {
+        let markdown = r#"```rust hello
+println!("Hello, world!");
+```"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "test".to_string(),
+            stderr: "".to_string(),
+            status: Some(0),
+        };
+
+        // This should panic because "nonexistent" block doesn't exist
+        doc.format_output("nonexistent", &output).unwrap();
     }
 }

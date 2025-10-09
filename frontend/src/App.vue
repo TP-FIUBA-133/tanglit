@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { BlockExecute, Edit } from "./tanglit.ts";
 import * as tanglit from "./tanglit.ts";
+import { BlockExecute, Edit } from "./tanglit.ts";
 import MainMenu from "./MainMenu.vue";
-import { Splitpanes, Pane } from "splitpanes";
+import { Pane, Splitpanes } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 import SlideViewMain from "./SlideViewMain.vue";
 import HtmlPreview from "./HtmlPreview.vue";
+import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 const exclusion_output = ref("");
 const raw_markdown = ref("");
@@ -16,6 +21,7 @@ const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ error: undefined, result: undefined, line: undefined });
 const html_preview = ref("");
+const currentFilePath = ref(undefined);
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -44,28 +50,47 @@ watch(raw_markdown, async (newValue) => {
   time_to_process.value = Math.floor(end_time - start_time);
 });
 
-const selectedFileName = ref("No file chosen.");
+async function openFile() {
+  try {
+    const selectedPath = await open({
+      multiple: false, // Only allow selection of a single file
+      title: "Open your Tanglit document",
+      filters: [
+        {
+          name: "Markdown/Text",
+          extensions: ["md"], // Customize as needed
+        },
+      ],
+    });
 
-// This function is called when a file is selected in the dialog
-function file_selected(file) {
-  if (file) {
-    selectedFileName.value = file.name;
-    // You can now read the file or do whatever you need with it
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result === "string") {
-        raw_markdown.value = result; // Set the content of the editor only if defined
-      }
-    };
-    reader.onerror = (e) => {
-      console.error("Error reading file:", e);
-      alert("Error reading file: " + e);
-    };
-    reader.readAsText(file); // Read the file as text
-  } else {
-    selectedFileName.value = "No file chosen.";
+    if (!selectedPath || Array.isArray(selectedPath)) {
+      // User cancelled, or something unexpected happened (shouldn't be array with multiple: false)
+      currentFilePath.value = undefined;
+      return;
+    }
+    currentFilePath.value = selectedPath;
+
+    const content = await readTextFile(selectedPath);
+    // Update the editor content
+    raw_markdown.value = content;
+    toast.success(`Successfully opened and read file: ${currentFilePath.value}`);
+  } catch (error) {
+    toast.error(`Error opening file: ${error.message}`);
+    currentFilePath.value = undefined;
   }
+}
+
+async function save_file() {
+  if (currentFilePath.value === undefined) {
+    currentFilePath.value = await save();
+  }
+  writeTextFile(currentFilePath.value, raw_markdown.value)
+    .then(() => {
+      toast.success(`Saved file ${currentFilePath.value}`);
+    })
+    .catch((error) => {
+      toast.error(`Error saving file: ${error}`);
+    });
 }
 
 async function run_block(line: number) {
@@ -149,9 +174,10 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
     </div>
     <MainMenu
       v-on:load_sample_markdown="load_sample_markdown"
-      v-on:file_selected="file_selected"
       v-on:preview_slides="preview_slides"
       v-on:preview_html="preview_html"
+      v-on:open_file="openFile"
+      v-on:save_file="save_file"
     />
   </main>
 </template>
