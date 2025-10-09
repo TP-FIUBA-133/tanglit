@@ -79,8 +79,15 @@ pub fn execute_block(
     )
     .map_err(|e| ExecutionError::WriteError(e.to_string()))?;
 
-    let output = Command::new("sh")
+    // Make the script executable
+    Command::new("chmod")
+        .arg("+x")
         .arg(&execution_script_path)
+        .status()
+        .map_err(|e| ExecutionError::InternalError(format!("chmod failed: {e}")))?;
+
+    // Execute the script
+    let output = Command::new(&execution_script_path)
         .arg(block_file_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
