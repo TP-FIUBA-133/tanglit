@@ -88,33 +88,10 @@ fn handle_generate_pdf_command(
 fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
     let input_file_path = &tangle_all_command.general.input_file_path;
     let doc = TanglitDoc::new_from_file(input_file_path)?;
-
-    let blocks = doc.get_code_blocks()?;
-    let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
-
-    for block in &blocks_to_tangle {
-        let output = blocks.tangle_codeblock(block)?;
-
-        let lang = block.language.as_deref();
-        let extension = lang
-            .and_then(|l| LanguageConfig::load_for_lang(l).ok())
-            .and_then(|cfg| cfg.extension);
-
-        let file_name = block.export.clone().unwrap_or(block.tag.clone());
-
-        write_file(
-            output,
-            &PathBuf::from(&tangle_all_command.output_dir),
-            &file_name,
-            extension.as_deref(),
-        )
-        .map_err(|e| WriteError(format!("Error writing to file: {}", e)))?;
-    }
-
+    let blocks_processed = doc.generate_code_files(tangle_all_command.output_dir.clone())?;
     Ok(format!(
         "✅ {} blocks tangled to {}",
-        blocks_to_tangle.len(),
-        tangle_all_command.output_dir
+        blocks_processed, tangle_all_command.output_dir
     ))
 }
 

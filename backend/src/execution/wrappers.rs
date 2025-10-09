@@ -7,7 +7,7 @@ use crate::execution::render_engine::render;
 use regex::Regex;
 use std::fs::write;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub fn full_filename(name: &str, ext: Option<&str>) -> String {
     ext.as_ref()
@@ -27,6 +27,17 @@ pub fn write_file(
     // Write the tangled output to the file
     write(&dst_path, contents)?;
     io::Result::Ok(dst_path)
+}
+
+pub fn write_code_to_file(block: &CodeBlock, code: String, dir: String) -> io::Result<PathBuf> {
+    let lang = block.language.as_deref();
+    let extension = lang
+        .and_then(|l| LanguageConfig::load_for_lang(l).ok())
+        .and_then(|cfg| cfg.extension);
+
+    let file_name = block.export.clone().unwrap_or(block.tag.clone());
+
+    write_file(code, &PathBuf::from(dir), &file_name, extension.as_deref())
 }
 
 /// Loads and applies a template wrapper for the given language
