@@ -14,6 +14,8 @@ pub enum Commands {
     Tangle(TangleArgs),
     #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
+    #[command(about = "Tangle and export all marked code blocks from a markdown file")]
+    TangleAll(TangleAllArgs),
     #[command(about = "Generates a PDF from an markdown file, skipping the items with % markers")]
     GeneratePDF(GenerateDocArgs),
     #[command(about = "Generates an HTML from an markdown file, skipping the items with % markers")]
@@ -84,6 +86,20 @@ pub struct GenerateDocArgs {
         env = "OUTPUT_FILE_PATH"
     )]
     pub output_file_path: String,
+}
+
+#[derive(Args)]
+pub struct TangleAllArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_DIR",
+        help = "Path to the directory where the output files will be saved.",
+        help_heading = "Tangle All Args",
+        env = "OUTPUT_DIR"
+    )]
+    pub output_dir: String,
 }
 
 #[derive(Args)]
