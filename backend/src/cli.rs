@@ -14,12 +14,16 @@ pub enum Commands {
     Tangle(TangleArgs),
     #[command(about = "Execute a specific code block from a markdown file and read its output")]
     Execute(ExecuteArgs),
+    #[command(about = "Tangle and export all marked code blocks from a markdown file")]
+    TangleAll(TangleAllArgs),
     #[command(about = "Generates a PDF from an markdown file, skipping the items with % markers")]
     GeneratePDF(GenerateDocArgs),
     #[command(about = "Generates an HTML from an markdown file, skipping the items with % markers")]
     GenerateHTML(GenerateDocArgs),
     #[command(about = "Generates markdown slides from a markdown file")]
     GenerateSlidesMd(GenerateSlidesMdArgs),
+    #[command(about = "Generates a PDF with slides from a markdown file")]
+    GenerateSlidesPdf(GenerateSlidesPdfArgs),
 }
 
 #[derive(Args, Debug)]
@@ -78,10 +82,24 @@ pub struct GenerateDocArgs {
         long,
         value_name = "OUTPUT_FILE_PATH",
         help = "Path to the file where the output will be saved.",
-        help_heading = "Exclude Args",
+        help_heading = "Generate Doc Args",
         env = "OUTPUT_FILE_PATH"
     )]
     pub output_file_path: String,
+}
+
+#[derive(Args)]
+pub struct TangleAllArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_DIR",
+        help = "Path to the directory where the output files will be saved.",
+        help_heading = "Tangle All Args",
+        env = "OUTPUT_DIR"
+    )]
+    pub output_dir: String,
 }
 
 #[derive(Args)]
@@ -92,8 +110,22 @@ pub struct GenerateSlidesMdArgs {
         long,
         value_name = "OUTPUT_DIR",
         help = "Path to the directory where the output file will be saved.",
-        help_heading = "Tangle Args",
+        help_heading = "Generate Slides MD Args",
         env = "OUTPUT_DIR"
     )]
     pub output_dir: String,
+}
+
+#[derive(Args)]
+pub struct GenerateSlidesPdfArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_FILE_PATH",
+        help = "Path to the file where the output will be saved.",
+        help_heading = "Generate Slides PDF Args",
+        env = "OUTPUT_FILE_PATH"
+    )]
+    pub output_file_path: String,
 }

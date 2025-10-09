@@ -2,10 +2,22 @@ use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Plugins, markdown_to_html_with_plugins};
 
 // Taken from https://github.com/sindresorhus/github-markdown-css/blob/bedb4b771f5fa1ae117df597c79993fd1eb4dff0/github-markdown-light.css
-const GITHUB_MARKDOWN_LIGHT_CSS: &str = include_str!("../../resources/github-markdown-light.css");
+pub const GITHUB_MARKDOWN_LIGHT_CSS: &str =
+    include_str!("../../resources/github-markdown-light.css");
+pub const PAGE_BREAK_AND_CENTER_CSS: &str =
+    include_str!("../../resources/page_break_and_center.css");
+
+pub fn markdown_to_html(input: &str) -> String {
+    let fragment = markdown_to_html_fragment(input);
+    wrap_in_html_doc(
+        &fragment,
+        "Document", // TODO get title from arg or extract from markdown
+        &[GITHUB_MARKDOWN_LIGHT_CSS.to_string()],
+    )
+}
 
 // TODO: Make all options configurable
-pub fn markdown_to_html(input: &str) -> String {
+pub fn markdown_to_html_fragment(input: &str) -> String {
     // InspiredGitHub
     // Solarized (dark)
     // Solarized (light)
@@ -33,17 +45,11 @@ pub fn markdown_to_html(input: &str) -> String {
 
     let inner_html = markdown_to_html_with_plugins(input, &options, &plugins);
 
-    let content_html = format!(r#"<div class="markdown-body">{inner_html}</div>"#);
-
-    wrap_in_html_doc(
-        &content_html,
-        "Document", // TODO get title from arg or extract from markdown
-        &[GITHUB_MARKDOWN_LIGHT_CSS.to_string()],
-    )
+    format!(r#"<div class="markdown-body">{inner_html}</div>"#)
 }
 
 /// Wraps an HTML fragment in a complete HTML5 document shell.
-fn wrap_in_html_doc(content: &str, title: &str, styles: &[String]) -> String {
+pub fn wrap_in_html_doc(content: &str, title: &str, styles: &[String]) -> String {
     let style_tags: String = styles
         .iter()
         .map(|s| format!(r#"<style>{}</style>"#, s))
