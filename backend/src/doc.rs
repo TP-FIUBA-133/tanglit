@@ -4,7 +4,10 @@ mod generate_pdf;
 mod parser;
 mod tangle;
 
-use crate::doc::gen_html::markdown_to_html;
+use crate::doc::gen_html::{
+    GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS, markdown_to_html,
+    markdown_to_html_fragment, wrap_in_html_doc,
+};
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
 use crate::doc::parser::slides::parse_slides_from_ast;
@@ -19,7 +22,6 @@ pub use parser::slides::SlideByIndex;
 use parser::slides::parse_slides_index_from_ast;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fs;
 pub use tangle::CodeBlocks;
 pub use tangle::TangleError;
 
@@ -69,18 +71,6 @@ impl TanglitDoc {
 
     pub fn parse_slides_index(&self) -> Vec<SlideByIndex> {
         parse_slides_index_from_ast(&self.ast, &self.raw_markdown)
-    }
-
-    pub fn generate_md_slides(&self, output_dir: String) -> Result<(), DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
-        let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
-
-        for (i, slide) in slides.iter().enumerate() {
-            let slide_md = slide.to_markdown()?;
-            fs::write(format!("{}/slide_{}.md", output_dir, i), slide_md)?;
-        }
-
-        Ok(())
     }
 
     pub fn generate_md_slides_vec(&self) -> Result<Vec<String>, DocError> {
@@ -177,10 +167,34 @@ impl TanglitDoc {
         Ok(markdown_to_html(&markdown_with_exclusions))
     }
 
-    pub fn generate_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+    pub fn generate_doc_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
         let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
         generate_pdf(&html_with_exclusions, output_file_path)?;
+        Ok(())
+    }
+
+    pub fn generate_slides_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+        let slides_md = self.generate_md_slides_vec()?;
+
+        // Build the HTML for all slides
+        let mut slides_sections = String::new();
+        for slide_md in slides_md.iter() {
+            let frag = markdown_to_html_fragment(slide_md);
+            slides_sections.push_str(&format!(r#"<section class="slide">{}</section>"#, frag));
+        }
+
+        // Wrap once into a complete HTML document.
+        let all_slides_html = wrap_in_html_doc(
+            &slides_sections,
+            "Slides",
+            &[
+                GITHUB_MARKDOWN_LIGHT_CSS.to_string(),
+                PAGE_BREAK_AND_CENTER_CSS.to_string(),
+            ],
+        );
+
+        generate_pdf(&all_slides_html, output_file_path)?;
         Ok(())
     }
 }

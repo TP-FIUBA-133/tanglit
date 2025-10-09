@@ -20,6 +20,8 @@ pub enum Commands {
     GenerateHTML(GenerateDocArgs),
     #[command(about = "Generates markdown slides from a markdown file")]
     GenerateSlidesMd(GenerateSlidesMdArgs),
+    #[command(about = "Generates a PDF with slides from a markdown file")]
+    GenerateSlidesPdf(GenerateSlidesPdfArgs),
 }
 
 #[derive(Args, Debug)]
@@ -78,7 +80,7 @@ pub struct GenerateDocArgs {
         long,
         value_name = "OUTPUT_FILE_PATH",
         help = "Path to the file where the output will be saved.",
-        help_heading = "Exclude Args",
+        help_heading = "Generate Doc Args",
         env = "OUTPUT_FILE_PATH"
     )]
     pub output_file_path: String,
@@ -92,8 +94,22 @@ pub struct GenerateSlidesMdArgs {
         long,
         value_name = "OUTPUT_DIR",
         help = "Path to the directory where the output file will be saved.",
-        help_heading = "Tangle Args",
+        help_heading = "Generate Slides MD Args",
         env = "OUTPUT_DIR"
     )]
     pub output_dir: String,
+}
+
+#[derive(Args)]
+pub struct GenerateSlidesPdfArgs {
+    #[command(flatten)]
+    pub general: GeneralArgs,
+    #[arg(
+        long,
+        value_name = "OUTPUT_FILE_PATH",
+        help = "Path to the file where the output will be saved.",
+        help_heading = "Generate Slides PDF Args",
+        env = "OUTPUT_FILE_PATH"
+    )]
+    pub output_file_path: String,
 }

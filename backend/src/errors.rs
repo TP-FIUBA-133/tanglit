@@ -10,6 +10,7 @@ pub enum ExecutionError {
     ConfigError(ConfigError),
     ExecutionScriptNotFound,
     TemplateNotFound,
+    IOError(String),
 }
 
 impl fmt::Display for ExecutionError {
@@ -27,6 +28,7 @@ impl fmt::Display for ExecutionError {
             ExecutionError::TemplateNotFound => {
                 write!(f, "Template file not found in language configuration")
             }
+            ExecutionError::IOError(msg) => write!(f, "IO Error: {}", msg),
         }
     }
 }
@@ -46,6 +48,7 @@ impl fmt::Debug for ExecutionError {
             ExecutionError::TemplateNotFound => {
                 write!(f, "Template file not found in language configuration")
             }
+            ExecutionError::IOError(msg) => write!(f, "IO Error: {}", msg),
         }
     }
 }
@@ -65,6 +68,12 @@ impl From<TangleError> for ExecutionError {
 impl From<ConfigError> for ExecutionError {
     fn from(error: ConfigError) -> Self {
         ExecutionError::ConfigError(error)
+    }
+}
+
+impl From<std::io::Error> for ExecutionError {
+    fn from(error: std::io::Error) -> Self {
+        ExecutionError::IOError(format!("IO Error: {}", error))
     }
 }
 
