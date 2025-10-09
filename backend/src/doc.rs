@@ -13,6 +13,7 @@ use crate::doc::parser::exclude::FilterTarget;
 use crate::doc::parser::slides::parse_slides_from_ast;
 use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 use crate::execution::ExecutionOutput;
+use crate::execution::write_code_to_file;
 pub use error::DocError;
 use markdown::mdast::Node;
 pub use parser::ParserError;
@@ -196,6 +197,17 @@ impl TanglitDoc {
 
         generate_pdf(&all_slides_html, output_file_path)?;
         Ok(())
+    }
+
+    pub fn generate_code_files(&self, output_dir: String) -> Result<usize, DocError> {
+        let blocks = self.get_code_blocks()?;
+        let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
+        let count = blocks_to_tangle.len();
+        for block in blocks_to_tangle.iter() {
+            let tangle_result = blocks.tangle_codeblock(block)?;
+            write_code_to_file(block, tangle_result, output_dir.clone())?;
+        }
+        Ok(count)
     }
 }
 

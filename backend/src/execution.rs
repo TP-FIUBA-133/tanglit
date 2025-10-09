@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-pub use wrappers::{make_executable_code, write_file};
+pub use wrappers::{make_executable_code, write_code_to_file, write_file};
 
 /// Executes a code block by tangling it and adding necessary wrappers to make it executable.
 /// Prints both the resulting stdout and sterr from the execution and returns the stdout as a String.

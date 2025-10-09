@@ -1,5 +1,6 @@
 use backend::cli::{
-    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleArgs,
+    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs,
+    TangleArgs,
 };
 use backend::configuration::init_configuration;
 use backend::configuration::language_config::LanguageConfig;
@@ -87,6 +88,16 @@ fn handle_generate_pdf_command(
     ))
 }
 
+fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
+    let input_file_path = &tangle_all_command.general.input_file_path;
+    let doc = TanglitDoc::new_from_file(input_file_path)?;
+    let blocks_processed = doc.generate_code_files(tangle_all_command.output_dir.clone())?;
+    Ok(format!(
+        "✅ {} blocks tangled to {}",
+        blocks_processed, tangle_all_command.output_dir
+    ))
+}
+
 fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
     let slides_md = doc.generate_md_slides_vec()?;
@@ -126,6 +137,7 @@ fn main() {
         Commands::Execute(args) => handle_execute_command(args),
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
         Commands::GenerateHTML(args) => handle_generate_html_command(args),
+        Commands::TangleAll(args) => handle_tangle_all_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
         Commands::GenerateSlidesPdf(args) => handle_generate_slides_pdf(args),
     };
