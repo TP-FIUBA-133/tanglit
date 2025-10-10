@@ -83,4 +83,10 @@ mod tests {
         test_exclusions_file("doc/test_9", FilterTarget::Doc);
         test_exclusions_file("slides/test_9", FilterTarget::Slides);
     }
+
+    #[test_log::test]
+    fn test_exclusions_10() {
+        test_exclusions_file("doc/test_10", FilterTarget::Doc);
+        test_exclusions_file("slides/test_10", FilterTarget::Slides);
+    }
 }
