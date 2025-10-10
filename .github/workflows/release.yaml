@@ -1,4 +1,4 @@
-name: publish
+name: releases
 
 on:
   # Real release when you push a tag like v1.2.3
