@@ -37,11 +37,11 @@ function initReveal() {
   });
 
   // Also maybe on slidechanged event:
-  deck.on("slidechanged", (event: any) => {
-    event.currentSlide
-  .querySelectorAll("h1, h2")
-  .forEach((el: HTMLElement) => el.classList.add("r-fit-text"));
-
+  deck.on("slidechanged", (ev: Event) => {
+  const { currentSlide } = ev as unknown as { currentSlide?: HTMLElement };
+  currentSlide
+    ?.querySelectorAll<HTMLElement>("h1, h2")
+    .forEach((el) => el.classList.add("r-fit-text"));
   });
 
   deck.initialize();
