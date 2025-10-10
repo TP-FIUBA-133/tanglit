@@ -59,12 +59,22 @@ jobs:
           projectPath: ./frontend
           args: ${{ matrix.args }}
 
+      # Parse the JSON array of artifact paths into newline-separated lines
+      - name: Collect artifact paths
+        if: github.event_name == 'workflow_dispatch'
+        id: collect_artifacts
+        run: |
+          echo "paths<<EOF" >> "$GITHUB_OUTPUT"
+          echo "${{ join(fromJSON(steps.tauri_build_only.outputs.artifactPaths), '\n') }}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - name: Upload build artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: tauri-bundles-${{ matrix.platform }}
-          path: ${{ steps.tauri_build_only.outputs.artifactPaths }}
+          path: ${{ steps.collect_artifacts.outputs.paths }}
+          if-no-files-found: error
 
       # ---------- Real release path (tag pushes): creates/updates release ----------
       - name: Build with Tauri and publish GitHub Release
