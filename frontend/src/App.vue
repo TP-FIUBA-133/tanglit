@@ -118,6 +118,22 @@ async function preview_html() {
   });
 }
 
+async function save_html() {
+  let html_save_path = await save();
+  writeTextFile(html_save_path, html_preview.value)
+    .then(() => {
+      toast.success(`Saved file ${html_save_path}`);
+    })
+    .catch((error) => {
+      toast.error(`Error saving file: ${error}`);
+    });
+}
+
+async function save_pdf() {
+  let pdf_save_path = await save();
+  await tanglit.save_pdf(raw_markdown.value, pdf_save_path);
+}
+
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
 
 async function add_output_to_markdown(block_line, output: string) {
@@ -178,6 +194,8 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
       v-on:preview_html="preview_html"
       v-on:open_file="openFile"
       v-on:save_file="save_file"
+      v-on:save_html="save_html"
+      v-on:save_pdf="save_pdf"
     />
   </main>
 </template>
