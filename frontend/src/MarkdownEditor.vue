@@ -13,7 +13,7 @@ const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
 const props = defineProps(["block_lines", "block_execute", "blocks"]);
 const zone_ids: Record<number, string> = {};
-const zone_apps: Record<number, App> = {};
+const zone_apps: Record<string, App> = {};
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
 const emit = defineEmits(["run-block", "add_output_to_markdown"]);
@@ -35,10 +35,10 @@ watch(
   },
 );
 
-function close_zone(zone_id: number) {
+function close_zone(zone_id: string) {
   if (!editor.value) return;
   editor.value?.changeViewZones((accessor) => {
-    accessor.removeZone(String(zone_id));
+    accessor.removeZone(zone_id);
     zone_apps[zone_id].unmount();
   });
 }
@@ -56,7 +56,7 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
   if (zone_ids[line_number]) {
     // the widget is not dynamic, we need to close the existing one
     // and create another one
-    close_zone(Number(zone_ids[line_number]));
+    close_zone(zone_ids[line_number]);
   }
   // Create a SINGLE div for everything.
   const domNode = document.createElement("div");
@@ -68,7 +68,7 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
       result: result,
       line: line_number,
       onRun_block: () => emit("run-block", line_number),
-      onClose: () => close_zone(Number(zone_ids[line_number])),
+      onClose: () => close_zone(zone_ids[line_number]),
       onAdd_output_to_markdown: () => emit("add_output_to_markdown", line_number, result.output),
     }),
   );
@@ -103,7 +103,7 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
   editor.value?.changeViewZones((accessor) => {
     const zoneId = accessor.addZone(myZoneObject);
     zone_ids[line_number] = zoneId;
-    zone_apps[Number(zoneId)] = app;
+    zone_apps[zoneId] = app;
   });
 }
 
@@ -151,7 +151,7 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.onclick = () => {
     // emit an event to run the block
     // emit("run-block", line);
-    makeBlockResult(line, { output: undefined, error: null });
+    makeBlockResult(line, { line });
   };
   return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
@@ -173,14 +173,14 @@ watch(slide_lines_mod, (newValue, oldValue) => {
 
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
-  oldValue?.forEach((line) => {
+  oldValue?.forEach((line: number) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
       const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "slide")];
       editorInstance.removeGlyphMarginWidget(marginGlyph);
     }
   });
-  newValue?.forEach((line, idx) => {
+  newValue?.forEach((line: number, idx: number) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!oldLines.has(line)) {
       // Add the margin glyph only if it doesn't already exist
