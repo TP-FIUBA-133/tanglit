@@ -18,10 +18,9 @@ const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, output: undefined});
+const block_execute = ref<BlockExecute>({ error: undefined, output: undefined });
 const html_preview = ref("");
 const currentFilePath: Ref<string | null> = ref(null);
-
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
