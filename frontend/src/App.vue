@@ -5,6 +5,8 @@ import * as tanglit from "./tanglit.ts";
 import { BlockExecute, Edit } from "./tanglit.ts";
 import MainMenu from "./MainMenu.vue";
 import "splitpanes/dist/splitpanes.css";
+// @ts-expect-error missing types
+import { Pane, Splitpanes } from "splitpanes";
 import SlideViewMain from "./SlideViewMain.vue";
 import HtmlPreview from "./HtmlPreview.vue";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
