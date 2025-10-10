@@ -1,0 +1,82 @@
+name: releases
+
+on:
+  # Real release when you push a tag like v1.2.3
+  push:
+    tags:
+      - "v*.*.*"
+  # Manual run for build-only (no release)
+  workflow_dispatch: {}
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-latest" # for Arm based macs (M1 and above).
+            args: "--target aarch64-apple-darwin"
+          - platform: "macos-latest" # for Intel based macs.
+            args: "--target x86_64-apple-darwin"
+          - platform: "ubuntu-22.04" # for Tauri v1 you could replace this with ubuntu-20.04.
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@1.86.0
+        with:
+          # Those targets are only used on macOS runners so it's in an `if` to slightly speed up linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      # ---------- Build-only path (manual runs): NO release ----------
+      - name: Build with Tauri (no release)
+        id: tauri_build_only
+        if: github.event_name == 'workflow_dispatch'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: ./frontend
+          args: ${{ matrix.args }}
+
+      - name: Upload build artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-bundles-${{ matrix.platform }}
+          path: ${{ steps.tauri_build_only.outputs.artifactPaths }}
+
+      # ---------- Real release path (tag pushes): creates/updates release ----------
+      - name: Build with Tauri and publish GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref_name, 'v')
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "App v__VERSION__"
+          releaseBody: "See the assets to download this version and install."
+          releaseDraft: true
+          prerelease: false
+          projectPath: ./frontend
+          args: ${{ matrix.args }}
