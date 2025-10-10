@@ -7,8 +7,13 @@ use regex::Regex;
 mod test;
 mod to_node;
 
-static DOC_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (%[ipl]?)").unwrap());
-static SLIDES_MARKER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^.* (&[ipl]?)").unwrap());
+// Matches one-or-more trailing markers (any mix of % / & with  i|optionalp|l), with optional spaces.
+static TRAILING_MARKERS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:\s*(?:%[ipl]?|&[ipl]?))+\s*$").unwrap());
+
+const PARAGRAPH_MARKER: char = 'p';
+const LIST_MARKER: char = 'l';
+const LIST_ITEM_MARKER: char = 'i';
 
 pub enum FilterTarget {
     Doc,
@@ -16,39 +21,55 @@ pub enum FilterTarget {
 }
 
 impl FilterTarget {
-    fn code_marker(&self) -> &str {
+    pub fn target_symbol(&self) -> char {
         match self {
-            FilterTarget::Doc => "%",
-            FilterTarget::Slides => "&",
+            FilterTarget::Doc => '%',
+            FilterTarget::Slides => '&',
         }
     }
-    fn line_marker(&self) -> &str {
-        self.code_marker() // same as code_marker
-    }
-    fn list_marker(&self) -> &str {
-        match self {
-            FilterTarget::Doc => "%l",
-            FilterTarget::Slides => "&l",
+}
+
+// Return true if the trailing marker contains the target marker with the given suffix:
+// suffix: None => bare line marker ("%"), Some('p') => paragraph, Some('l') => list, Some('i') => list item
+fn has_target_marker(s: &str, target: &FilterTarget, suffix: Option<char>) -> bool {
+    // Find the trailing markers part
+    let Some(m) = TRAILING_MARKERS.find(s) else {
+        return false;
+    };
+    let tail = &s[m.start()..];
+
+    // Iterate pairs of (symbol, optional suffix) inside the tail
+    // Example matches: "%", "%p", "&", "&l", "%i", "&p"
+    static ONE_MARKER: Lazy<Regex> = Lazy::new(|| Regex::new(r"(%|&)([ipl]?)").unwrap());
+
+    let target_sym = target.target_symbol();
+    for cap in ONE_MARKER.captures_iter(tail) {
+        let sym = cap.get(1).unwrap().as_str().as_bytes()[0] as char;
+        let suf = cap.get(2).unwrap().as_str().chars().next(); // None if empty
+
+        if sym == target_sym {
+            match suffix {
+                None => {
+                    // Want bare line marker, so if suf is empty, it's a match
+                    if suf.is_none() {
+                        return true;
+                    }
+                }
+                Some(c) => {
+                    // Want specific suffix, so if suf matches, it's a match
+                    if suf == Some(c) {
+                        return true;
+                    }
+                }
+            }
         }
     }
-    fn list_item_marker(&self) -> &str {
-        match self {
-            FilterTarget::Doc => "%i",
-            FilterTarget::Slides => "&i",
-        }
-    }
-    fn paragraph_marker(&self) -> &str {
-        match self {
-            FilterTarget::Doc => "%p",
-            FilterTarget::Slides => "&p",
-        }
-    }
-    fn marker_regex(&self) -> &'static Regex {
-        match self {
-            FilterTarget::Doc => &DOC_MARKER_REGEX,
-            FilterTarget::Slides => &SLIDES_MARKER_REGEX,
-        }
-    }
+    false
+}
+
+// Strip *all* trailing markers for both targets from a line
+fn strip_all_trailing_markers(s: &str) -> String {
+    TRAILING_MARKERS.replace(s, "").to_string()
 }
 
 pub fn exclude_from_ast(mdast: &Node, target: FilterTarget) -> Node {
@@ -96,10 +117,12 @@ fn process_paragraph(paragraph: &Paragraph, target: &FilterTarget) -> Option<Par
         children: vec![],
         position: None,
     };
-    if get_paragraph_first_line_marker(paragraph, target) == Some(target.paragraph_marker().into())
-    {
-        return None; // Exclude the entire paragraph if the first line has the marker
+
+    // Exclude the entire paragraph if the first line's trailing markers include the paragraph marker
+    if paragraph_has_marker(paragraph, target, Some(PARAGRAPH_MARKER)) {
+        return None;
     }
+
     for child in &paragraph.children {
         let Node::Text(text) = child else {
             new_paragraph.children.push(child.clone());
@@ -119,11 +142,18 @@ fn process_code(code: &Code, target: &FilterTarget) -> Option<Code> {
         return Some(code.clone());
     };
 
-    if meta_str.ends_with(target.code_marker()) {
-        return None; // Exclude this code block
+    // Exclude code block if the trailing markers include the target's bare line marker
+    if has_target_marker(meta_str, target, None) {
+        return None;
     }
 
-    Some(code.clone())
+    // Clean ALL markers so nothing leaks
+    let cleaned_meta = strip_all_trailing_markers(meta_str);
+
+    let mut new_code = code.clone();
+    new_code.meta = Some(cleaned_meta);
+
+    Some(new_code)
 }
 
 fn process_list(list_node: &List, target: &FilterTarget) -> Option<List> {
@@ -176,9 +206,8 @@ fn should_exclude_list(list_node: &List, target: &FilterTarget) -> bool {
         return false;
     };
 
-    // Exclude the entire list if the first line of the first item has the marker
-    let first_line_marker = get_paragraph_first_line_marker(p, target);
-    first_line_marker == Some(target.list_marker().into())
+    // Exclude the entire list if the first line of the first item has the list marker
+    paragraph_has_marker(p, target, Some(LIST_MARKER))
 }
 
 fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget) -> bool {
@@ -188,20 +217,25 @@ fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget) -> bool
     let Node::Paragraph(p) = &list_item.children[0] else {
         return false;
     };
-    let item_marker = get_paragraph_first_line_marker(p, target);
-    item_marker == Some(target.list_item_marker().into())
+    paragraph_has_marker(p, target, Some(LIST_ITEM_MARKER))
 }
 
 fn process_text(text: &Text, target: &FilterTarget) -> Option<Text> {
     let mut content = String::new();
+
     for line in text.value.lines() {
-        if line.ends_with(target.line_marker()) {
+        // Exclude the entire line if trailing markers include *target* bare marker (%, &)
+        if has_target_marker(line, target, None) {
             continue;
-        } else {
-            content.push_str((line.to_string() + "\n").as_str());
         }
+
+        // Strip ALL trailing markers (both %... and &...) on kept lines
+        let cleaned_line = strip_all_trailing_markers(line);
+        content.push_str(cleaned_line.trim_end());
+        content.push('\n');
     }
-    if content.is_empty() {
+
+    if content.trim().is_empty() {
         return None;
     }
     Some(Text {
@@ -210,11 +244,15 @@ fn process_text(text: &Text, target: &FilterTarget) -> Option<Text> {
     })
 }
 
-fn get_paragraph_first_line_marker(paragraph: &Paragraph, target: &FilterTarget) -> Option<String> {
+fn paragraph_has_marker(
+    paragraph: &Paragraph,
+    target: &FilterTarget,
+    suffix: Option<char>,
+) -> bool {
     if let Some(Node::Text(text)) = paragraph.children.first() {
-        let first_line = text.value.lines().next()?;
-        let marker_regex = target.marker_regex();
-        return Some(marker_regex.captures(first_line)?[1].to_string());
+        if let Some(first_line) = text.value.lines().next() {
+            return has_target_marker(first_line, target, suffix);
+        }
     }
-    None
+    false
 }
