@@ -20,7 +20,7 @@ const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, output: undefined });
+const block_execute = ref<BlockExecute>({ line: undefined, error: undefined, output: undefined });
 const html_preview = ref("");
 const currentFilePath: Ref<string | null> = ref(null);
 
@@ -106,6 +106,7 @@ async function run_block(line: number) {
     if (block.start_line == line) {
       // Here you can execute the block or do whatever you need with it
       block_execute.value = await tanglit.execute_block(raw_markdown.value, block.tag);
+      block_execute.value.line = line;
       break;
     }
   }
