@@ -35,10 +35,10 @@ watch(
   },
 );
 
-function close_zone(zone_id) {
+function close_zone(zone_id: number) {
   if (!editor.value) return;
   editor.value?.changeViewZones((accessor) => {
-    accessor.removeZone(zone_id);
+    accessor.removeZone(String(zone_id));
     zone_apps[zone_id].unmount();
   });
 }
@@ -56,7 +56,7 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
   if (zone_ids[line_number]) {
     // the widget is not dynamic, we need to close the existing one
     // and create another one
-    close_zone(zone_ids[line_number]);
+    close_zone(Number(zone_ids[line_number]));
   }
   // Create a SINGLE div for everything.
   const domNode = document.createElement("div");
@@ -68,7 +68,7 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
       result: result,
       line: line_number,
       onRun_block: () => emit("run-block", line_number),
-      onClose: () => close_zone(zone_ids[line_number]),
+      onClose: () => close_zone(Number(zone_ids[line_number])),
       onAdd_output_to_markdown: () => emit("add_output_to_markdown", line_number, result.output),
     }),
   );
@@ -103,7 +103,7 @@ async function makeBlockResult(line_number: number, result: BlockExecute) {
   editor.value?.changeViewZones((accessor) => {
     const zoneId = accessor.addZone(myZoneObject);
     zone_ids[line_number] = zoneId;
-    zone_apps[zoneId] = app;
+    zone_apps[Number(zoneId)] = app;
   });
 }
 
@@ -151,7 +151,7 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.onclick = () => {
     // emit an event to run the block
     // emit("run-block", line);
-    makeBlockResult(line, { line: line, output: null, error: null });
+    makeBlockResult(line, { output: undefined, error: null });
   };
   return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
@@ -198,14 +198,14 @@ watch(
     const newLines = new Set(newValue || []);
     const oldLines = new Set(oldValue || []);
 
-    oldValue?.forEach((line) => {
+    oldValue?.forEach((line: number) => {
       if (line < 1) return; // Ensure line numbers are valid
       if (!newLines.has(line)) {
         const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "code")];
         editorInstance.removeGlyphMarginWidget(marginGlyph);
       }
     });
-    newValue?.forEach((line) => {
+    newValue?.forEach((line: number) => {
       if (line < 1) return; // Ensure line numbers are valid
       if (!oldLines.has(line)) {
         // Add the margin glyph only if it doesn't already exist
