@@ -13,7 +13,7 @@ const raw_markdown_mod = defineModel<string>("raw_markdown");
 const slide_lines_mod = defineModel<number[]>("slide_lines");
 const props = defineProps(["block_lines", "block_execute", "blocks"]);
 const zone_ids: Record<number, string> = {};
-const zone_apps: Record<number, App> = {};
+const zone_apps: Record<string, App> = {};
 
 let margin_glyphs: Record<string, IGlyphMarginWidget> = {};
 const emit = defineEmits(["run-block", "add_output_to_markdown"]);
@@ -35,7 +35,7 @@ watch(
   },
 );
 
-function close_zone(zone_id) {
+function close_zone(zone_id: string) {
   if (!editor.value) return;
   editor.value?.changeViewZones((accessor) => {
     accessor.removeZone(zone_id);
@@ -151,7 +151,7 @@ function RunBlockWidget(line: number): IGlyphMarginWidget {
   widgetNode.onclick = () => {
     // emit an event to run the block
     // emit("run-block", line);
-    makeBlockResult(line, { line: line, output: null, error: null });
+    makeBlockResult(line, { line });
   };
   return makeGlyphWidget(line, get_margin_glyph_id(line, "code"), widgetNode);
 }
@@ -173,14 +173,14 @@ watch(slide_lines_mod, (newValue, oldValue) => {
 
   const newLines = new Set(newValue || []);
   const oldLines = new Set(oldValue || []);
-  oldValue?.forEach((line) => {
+  oldValue?.forEach((line: number) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!newLines.has(line)) {
       const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "slide")];
       editorInstance.removeGlyphMarginWidget(marginGlyph);
     }
   });
-  newValue?.forEach((line, idx) => {
+  newValue?.forEach((line: number, idx: number) => {
     if (line < 1) return; // Ensure line numbers are valid
     if (!oldLines.has(line)) {
       // Add the margin glyph only if it doesn't already exist
@@ -198,14 +198,14 @@ watch(
     const newLines = new Set(newValue || []);
     const oldLines = new Set(oldValue || []);
 
-    oldValue?.forEach((line) => {
+    oldValue?.forEach((line: number) => {
       if (line < 1) return; // Ensure line numbers are valid
       if (!newLines.has(line)) {
         const marginGlyph = margin_glyphs[get_margin_glyph_id(line, "code")];
         editorInstance.removeGlyphMarginWidget(marginGlyph);
       }
     });
-    newValue?.forEach((line) => {
+    newValue?.forEach((line: number) => {
       if (line < 1) return; // Ensure line numbers are valid
       if (!oldLines.has(line)) {
         // Add the margin glyph only if it doesn't already exist

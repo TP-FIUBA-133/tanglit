@@ -7,6 +7,7 @@ export type ExecutionOutput = {
 };
 
 export type BlockExecute = {
+  line?: number | undefined;
   error?: unknown;
   output?: ExecutionOutput;
 };

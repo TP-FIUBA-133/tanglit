@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, Ref, ref, watch } from "vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
 import * as tanglit from "./tanglit.ts";
 import { BlockExecute, Edit } from "./tanglit.ts";
 import MainMenu from "./MainMenu.vue";
-import { Pane, Splitpanes } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
+// @ts-expect-error missing types
+import { Pane, Splitpanes } from "splitpanes";
 import SlideViewMain from "./SlideViewMain.vue";
 import HtmlPreview from "./HtmlPreview.vue";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
@@ -19,9 +20,9 @@ const raw_markdown = ref("");
 const slides = ref<number[]>([]);
 const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
-const block_execute = ref<BlockExecute>({ error: undefined, result: undefined, line: undefined });
+const block_execute = ref<BlockExecute>({ line: undefined, error: undefined, output: undefined });
 const html_preview = ref("");
-const currentFilePath = ref(undefined);
+const currentFilePath: Ref<string | null> = ref(null);
 
 function load_sample_markdown() {
   fetch("/src/assets/example.md")
@@ -63,32 +64,36 @@ async function openFile() {
       ],
     });
 
-    if (!selectedPath || Array.isArray(selectedPath)) {
+    if (typeof selectedPath !== "string") {
       // User cancelled, or something unexpected happened (shouldn't be array with multiple: false)
-      currentFilePath.value = undefined;
+      currentFilePath.value = null;
       return;
     }
+
     currentFilePath.value = selectedPath;
 
     const content = await readTextFile(selectedPath);
     // Update the editor content
     raw_markdown.value = content;
     toast.success(`Successfully opened and read file: ${currentFilePath.value}`);
-  } catch (error) {
-    toast.error(`Error opening file: ${error.message}`);
-    currentFilePath.value = undefined;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    toast.error(`Error opening file: ${message}`);
+    currentFilePath.value = null;
   }
 }
 
 async function save_file() {
-  if (currentFilePath.value === undefined) {
+  if (!currentFilePath.value) {
     currentFilePath.value = await save();
   }
+  if (!currentFilePath.value) return;
+
   writeTextFile(currentFilePath.value, raw_markdown.value)
     .then(() => {
       toast.success(`Saved file ${currentFilePath.value}`);
     })
-    .catch((error) => {
+    .catch((error: string) => {
       toast.error(`Error saving file: ${error}`);
     });
 }
@@ -119,24 +124,26 @@ async function preview_html() {
 }
 
 async function save_html() {
-  let html_save_path = await save();
+  let html_save_path: string | null = await save();
+  if (!html_save_path) return;
   writeTextFile(html_save_path, html_preview.value)
     .then(() => {
       toast.success(`Saved file ${html_save_path}`);
     })
-    .catch((error) => {
+    .catch((error: string) => {
       toast.error(`Error saving file: ${error}`);
     });
 }
 
 async function save_pdf() {
-  let pdf_save_path = await save();
+  let pdf_save_path: string | null = await save();
+  if (!pdf_save_path) return;
   await tanglit.save_pdf(raw_markdown.value, pdf_save_path);
 }
 
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
 
-async function add_output_to_markdown(block_line, output: string) {
+async function add_output_to_markdown(block_line: number, output: string) {
   const editor = markdown_editor.value;
   if (!editor) return;
   console.log("Adding output to markdown:", output);

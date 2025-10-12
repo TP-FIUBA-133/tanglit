@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+unset PYTHONHOME
+unset PYTHONPATH
+
 SRC_FILE="$1"
 OUT_DIR="$(dirname "$SRC_FILE")"
 
