@@ -34,6 +34,7 @@ pub struct CodeBlock {
 }
 
 impl CodeBlock {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         language: Option<String>,
         code: String,
@@ -57,7 +58,16 @@ impl CodeBlock {
     }
 
     pub fn new_with_code(code: String) -> Self {
-        Self::new(None, code, "".to_string(), Vec::new(), None, HashMap::new(), 0, 0)
+        Self::new(
+            None,
+            code,
+            "".to_string(),
+            Vec::new(),
+            None,
+            HashMap::new(),
+            0,
+            0,
+        )
     }
 
     /// Creates a CodeBlock from a Code node, extracting the language, code, tag, and imports.
@@ -92,7 +102,14 @@ impl CodeBlock {
         ))
     }
 
-    fn parse_metadata(metadata: &str) -> (Option<String>, Vec<String>, Option<String>, HashMap<String, String>) {
+    fn parse_metadata(
+        metadata: &str,
+    ) -> (
+        Option<String>,
+        Vec<String>,
+        Option<String>,
+        HashMap<String, String>,
+    ) {
         // Extract imports
         let imports: Vec<String> = USE_RE
             .captures(metadata)
@@ -110,22 +127,22 @@ impl CodeBlock {
 
         // Extract args
         let args: HashMap<String, String> = ARGS_RE
-        .captures(metadata)
-        .map(|caps| {
-            let args_content = &caps[1];
-            args_content
-                .split(';')
-                .filter_map(|s| {
-                    let mut parts = s.splitn(2, '=').map(|s| s.trim());
-                    if let (Some(k), Some(v)) = (parts.next(), parts.next()) {
-                        Some((k.to_string(), v.to_string()))
-                    } else {
-                        None
-                    }
-                })
-                .collect()
-        })
-        .unwrap_or_default();
+            .captures(metadata)
+            .map(|caps| {
+                let args_content = &caps[1];
+                args_content
+                    .split(';')
+                    .filter_map(|s| {
+                        let mut parts = s.splitn(2, '=').map(|s| s.trim());
+                        if let (Some(k), Some(v)) = (parts.next(), parts.next()) {
+                            Some((k.to_string(), v.to_string()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
 
         // Remove the `use=[...]`, `export=` and `args=[...]` part to get the block tag
         let metadata_without_use = USE_RE.replace(metadata, "");
@@ -208,7 +225,7 @@ mod tests {
 
     #[test]
     fn test_parse_metadata_with_args() {
-        let metadata = "use=[block1] export=main.c args=[arg1=1, arg2=2] tag5";
+        let metadata = "use=[block1] export=main.c args=[arg1=1; arg2=2] tag5";
         let (tag, imports, export, args) = CodeBlock::parse_metadata(metadata);
         assert_eq!(tag, Some("tag5".to_string()));
         assert_eq!(imports, vec!["block1".to_string()]);
@@ -221,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_parse_metadata_with_only_args() {
-        let metadata = "args=[arg1=1, arg2=2]";
+        let metadata = "args=[arg1=1; arg2=2]";
         let (tag, imports, export, args) = CodeBlock::parse_metadata(metadata);
         assert!(tag.is_none());
         assert!(imports.is_empty());
@@ -234,7 +251,7 @@ mod tests {
 
     #[test]
     fn test_parse_metadata_with_quoted_args() {
-        let metadata = r#"args=[arg1="1", arg2="2"] tag5"#;
+        let metadata = r#"args=[arg1="1"; arg2="2"] tag5"#;
         let (tag, imports, export, args) = CodeBlock::parse_metadata(metadata);
         assert_eq!(tag, Some("tag5".to_string()));
         assert!(imports.is_empty());

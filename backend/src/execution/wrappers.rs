@@ -88,7 +88,8 @@ pub fn tangle_imports(
 }
 
 fn replace_args(code: &str, args: &HashMap<String, String>) -> String {
-    let pattern = args.keys()
+    let pattern = args
+        .keys()
         .map(|k| regex::escape(k))
         .collect::<Vec<_>>()
         .join("|");
