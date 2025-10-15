@@ -5,6 +5,7 @@ use crate::doc::DocError;
 use crate::errors::ExecutionError;
 use crate::execution::render_engine::render;
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs::write;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -86,6 +87,20 @@ pub fn tangle_imports(
     Ok(imports_output)
 }
 
+fn replace_args(code: &str, args: &HashMap<String, String>) -> String {
+    let pattern = args.keys()
+        .map(|k| regex::escape(k))
+        .collect::<Vec<_>>()
+        .join("|");
+    let re = Regex::new(&format!(r"\b({})\b", pattern)).unwrap();
+
+    re.replace_all(code, |caps: &regex::Captures| {
+        let key = &caps[1];
+        args.get(key).cloned().unwrap_or_else(|| key.to_string())
+    })
+    .into_owned()
+}
+
 /// Tangles code in a given codeblock, wraps it in a language-specific wrapper
 /// and adds any imported blocks.
 pub fn make_executable_code(
@@ -100,7 +115,9 @@ pub fn make_executable_code(
         .tangle_codeblock(code_block)
         .map_err(|e| ExecutionError::from(DocError::from(e)))?;
 
-    add_wrapper(lang_config, &code, &imports_output)
+    let code_with_args = replace_args(&code, &code_block.args);
+
+    add_wrapper(lang_config, &code_with_args, &imports_output)
 }
 
 #[cfg(test)]
@@ -119,6 +136,7 @@ mod tests {
             "main".to_string(),
             vec!["io".to_string()],
             None,
+            HashMap::new(),
             0,
             0,
         );
@@ -131,6 +149,7 @@ mod tests {
                 "io".to_string(),
                 vec![],
                 None,
+                HashMap::new(),
                 0,
                 0,
             ),
@@ -143,6 +162,7 @@ mod tests {
                 "x".to_string(),
                 vec![],
                 None,
+                HashMap::new(),
                 0,
                 0,
             ),
@@ -163,5 +183,61 @@ mod tests {
                 .to_string()
             );
         });
+    }
+
+    #[test]
+    fn test_replace_args() {
+        let mut args = HashMap::new();
+        args.insert("A".to_string(), "1".to_string());
+        args.insert("B".to_string(), "2".to_string());
+
+        let code = "print(A + B);";
+        let expected = "print(1 + 2);";
+
+        assert_eq!(replace_args(code, &args), expected);
+    }
+
+    #[test]
+    fn test_replace_args_with_quotes() {
+        let mut args = HashMap::new();
+        args.insert("X".to_string(), "\"hello\"".to_string());
+        args.insert("Y".to_string(), "3.14".to_string());
+
+        let code = "let s = X; let pi = Y;";
+        let expected = "let s = \"hello\"; let pi = 3.14;";
+
+        assert_eq!(replace_args(code, &args), expected);
+    }
+
+    #[test]
+    fn test_replace_args_partial_names() {
+        let mut args = HashMap::new();
+        args.insert("A".to_string(), "10".to_string());
+
+        let code = "MAX = A + 5;";
+        let expected = "MAX = 10 + 5;"; // solo A se reemplaza, no MAX
+
+        assert_eq!(replace_args(code, &args), expected);
+    }
+
+    #[test]
+    fn test_replace_args_missing_param_dont_replace() {
+        let args = HashMap::new(); // ningún parámetro
+
+        let code = "print(B);";
+        let expected = "print(B);"; // B no existe en args, se deja igual
+
+        assert_eq!(replace_args(code, &args), expected);
+    }
+
+    #[test]
+    fn test_replace_args_multiple_occurrences() {
+        let mut args = HashMap::new();
+        args.insert("V".to_string(), "42".to_string());
+
+        let code = "V + V + V;";
+        let expected = "42 + 42 + 42;";
+
+        assert_eq!(replace_args(code, &args), expected);
     }
 }

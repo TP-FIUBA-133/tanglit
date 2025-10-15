@@ -58,6 +58,18 @@ printf("This program is written in %s.\n", language);
 printf("and the meaning of life is %d\n", @[a_value]);
 ```
 
+```c simple_param use=[headers] args=[A=40; B=2]
+printf("and the meaning of life is %d\n", A+B);
+```
+
+```python list_param args=[A=[]; NUMS=[1,2,3,4,5]]
+print("Lista de números:")
+print(f"Lista vacia{A}")
+print(f"Cantidad de elementos: {len(NUMS)}")
+for x in NUMS:
+    print(x)
+```
+
 ## custom executors
 
 example haskell block. This evaluates a single haskell expression 
