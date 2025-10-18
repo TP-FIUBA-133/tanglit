@@ -1,22 +1,49 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref, watch } from "vue";
 import Reveal from "reveal.js";
 import "reveal.js/dist/reveal.css";
-import "reveal.js/dist/theme/black.css"; // you can pick another theme
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
 import Highlight from "reveal.js/plugin/highlight/highlight.esm.js";
-import "reveal.js/plugin/highlight/monokai.css";
 
 const { slides_markdown } = defineProps<{ slides_markdown: string[] }>();
 
 let deck: Reveal.Api | null = null;
 
-function initReveal() {
-  // Reveal.initialize({
-  //   plugins: [ RevealMarkdown,  ],
-  //
-  // });
+const availableCodeThemes = [
+  "agate",
+  "ascetic",
+  "dark",
+  "default",
+  "github",
+  "github-dark",
+  "github-dark-dimmed",
+  "monokai",
+  "obsidian",
+];
 
+const availableSlideThemes = [
+  "black",
+  "white",
+  "league",
+  "beige",
+  "sky",
+  "night",
+  "serif",
+  "simple",
+  "solarized",
+  "blood",
+  "moon",
+  "dracula",
+  "black-constrast",
+  "white-contrast",
+];
+const selectedSlideTheme = ref("beige"); // Default theme
+const selectedCodeTheme = ref("github-dark"); // Default theme
+
+const slideThemeLinkId = "slide-theme-link";
+const codeThemeLinkId = "code-theme-link";
+
+function initReveal() {
   deck = new Reveal({
     plugins: [Markdown, Highlight],
     embedded: true,
@@ -46,11 +73,60 @@ function initReveal() {
 }
 
 onMounted(() => {
+  if (!document.getElementById(slideThemeLinkId)) {
+    const link = document.createElement("link");
+    link.id = slideThemeLinkId;
+    link.rel = "stylesheet";
+    link.href = `/node_modules/reveal.js/dist/theme/${selectedSlideTheme.value}.css`;
+    document.head.appendChild(link);
+  }
+
+  if (!document.getElementById(codeThemeLinkId)) {
+    const link = document.createElement("link");
+    link.id = codeThemeLinkId;
+    link.rel = "stylesheet";
+    link.href = `/node_modules/highlight.js/styles/${selectedCodeTheme.value}.css`;
+    document.head.appendChild(link);
+  }
+
   initReveal();
+});
+
+watch(selectedSlideTheme, (newTheme) => {
+  const themeLink = document.getElementById(slideThemeLinkId) as HTMLLinkElement;
+  if (themeLink) {
+    themeLink.href = `/node_modules/reveal.js/dist/theme/${newTheme}.css`;
+  }
+});
+
+watch(selectedCodeTheme, (newTheme) => {
+  const themeLink = document.getElementById(codeThemeLinkId) as HTMLLinkElement;
+  if (themeLink) {
+    themeLink.href = `/node_modules/highlight.js/styles/${newTheme}.css`;
+  }
 });
 </script>
 
 <template>
+  <div class="theme-selectors">
+    <div class="theme-selector">
+      <label for="theme-select">Slide theme: </label>
+      <select id="theme-select" v-model="selectedSlideTheme">
+        <option v-for="theme in availableSlideThemes" :key="theme" :value="theme">
+          {{ theme }}
+        </option>
+      </select>
+    </div>
+
+    <div class="code-theme-selector">
+      <label for="code-theme-select">Code theme: </label>
+      <select id="code-theme-select" v-model="selectedCodeTheme">
+        <option v-for="theme in availableCodeThemes" :key="theme" :value="theme">
+          {{ theme }}
+        </option>
+      </select>
+    </div>
+  </div>
   <div class="reveal">
     <div class="slides">
       <section v-for="(md, index) in slides_markdown" :key="index" data-markdown>
@@ -70,5 +146,10 @@ onMounted(() => {
 .reveal .slides {
   /* This overrides the theme's default text-align: center */
   text-align: left;
+}
+
+.theme-selectors {
+  display: flex;
+  flex-direction: row;
 }
 </style>
