@@ -8,6 +8,7 @@ defineEmits([
   "open_file",
   "save_html",
   "save_pdf",
+  "tangle",
 ]);
 </script>
 
@@ -20,7 +21,7 @@ defineEmits([
     <button title="Preview doc" @click="$emit('preview_html')">Preview doc</button>
     <button title="Save the doc as HTML" @click="$emit('save_html')">Save doc as HTML</button>
     <button title="Save the doc as PDF" @click="$emit('save_pdf')">Save doc as PDF</button>
-    <button title="Tangle code">Tangle code</button>
+    <button title="Tangle code" @click="$emit('tangle')">Tangle code</button>
   </div>
 </template>
 

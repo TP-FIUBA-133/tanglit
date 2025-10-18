@@ -199,13 +199,13 @@ impl TanglitDoc {
         Ok(())
     }
 
-    pub fn generate_code_files(&self, output_dir: String) -> Result<usize, DocError> {
+    pub fn generate_code_files(&self, output_dir: &str) -> Result<usize, DocError> {
         let blocks = self.get_code_blocks()?;
         let blocks_to_tangle = blocks.get_all_blocks_to_tangle();
         let count = blocks_to_tangle.len();
         for block in blocks_to_tangle.iter() {
             let tangle_result = blocks.tangle_codeblock(block)?;
-            write_code_to_file(block, tangle_result, output_dir.clone())?;
+            write_code_to_file(block, tangle_result, output_dir)?;
         }
         Ok(count)
     }

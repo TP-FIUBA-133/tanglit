@@ -27,6 +27,7 @@ enum TANGLIT_COMMANDS {
   gen_slides = "tanglit_gen_slides",
   preview_html = "tanglit_preview_html",
   save_pdf = "tanglit_save_pdf",
+  tangle = "tanglit_tangle",
 }
 
 export async function exclude(raw_markdown: string): Promise<string> {
@@ -79,4 +80,8 @@ export async function preview_html(raw_markdown: string) {
 
 export async function save_pdf(raw_markdown: string, output_path: string) {
   return (await invoke(TANGLIT_COMMANDS.save_pdf, { raw_markdown, output_path })) as string;
+}
+
+export async function tangle(raw_markdown: string, output_dir: string) {
+  return (await invoke(TANGLIT_COMMANDS.tangle, { raw_markdown, output_path: output_dir })) as number;
 }

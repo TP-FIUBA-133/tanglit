@@ -164,6 +164,12 @@ async function add_output_to_markdown(block_line: number, output: string) {
 }
 
 const block_lines = computed(() => all_blocks.value.map((item) => item.start_line));
+
+async function tangle() {
+  let output_dir = await open({ directory: true });
+  let count = await tanglit.tangle(raw_markdown.value, output_dir);
+  toast.success(`Tangled code (${count} files) to directory: ` + output_dir);
+}
 </script>
 
 <template>
@@ -203,6 +209,7 @@ const block_lines = computed(() => all_blocks.value.map((item) => item.start_lin
       v-on:save_file="save_file"
       v-on:save_html="save_html"
       v-on:save_pdf="save_pdf"
+      v-on:tangle="tangle"
     />
   </main>
 </template>

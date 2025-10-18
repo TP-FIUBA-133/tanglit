@@ -29,7 +29,7 @@ pub fn write_file(
     io::Result::Ok(dst_path)
 }
 
-pub fn write_code_to_file(block: &CodeBlock, code: String, dir: String) -> io::Result<PathBuf> {
+pub fn write_code_to_file(block: &CodeBlock, code: String, dir: &str) -> io::Result<PathBuf> {
     let lang = block.language.as_deref();
     let extension = lang
         .and_then(|l| LanguageConfig::load_for_lang(l).ok())
