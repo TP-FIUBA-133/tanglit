@@ -41,7 +41,7 @@ pub const DEFAULT_EXECUTION_SCRIPT_C: &str = include_str!(concat!(
 ));
 
 pub fn get_default_toml(lang: &str) -> Option<String> {
-    let content = match lang {
+    let content = match lang.to_lowercase().as_str() {
         "rust" => DEFAULT_TOML_CONFIG_RUST.into(),
         "python" => DEFAULT_TOML_CONFIG_PYTHON.into(),
         "c" => DEFAULT_TOML_CONFIG_C.into(),
@@ -53,7 +53,7 @@ pub fn get_default_toml(lang: &str) -> Option<String> {
 /// Returns the default template for a given language, if available.
 /// We don't return an error if not found, as it's optional.
 pub fn get_default_template(lang: &str) -> Option<String> {
-    match lang {
+    match lang.to_lowercase().as_str() {
         "rust" => Some(DEFAULT_TEMPLATE_RUST.into()),
         "python" => Some(DEFAULT_TEMPLATE_PYTHON.into()),
         "c" => Some(DEFAULT_TEMPLATE_C.into()),
@@ -64,7 +64,7 @@ pub fn get_default_template(lang: &str) -> Option<String> {
 /// Returns the default execution script for a given language, if available.
 /// We don't return an error if not found, as it's optional.
 pub fn get_default_execution_script(lang: &str) -> Option<String> {
-    match lang {
+    match lang.to_lowercase().as_str() {
         "rust" => Some(DEFAULT_EXECUTION_SCRIPT_RUST.into()),
         "python" => Some(DEFAULT_EXECUTION_SCRIPT_PYTHON.into()),
         "c" => Some(DEFAULT_EXECUTION_SCRIPT_C.into()),
