@@ -25,7 +25,7 @@ const html_preview = ref("");
 const currentFilePath: Ref<string | null> = ref(null);
 
 function load_sample_markdown() {
-  fetch("/src/assets/example.md")
+  fetch("example.md")
     .then((response) => response.text())
     .then((text) => {
       raw_markdown.value = text;
