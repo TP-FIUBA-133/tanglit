@@ -91,7 +91,7 @@ fn handle_generate_pdf_command(
 fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
     let input_file_path = &tangle_all_command.input.in_file;
     let doc = TanglitDoc::new_from_file(input_file_path)?;
-    let blocks_processed = doc.generate_code_files(tangle_all_command.output.out_dir.clone())?;
+    let blocks_processed = doc.generate_code_files(&tangle_all_command.output.out_dir)?;
     Ok(format!(
         "✅ {} blocks tangled to {}",
         blocks_processed, tangle_all_command.output.out_dir
