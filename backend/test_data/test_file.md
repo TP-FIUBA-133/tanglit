@@ -21,6 +21,12 @@ a = 'SPAM'
 for i in range(4):
     print(a)
 ```
+```output
+SPAM
+SPAM
+SPAM
+SPAM
+```
 
 ```noconfiglang foo
 a = 'SPAM'
