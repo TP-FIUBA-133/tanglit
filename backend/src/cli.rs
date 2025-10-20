@@ -27,31 +27,52 @@ pub enum Commands {
 }
 
 #[derive(Args, Debug)]
-pub struct GeneralArgs {
+pub struct InputFileArg {
     #[arg(
-        long,
+        index = 1,
         value_name = "INPUT_FILE_PATH",
         help = "Path to the input markdown file.",
         help_heading = "General Args",
         env = "INPUT_FILE_PATH"
     )]
-    pub input_file_path: String,
+    pub in_file: String,
+}
+
+#[derive(Args, Debug)]
+pub struct OutputDirArg {
+    #[arg(
+        long("output-dir"),
+        short('o'),
+        value_name = "OUTPUT_DIR",
+        help = "Path to the directory where the output files will be saved.",
+        env = "OUTPUT_DIR",
+        help_heading = "General Args"
+    )]
+    pub out_dir: String,
+}
+
+#[derive(Args, Debug)]
+pub struct OutputFileArg {
+    #[arg(
+        long("output-file"),
+        short('o'),
+        value_name = "OUTPUT_FILE_PATH",
+        help = "Path to the file where the output will be saved.",
+        help_heading = "General Args",
+        env = "OUTPUT_FILE_PATH"
+    )]
+    pub out_file: String,
 }
 
 #[derive(Args)]
 pub struct TangleArgs {
     #[command(flatten)]
-    pub general: GeneralArgs,
+    pub input: InputFileArg,
+    #[command(flatten)]
+    pub output: OutputDirArg,
     #[arg(
         long,
-        value_name = "OUTPUT_DIR",
-        help = "Path to the directory where the output file will be saved.",
-        help_heading = "Tangle Args",
-        env = "OUTPUT_DIR"
-    )]
-    pub output_dir: String,
-    #[arg(
-        long,
+        short,
         value_name = "TARGET_BLOCK",
         help = "Tag of the code block to tangle.",
         help_heading = "Tangle Args",
@@ -63,9 +84,10 @@ pub struct TangleArgs {
 #[derive(Args)]
 pub struct ExecuteArgs {
     #[command(flatten)]
-    pub general: GeneralArgs,
+    pub input: InputFileArg,
     #[arg(
         long,
+        short,
         value_name = "TARGET_BLOCK",
         help = "Tag of the code block to execute.",
         help_heading = "Execute Args",
@@ -77,55 +99,31 @@ pub struct ExecuteArgs {
 #[derive(Args)]
 pub struct GenerateDocArgs {
     #[command(flatten)]
-    pub general: GeneralArgs,
-    #[arg(
-        long,
-        value_name = "OUTPUT_FILE_PATH",
-        help = "Path to the file where the output will be saved.",
-        help_heading = "Generate Doc Args",
-        env = "OUTPUT_FILE_PATH"
-    )]
-    pub output_file_path: String,
+    pub input: InputFileArg,
+    #[command(flatten)]
+    pub output: OutputFileArg,
 }
 
 #[derive(Args)]
 pub struct TangleAllArgs {
     #[command(flatten)]
-    pub general: GeneralArgs,
-    #[arg(
-        long,
-        value_name = "OUTPUT_DIR",
-        help = "Path to the directory where the output files will be saved.",
-        help_heading = "Tangle All Args",
-        env = "OUTPUT_DIR"
-    )]
-    pub output_dir: String,
+    pub input: InputFileArg,
+    #[command(flatten)]
+    pub output: OutputDirArg,
 }
 
 #[derive(Args)]
 pub struct GenerateSlidesMdArgs {
     #[command(flatten)]
-    pub general: GeneralArgs,
-    #[arg(
-        long,
-        value_name = "OUTPUT_DIR",
-        help = "Path to the directory where the output file will be saved.",
-        help_heading = "Generate Slides MD Args",
-        env = "OUTPUT_DIR"
-    )]
-    pub output_dir: String,
+    pub input: InputFileArg,
+    #[command(flatten)]
+    pub output: OutputDirArg,
 }
 
 #[derive(Args)]
 pub struct GenerateSlidesPdfArgs {
     #[command(flatten)]
-    pub general: GeneralArgs,
-    #[arg(
-        long,
-        value_name = "OUTPUT_FILE_PATH",
-        help = "Path to the file where the output will be saved.",
-        help_heading = "Generate Slides PDF Args",
-        env = "OUTPUT_FILE_PATH"
-    )]
-    pub output_file_path: String,
+    pub input: InputFileArg,
+    #[command(flatten)]
+    pub output: OutputFileArg,
 }

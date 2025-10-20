@@ -16,7 +16,7 @@ use backend::execution::write_file;
 use env_logger::init;
 
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
-    let input_file_path = tangle_args.general.input_file_path;
+    let input_file_path = tangle_args.input.in_file;
     let doc = TanglitDoc::new_from_file(&input_file_path)?;
 
     // Tangle the document
@@ -38,7 +38,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
     // Write the output to a file
     match write_file(
         output,
-        &PathBuf::from(tangle_args.output_dir),
+        &PathBuf::from(tangle_args.output.out_dir),
         &tangle_args.target_block,
         extension.as_deref(),
     ) {
@@ -50,7 +50,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
 fn handle_execute_command(
     execute_args: backend::cli::ExecuteArgs,
 ) -> Result<String, ExecutionError> {
-    let doc = TanglitDoc::new_from_file(&execute_args.general.input_file_path)?;
+    let doc = TanglitDoc::new_from_file(&execute_args.input.in_file)?;
     let output = execution::execute(&doc, &execute_args.target_block)?;
     Ok(format!(
         "Output of block {}:\n{}\nstderr: {}\nexit code: {}",
@@ -64,13 +64,13 @@ fn handle_execute_command(
 fn handle_generate_html_command(
     generate_html_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
-    let doc = TanglitDoc::new_from_file(&generate_html_args.general.input_file_path)?;
+    let doc = TanglitDoc::new_from_file(&generate_html_args.input.in_file)?;
     let html = doc.generate_html()?;
 
-    match write(Path::new(&generate_html_args.output_file_path), html) {
+    match write(Path::new(&generate_html_args.output.out_file), html) {
         Ok(_) => Ok(format!(
             "✅ HTML saved to {}",
-            generate_html_args.output_file_path
+            generate_html_args.output.out_file
         )),
         Err(e) => Err(WriteError(format!("Error writing to file: {}", e))),
     }
@@ -79,31 +79,31 @@ fn handle_generate_html_command(
 fn handle_generate_pdf_command(
     generate_pdf_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
-    let doc = TanglitDoc::new_from_file(&generate_pdf_args.general.input_file_path)?;
-    doc.generate_doc_pdf(&generate_pdf_args.output_file_path)?;
+    let doc = TanglitDoc::new_from_file(&generate_pdf_args.input.in_file)?;
+    doc.generate_doc_pdf(&generate_pdf_args.output.out_file)?;
 
     Ok(format!(
         "✅ PDF saved to {}",
-        &generate_pdf_args.output_file_path
+        &generate_pdf_args.output.out_file
     ))
 }
 
 fn handle_tangle_all_command(tangle_all_command: TangleAllArgs) -> Result<String, ExecutionError> {
-    let input_file_path = &tangle_all_command.general.input_file_path;
+    let input_file_path = &tangle_all_command.input.in_file;
     let doc = TanglitDoc::new_from_file(input_file_path)?;
-    let blocks_processed = doc.generate_code_files(&tangle_all_command.output_dir)?;
+    let blocks_processed = doc.generate_code_files(&tangle_all_command.output.out_dir)?;
     Ok(format!(
         "✅ {} blocks tangled to {}",
-        blocks_processed, tangle_all_command.output_dir
+        blocks_processed, tangle_all_command.output.out_dir
     ))
 }
 
 fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, ExecutionError> {
-    let doc = TanglitDoc::new_from_file(&args.general.input_file_path)?;
+    let doc = TanglitDoc::new_from_file(&args.input.in_file)?;
     let slides_md = doc.generate_md_slides_vec()?;
 
     for (i, slide_md) in slides_md.iter().enumerate() {
-        fs::write(format!("{}/slide_{}.md", args.output_dir, i), slide_md)?;
+        fs::write(format!("{}/slide_{}.md", args.output.out_dir, i), slide_md)?;
     }
 
     Ok("✅ Slides Generated".to_string())
@@ -112,12 +112,12 @@ fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, Execu
 fn handle_generate_slides_pdf(
     generate_slides_args: GenerateSlidesPdfArgs,
 ) -> Result<String, ExecutionError> {
-    let doc = TanglitDoc::new_from_file(&generate_slides_args.general.input_file_path)?;
-    doc.generate_slides_pdf(&generate_slides_args.output_file_path)?;
+    let doc = TanglitDoc::new_from_file(&generate_slides_args.input.in_file)?;
+    doc.generate_slides_pdf(&generate_slides_args.output.out_file)?;
 
     Ok(format!(
         "✅ Slides PDF saved to {}",
-        &generate_slides_args.output_file_path
+        &generate_slides_args.output.out_file
     ))
 }
 
