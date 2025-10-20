@@ -24,7 +24,7 @@ for i in range(4):
 ```output
 SPAM
 SPAM
-SPAN
+SPAM
 SPAM
 ```
 
