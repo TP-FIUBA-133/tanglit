@@ -4,6 +4,7 @@ mod generate_pdf;
 mod parser;
 mod tangle;
 
+pub use crate::doc::gen_html::DEFAULT_THEME;
 use crate::doc::gen_html::{
     GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS, markdown_to_html,
     markdown_to_html_fragment, wrap_in_html_doc,
@@ -163,14 +164,14 @@ impl TanglitDoc {
         Ok(CodeBlocks::from_codeblocks(blocks))
     }
 
-    pub fn generate_html(&self) -> Result<String, DocError> {
+    pub fn generate_html(&self, theme: &str) -> Result<String, DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
-        Ok(markdown_to_html(&markdown_with_exclusions))
+        Ok(markdown_to_html(&markdown_with_exclusions, theme))
     }
 
-    pub fn generate_doc_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+    pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
-        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
+        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions, theme);
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
     }

@@ -117,8 +117,8 @@ async function preview_slides() {
   console.log("Slides generated:", slides_markdown.value);
 }
 
-async function preview_html() {
-  await tanglit.preview_html(raw_markdown.value).then((html: string) => {
+async function preview_html(theme = "pico") {
+  await tanglit.preview_html(raw_markdown.value, theme).then((html: string) => {
     html_preview.value = html;
   });
 }
@@ -135,10 +135,10 @@ async function save_html() {
     });
 }
 
-async function save_pdf() {
+async function save_pdf(theme = "pico") {
   let pdf_save_path: string | null = await save();
   if (!pdf_save_path) return;
-  await tanglit.save_pdf(raw_markdown.value, pdf_save_path);
+  await tanglit.save_pdf(raw_markdown.value, theme, pdf_save_path);
 }
 
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
@@ -195,7 +195,7 @@ async function tangle() {
               <SlideViewMain class="slide-view" :slides_markdown="slides_markdown" />
             </pane>
             <pane min-size="30" v-if="html_preview">
-              <HtmlPreview :html="html_preview" />
+              <HtmlPreview :html="html_preview" v-on:change-theme="preview_html" />
             </pane>
           </splitpanes>
         </pane>

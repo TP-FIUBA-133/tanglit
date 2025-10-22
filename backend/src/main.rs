@@ -4,16 +4,16 @@ use backend::cli::{
 };
 use backend::configuration::init_configuration;
 use backend::configuration::language_config::LanguageConfig;
+use backend::doc::DEFAULT_THEME;
 use backend::doc::{TangleError, TanglitDoc};
 use backend::errors::ExecutionError;
 use backend::errors::ExecutionError::WriteError;
+use backend::execution::write_file;
 use backend::{cli::Cli, execution};
 use clap::Parser;
+use env_logger::init;
 use std::fs::{self, write};
 use std::path::{Path, PathBuf};
-
-use backend::execution::write_file;
-use env_logger::init;
 
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
     let input_file_path = tangle_args.input.in_file;
@@ -65,7 +65,11 @@ fn handle_generate_html_command(
     generate_html_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&generate_html_args.input.in_file)?;
-    let html = doc.generate_html()?;
+    let html = doc.generate_html(
+        &generate_html_args
+            .theme
+            .unwrap_or(DEFAULT_THEME.to_string()),
+    )?;
 
     match write(Path::new(&generate_html_args.output.out_file), html) {
         Ok(_) => Ok(format!(
@@ -80,7 +84,11 @@ fn handle_generate_pdf_command(
     generate_pdf_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&generate_pdf_args.input.in_file)?;
-    doc.generate_doc_pdf(&generate_pdf_args.output.out_file)?;
+
+    doc.generate_doc_pdf(
+        &generate_pdf_args.output.out_file,
+        &generate_pdf_args.theme.unwrap_or(DEFAULT_THEME.to_string()),
+    )?;
 
     Ok(format!(
         "✅ PDF saved to {}",
