@@ -159,7 +159,7 @@ mod tests {
                     .unwrap();
             assert_eq!(
                 tangle,
-                "#include <stdio.h>\n\n\nint main(){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
+                "#include <stdio.h>\n\n\nint main(void){\n    int x;\n    x = 42;\n    printf(\"Hello, world!: %d\",x);\n    return 0;\n}\n"
                 .to_string()
             );
         });
