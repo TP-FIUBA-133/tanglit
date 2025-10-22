@@ -1,6 +1,6 @@
 #<IMPORTS>#
 
-int main(){
+int main(void){
     #<BODY>#
     return 0;
 }
