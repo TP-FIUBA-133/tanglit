@@ -48,7 +48,7 @@ impl fmt::Debug for ParserError {
 }
 
 pub fn parse_from_string(input: &str) -> Result<Node, ParserError> {
-    markdown::to_mdast(input, &ParseOptions::mdx())
+    markdown::to_mdast(input, &ParseOptions::gfm())
         .map_err(|e| ParserError::InvalidInput(format!("Failed to parse input: {}", e)))
 }
 
@@ -113,8 +113,8 @@ mod tests {
     #[test]
     fn test_parse_code_blocks_no_blocks() {
         let input = r#"
-        This is just plain text.
-        No code blocks here.
+This is just plain text.
+No code blocks here.
         "#;
 
         let blocks = parse_code_blocks_from_string(input).unwrap();
@@ -125,11 +125,11 @@ mod tests {
     #[test]
     fn test_parse_code_blocks_block_and_text() {
         let input = r#"
-        This is some text.
-        ```python hello
-        print("Hello, world!")
-        ```
-        More text here.
+This is some text.
+```python hello
+print("Hello, world!")
+```
+More text here.
         "#;
         let blocks = parse_code_blocks_from_string(input).unwrap();
 
@@ -143,12 +143,12 @@ mod tests {
     #[test]
     fn test_parse_code_blocks_malformed_blocks() {
         let input = r#"
-        ```python hello_python
-        print("Hello, world!")
-        ```
-        ```Rust hello_rust
-        fn main() {
-            println!("Hello, world!");
+```python hello_python
+print("Hello, world!")
+```
+```Rust hello_rust
+fn main() {
+    println!("Hello, world!");
         "#; // Missing closing backticks
 
         let blocks = parse_code_blocks_from_string(input).unwrap();
