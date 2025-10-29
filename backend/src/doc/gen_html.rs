@@ -7,6 +7,8 @@ pub const GITHUB_MARKDOWN_LIGHT_CSS: &str =
 pub const PAGE_BREAK_AND_CENTER_CSS: &str =
     include_str!("../../resources/page_break_and_center.css");
 
+pub const CUSTOM_CSS: &str = include_str!("../../resources/custom.css");
+
 pub fn markdown_to_html(input: &str) -> String {
     let fragment = markdown_to_html_fragment(input);
     wrap_in_html_doc(
