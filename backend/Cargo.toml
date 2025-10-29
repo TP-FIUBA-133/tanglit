@@ -18,7 +18,9 @@ directories = "6.0.0"
 toml = "0.8"
 env_logger = "0.10"
 indexmap = "2.11.4"
-
+lol_html = "0.3.0"
+mime_guess = "2.0.4"
+base64 = "0.22.1"
 [dev-dependencies]
 test-log = "0.2.17"
 temp-env = "0.3.6"
