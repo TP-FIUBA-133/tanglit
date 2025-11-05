@@ -206,21 +206,13 @@ impl TanglitDoc {
         let inner_html = String::from_utf8(html).unwrap();
 
         Ok(wrap_in_html_doc(
-            &inner_html,
+            &format!(r#"<div class="markdown-body">{}</div>"#, &inner_html),
             "Some title",
-            &[CUSTOM_CSS.to_string()],
+            &[
+                CUSTOM_CSS.to_string(),
+                GITHUB_MARKDOWN_LIGHT_CSS.parse().unwrap(),
+            ],
         ))
-
-        // Ok(format!(
-        //     r#"
-        //     <!DOCTYPE html>
-        //     <style>
-        //     {}
-        //     {}
-        //     </style><div class="markdown-body">{}</div></body></html>"#,
-        //     custom_css, GITHUB_MARKDOWN_LIGHT_CSS, inner_html
-        // ))
-        // Ok(markdown_to_html(&markdown_with_exclusions))
     }
 
     pub fn generate_doc_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
