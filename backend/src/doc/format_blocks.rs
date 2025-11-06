@@ -86,8 +86,8 @@ pub fn ast_format_output(_lang: &Option<String>, tag: &Option<String>) -> (Strin
         .as_ref()
         .map(|_tag| format!(r#"<div class="block-tag">{_tag}</div>"#));
     let mut opening_html = main_opening_html;
-    if block_tag_html.is_some() {
-        opening_html.push_str(block_tag_html.as_deref().unwrap());
+    if let Some(block_tag) = block_tag_html {
+        opening_html.push_str(&block_tag);
     }
     (opening_html, main_closing_html)
 }
@@ -102,8 +102,8 @@ pub fn ast_format_single_code_block(
         format!(r#"<div class="block-header"><span class="block-tag">{_tag}</span></div>"#)
     });
     let mut opening_html = main_opening_html;
-    if block_tag_html.is_some() {
-        opening_html.push_str(block_tag_html.as_deref().unwrap());
+    if let Some(block_tag) = block_tag_html {
+        opening_html.push_str(&block_tag);
     }
     (opening_html, main_closing_html)
 }
