@@ -106,7 +106,7 @@ pub struct GenerateDocArgs {
         long,
         short,
         value_name = "THEME",
-        help = "Theme to use for the generated document (e.g., 'pico', 'water', 'sakura').",
+        help = "Theme to use for the generated document ('pico', 'water', 'sakura' or 'latex'; the default is 'pico').",
         help_heading = "Document Generation Args",
         env = "THEME"
     )]
