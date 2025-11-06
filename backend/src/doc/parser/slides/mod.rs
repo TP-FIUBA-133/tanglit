@@ -94,7 +94,7 @@ pub fn parse_slides_from_ast(mdast: &Node, input: &str) -> Vec<Slide> {
         let mut new_slide = None;
 
         if let Node::Heading(heading) = child {
-            if heading.depth == 1 {
+            if heading.depth == 1 || heading.depth == 2 {
                 last_title = Some(child.clone()); // update the “last title”
                 new_slide = Some(Slide {
                     content: vec![child.clone()],
