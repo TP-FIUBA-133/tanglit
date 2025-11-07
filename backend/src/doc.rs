@@ -6,9 +6,10 @@ mod parser;
 mod tangle;
 
 use crate::doc::format_blocks::format_code_blocks;
+pub use crate::doc::gen_html::DEFAULT_THEME;
 use crate::doc::gen_html::{
-    CUSTOM_CSS, GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS, markdown_to_html,
-    markdown_to_html_fragment, wrap_in_html_doc,
+    AVAILABLE_THEMES, CUSTOM_CSS, GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS,
+    markdown_to_html, markdown_to_html_fragment, wrap_in_html_doc,
 };
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
@@ -19,6 +20,7 @@ use crate::execution::write_code_to_file;
 use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Arena, ComrakOptions, Plugins, parse_document};
 pub use error::DocError;
+use log::warn;
 use markdown::mdast::Node;
 pub use parser::ParserError;
 pub use parser::code_block::CodeBlock;
@@ -168,7 +170,7 @@ impl TanglitDoc {
         Ok(CodeBlocks::from_codeblocks(blocks))
     }
 
-    pub fn generate_html(&self) -> Result<String, DocError> {
+    pub fn generate_html(&self, theme: &str) -> Result<String, DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
 
         let arena = Arena::new();
@@ -205,19 +207,31 @@ impl TanglitDoc {
 
         let inner_html = String::from_utf8(html).unwrap();
 
+        let mut final_theme = theme.to_string();
+        if !AVAILABLE_THEMES.contains(&theme) {
+            warn!(
+                "Theme '{}' is not available. Available themes: {:?}",
+                theme, AVAILABLE_THEMES
+            );
+            warn!("Falling back to default theme {}", DEFAULT_THEME);
+            final_theme = DEFAULT_THEME.to_string();
+        }
+
         Ok(wrap_in_html_doc(
-            &format!(r#"<div class="markdown-body">{}</div>"#, &inner_html),
-            "Some title",
+            &inner_html,
+            "Document", // TODO get title from arg or extract from markdown
             &[
+                crate::doc::gen_html::get_theme_css(final_theme.as_str())
+                    .unwrap()
+                    .to_string(),
                 CUSTOM_CSS.to_string(),
-                GITHUB_MARKDOWN_LIGHT_CSS.parse().unwrap(),
             ],
         ))
     }
 
-    pub fn generate_doc_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+    pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
-        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions);
+        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions, theme);
         generate_pdf(&html_with_exclusions, output_file_path)?;
         Ok(())
     }
