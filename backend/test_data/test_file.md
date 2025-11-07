@@ -102,5 +102,5 @@ Rust
 println!("hello world");
 ```
 
-Replace the link below with the path to the image in your computer:
-![messi](file:///absolute/path/to/your/image/messi.jpg)
+Replace the link below with the path to the image in your computer, you should use absolute paths:
+![messi](file:///home/chris/workspace/tanglit/backend/test_data/messi.jpg)
