@@ -9,7 +9,7 @@ use crate::doc::format_blocks::format_code_blocks;
 pub use crate::doc::gen_html::DEFAULT_THEME;
 use crate::doc::gen_html::{
     AVAILABLE_THEMES, CUSTOM_CSS, GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS,
-    markdown_to_html, markdown_to_html_fragment, wrap_in_html_doc,
+    markdown_to_html_fragment, wrap_in_html_doc,
 };
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
@@ -230,9 +230,8 @@ impl TanglitDoc {
     }
 
     pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
-        let markdown_with_exclusions = self.filter_content_for_doc()?;
-        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions, theme);
-        generate_pdf(&html_with_exclusions, output_file_path)?;
+        let html = self.generate_html(theme)?;
+        generate_pdf(&html, output_file_path)?;
         Ok(())
     }
 
