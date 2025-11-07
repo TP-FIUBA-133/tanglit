@@ -1,6 +1,5 @@
 use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Plugins, markdown_to_html_with_plugins};
-use log::warn;
 use std::string::ToString;
 
 // Taken from https://github.com/sindresorhus/github-markdown-css/blob/bedb4b771f5fa1ae117df597c79993fd1eb4dff0/github-markdown-light.css
@@ -28,29 +27,13 @@ pub const THEME_CSS: &[(&str, &str); 4] = &[
     ("latex", LATEX_CSS),
 ];
 
-fn get_theme_css(theme: &str) -> Option<&'static str> {
+pub(crate) fn get_theme_css(theme: &str) -> Option<&'static str> {
     THEME_CSS
         .iter()
         .find_map(|(k, v)| if *k == theme { Some(*v) } else { None })
 }
 
-pub fn markdown_to_html(input: &str, theme: &str) -> String {
-    let mut final_theme = theme.to_string();
-    if !AVAILABLE_THEMES.contains(&theme) {
-        warn!(
-            "Theme '{}' is not available. Available themes: {:?}",
-            theme, AVAILABLE_THEMES
-        );
-        warn!("Falling back to default theme {}", DEFAULT_THEME);
-        final_theme = DEFAULT_THEME.to_string();
-    }
-    let fragment = markdown_to_html_fragment(input);
-    wrap_in_html_doc(
-        &fragment,
-        "Document", // TODO get title from arg or extract from markdown
-        &[get_theme_css(final_theme.as_str()).unwrap().to_string()],
-    )
-}
+pub const CUSTOM_CSS: &str = include_str!("../../resources/custom.css");
 
 // TODO: Make all options configurable
 pub fn markdown_to_html_fragment(input: &str) -> String {
