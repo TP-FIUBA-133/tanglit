@@ -102,6 +102,15 @@ pub struct GenerateDocArgs {
     pub input: InputFileArg,
     #[command(flatten)]
     pub output: OutputFileArg,
+    #[arg(
+        long,
+        short,
+        value_name = "THEME",
+        help = "Theme to use for the generated document ('pico', 'water', 'sakura' or 'latex'; the default is 'pico').",
+        help_heading = "Document Generation Args",
+        env = "THEME"
+    )]
+    pub theme: Option<String>,
 }
 
 #[derive(Args)]
