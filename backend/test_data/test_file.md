@@ -102,4 +102,5 @@ Rust
 println!("hello world");
 ```
 
-![messi](messi.jpg)
+Replace the link below with the path to the image in your computer:
+![messi](file:///absolute/path/to/your/image/messi.jpg)
