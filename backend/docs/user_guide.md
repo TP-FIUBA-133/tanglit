@@ -97,11 +97,12 @@ To export the entire document as a **PDF** or **HTML**, press **Save doc as PDF*
 > [!WARNING]  
 > In the current version, you need to have **Chrome** installed for PDF generation.
 
-
 ## 7. Slide Generation
 
 Tanglit lets you turn any Markdown document into a presentation.  
-To preview your slides, click **Preview slides** in the menu bar below.
+In fact, this user guide is a presentation itself.  
+
+To preview the slides, click **Preview slides** in the menu bar below.
 
 Slides are created automatically from first- and second-level headings (`#` and `##`).
 
@@ -110,5 +111,60 @@ Slides are created automatically from first- and second-level headings (`#` and 
 
 To export your presentation as a PDF, click **Save slides as PDF** in the menu bar below.
 
+--- ---
+## 8. Exclusion Markers
 
-## 8. Excluding markers
+Since Tanglit allows you to generate both a `PDF/HTML` document and a slide presentation from the same source,  
+it provides markers to **hide specific content** depending on the output target.
+
+--- ---
+### Excluding Paragraphs
+
+You can exclude an entire paragraph from the slides using the `&p` marker at the end of the first line.
+
+For example, imagine you write a detailed paragraph that feels too long for a slide, like this one.   &p  
+You can hide it from the slide presentation and include a shorter version instead.
+
+To exclude a paragraph from the generated document (but keep it in the slides),  
+use the `%p` marker at the end of the first line.
+
+This paragraph will appear **only** in the rendered slides.   %p
+
+To hide a single line instead of a full paragraph,  
+use `&` or `%` at the end of the line.
+
+--- ---
+### Excluding Lists
+
+You can also exclude **lists items** from either the document or the slides using the `&i` and `%i` marker.
+
+- This item will appear in both outputs
+- This item is slide-only   %i
+- This item is document-only   &i
+
+Or to exclude the list entirely, use `&l` or `%i` at the end of the first item.
+
+- This list is slide only.    %l
+- Slide item.
+- Slide item.  
+
+-- separator -- %&
+
+- This list is document only.    &l
+- Document item.
+- Document item.
+
+--- ---
+### Excluding Code Blocks
+
+You can also exclude code blocks.  
+Simply add `%` or `&` to the block metadata:
+
+```markdown %
+This block will only appear in the slides!
+```
+```Markdown &
+This block will only appear in the document!
+```
+
+
