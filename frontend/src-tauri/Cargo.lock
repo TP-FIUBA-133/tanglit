@@ -314,26 +314,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "backend"
-version = "0.1.0"
-dependencies = [
- "clap",
- "comrak",
- "directories",
- "env_logger",
- "headless_chrome",
- "indexmap 2.11.4",
- "log",
- "markdown",
- "mdast_util_to_markdown",
- "once_cell",
- "regex",
- "serde",
- "serde_json",
- "toml 0.8.23",
-]
-
-[[package]]
 name = "backtrace"
 version = "0.3.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1365,10 +1345,10 @@ dependencies = [
 name = "frontend"
 version = "0.1.0"
 dependencies = [
- "backend",
  "mdast_util_to_markdown",
  "serde",
  "serde_json",
+ "tanglit",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
@@ -4136,6 +4116,26 @@ dependencies = [
  "pkg-config",
  "toml 0.8.23",
  "version-compare",
+]
+
+[[package]]
+name = "tanglit"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "comrak",
+ "directories",
+ "env_logger",
+ "headless_chrome",
+ "indexmap 2.11.4",
+ "log",
+ "markdown",
+ "mdast_util_to_markdown",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "toml 0.8.23",
 ]
 
 [[package]]
