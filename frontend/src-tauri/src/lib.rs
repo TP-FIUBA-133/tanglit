@@ -60,18 +60,18 @@ fn tanglit_gen_slides(raw_markdown: &str) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn tanglit_preview_html(raw_markdown: &str) -> Result<String, String> {
+fn tanglit_preview_html(raw_markdown: &str, theme: &str) -> Result<String, String> {
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    doc.generate_html()
+    doc.generate_html(theme)
         .map_err(|e| format!("Error generating HTML: {}", e))
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn tanglit_save_pdf(raw_markdown: &str, output_path: &str) -> Result<(), String> {
+fn tanglit_save_pdf(raw_markdown: &str, theme: &str, output_path: &str) -> Result<(), String> {
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    doc.generate_doc_pdf(output_path)
+    doc.generate_doc_pdf(output_path, theme)
         .map_err(|e| format!("Error generating PDF: {}", e))
 }
 
