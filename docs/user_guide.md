@@ -5,13 +5,18 @@ It lets you **write**, **run**, and **present** Markdown documents with live cod
 
 ## 1. Writing Markdown
 
-Write your content in the main editor. Tanglit supports standard Markdown syntax.
+Start by writing your content in the main editor. Tanglit fully supports standard **Markdown syntax**, so you can structure your document as you normally would.
 
 You can include:
-- **Text**
-- Lists
-- `Code`
-- Images
+- Text and **formatting**
+- Lists and tables
+- `Inline` and fenced code blocks
+
+To insert images stored locally on your computer, use the following syntax with an absolute file path:
+
+```markdown
+![image](file:///absolute/path/to/image.png)
+```
 
 ## 2. Running Code Blocks
 
