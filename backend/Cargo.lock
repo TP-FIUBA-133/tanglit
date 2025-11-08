@@ -94,28 +94,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "backend"
-version = "0.1.0"
-dependencies = [
- "clap",
- "comrak",
- "directories",
- "env_logger 0.10.2",
- "headless_chrome",
- "indexmap",
- "log",
- "markdown",
- "mdast_util_to_markdown",
- "once_cell",
- "regex",
- "serde",
- "serde_json",
- "temp-env",
- "test-log",
- "toml",
-]
-
-[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1475,6 +1453,28 @@ dependencies = [
  "thiserror 1.0.69",
  "walkdir",
  "yaml-rust",
+]
+
+[[package]]
+name = "tanglit"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "comrak",
+ "directories",
+ "env_logger 0.10.2",
+ "headless_chrome",
+ "indexmap",
+ "log",
+ "markdown",
+ "mdast_util_to_markdown",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "temp-env",
+ "test-log",
+ "toml",
 ]
 
 [[package]]

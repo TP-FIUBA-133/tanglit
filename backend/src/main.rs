@@ -1,19 +1,19 @@
-use backend::cli::{
-    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs,
-    TangleArgs,
-};
-use backend::configuration::init_configuration;
-use backend::configuration::language_config::LanguageConfig;
-use backend::doc::{TangleError, TanglitDoc};
-use backend::errors::ExecutionError;
-use backend::errors::ExecutionError::WriteError;
-use backend::{cli::Cli, execution};
 use clap::Parser;
 use std::fs::{self, write};
 use std::path::{Path, PathBuf};
+use tanglit::cli::{
+    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs,
+    TangleArgs,
+};
+use tanglit::configuration::init_configuration;
+use tanglit::configuration::language_config::LanguageConfig;
+use tanglit::doc::{TangleError, TanglitDoc};
+use tanglit::errors::ExecutionError;
+use tanglit::errors::ExecutionError::WriteError;
+use tanglit::{cli::Cli, execution};
 
-use backend::execution::write_file;
 use env_logger::init;
+use tanglit::execution::write_file;
 
 fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionError> {
     let input_file_path = tangle_args.input.in_file;
@@ -48,7 +48,7 @@ fn handle_tangle_command(tangle_args: TangleArgs) -> Result<String, ExecutionErr
 }
 
 fn handle_execute_command(
-    execute_args: backend::cli::ExecuteArgs,
+    execute_args: tanglit::cli::ExecuteArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&execute_args.input.in_file)?;
     let output = execution::execute(&doc, &execute_args.target_block)?;

@@ -21,35 +21,36 @@ Tanglit can execute code blocks directly within your Markdown:
 print("Hello from Tanglit!")
 ```
 
-When you click the play button ▶️, the output appears right below the block.
-You can insert the output back into the Markdown by pressing the `Add to Markdown` button.
+When you click the play button ▶️, the output appears right below the block.  
+You can insert the output back into the Markdown by pressing the **Add to Markdown** button.
 
 ## 3. Importing code blocks
 
-You can also import code from other blocks.
+Tanglit allows you to **reuse code** across multiple blocks.
 
-In the block metadata, specify a language (`python`) and a block name (`hello_message`).
+In the block metadata, specify the language (`python`) and a block name (`hello_message`):
 
 ```python hello_message
 hello_message = "Hello from Tanglit!"
 ```
 
-Then, import the block using the `@[]` syntax.
+Then, import that block into another one using the `@[]` syntax:
 
 ```python
 @[hello_message]
 print(hello_message)
 ```
 
-## 4. Execution wrappers
 
-Some languages require wrapping the code block with a main function.
-For example in C:
+## 4. Execution Wrappers
+
+Some languages require wrapping the code block with a `main` function.  
+For example, in C:
 
 ```
 #<IMPORTS>#
 
-int main(void){
+int main(void) {
     #<BODY>#
     return 0;
 }
@@ -59,8 +60,8 @@ When you execute a C code block, your code is placed inside the `#<BODY>#` place
 
 ---
 
-But what if you need to define something outside the main function — for example, `#include <stdio.h>`?
-In that case, define everything you want outside the wrapper in a separate code block, and import it using the `use=[]` syntax in the block metadata:
+If you need to define something **outside** the main function — for example, `#include <stdio.h>` —  
+define it in a separate code block and import it using the `use=[]` syntax in the block metadata:
 
 ```c stdio
 #include <stdio.h>
@@ -70,13 +71,12 @@ In that case, define everything you want outside the wrapper in a separate code 
 printf("Hello from Tanglit!");
 ```
 
-If you run the block above, you'll see that the message is printed successfully ✅
+When you run the block above, you’ll see that the message is printed successfully.
 
-> [!IMPORTANT]  
-> We provide default templates for our default supported languages (currently `C`, `Python` and `Rust`).  
-> See our [language config docs]() for more.
+> [!NOTE]  
+> Learn more about execution wrappers and supported languages in the [Language Configs documentation](./language_configs.md).
 
-## 5. Export source code
+## 5. Export Source Code
 
 Tanglit also supports exporting the source code of a block using the `export=filename` syntax in the block metadata:
 
@@ -85,14 +85,14 @@ Tanglit also supports exporting the source code of a block using the `export=fil
 print(hello_message)
 ```
 
-When you press the `Tangle code` button in the menu bar below, you will be asked to select an output directory.
+When you press the **Tangle code** button in the menu bar below, you’ll be asked to select an output directory.  
 After selecting one, all blocks marked with an `export=` flag will be written there as source files.
 
 ## 6. Document Generation (PDF/HTML)
 
 You can preview your Tanglit document by pressing the **Preview doc** button in the menu bar below.
 
-To export the entire document as a **PDF** or **HTML**, press **Save doc as PDF** or **Save doc as HTML** in the menu bar below.
+To export the entire document as a **PDF** or **HTML**, click **Save doc as PDF** or **Save doc as HTML** in the menu bar below.
 
 > [!WARNING]  
 > In the current version, you need to have **Chrome** installed for PDF generation.
@@ -100,7 +100,7 @@ To export the entire document as a **PDF** or **HTML**, press **Save doc as PDF*
 ## 7. Slide Generation
 
 Tanglit lets you turn any Markdown document into a presentation.  
-In fact, this user guide is a presentation itself.  
+In fact, this user guide is a presentation itself.
 
 To preview the slides, click **Preview slides** in the menu bar below.
 
@@ -111,7 +111,7 @@ Slides are created automatically from first- and second-level headings (`#` and 
 
 To export your presentation as a PDF, click **Save slides as PDF** in the menu bar below.
 
---- ---
+
 ## 8. Exclusion Markers
 
 Since Tanglit allows you to generate both a `PDF/HTML` document and a slide presentation from the same source,  
@@ -120,7 +120,7 @@ it provides markers to **hide specific content** depending on the output target.
 --- ---
 ### Excluding Paragraphs
 
-You can exclude an entire paragraph from the slides using the `&p` marker at the end of the first line.
+Exclude an entire paragraph from the slides by adding the `&p` marker at the end of the first line.
 
 For example, imagine you write a detailed paragraph that feels too long for a slide, like this one.   &p  
 You can hide it from the slide presentation and include a shorter version instead.
@@ -136,29 +136,28 @@ use `&` or `%` at the end of the line.
 --- ---
 ### Excluding Lists
 
-You can also exclude **lists items** from either the document or the slides using the `&i` and `%i` marker.
+Exclude specific **list items** from either the document or the slides using the `&i` and `%i` markers.
 
 - This item will appear in both outputs
 - This item is slide-only   %i
 - This item is document-only   &i
 
-Or to exclude the list entirely, use `&l` or `%i` at the end of the first item.
+To exclude an entire list, add `&l` or `%l` at the end of the first item.
 
-- This list is slide only.    %l
-- Slide item.
-- Slide item.  
+- This list is slide-only   %l
+- Slide item
+- Slide item
 
 -- separator -- %&
 
-- This list is document only.    &l
-- Document item.
-- Document item.
+- This list is document-only   &l
+- Document item
+- Document item
 
 --- ---
 ### Excluding Code Blocks
 
-You can also exclude code blocks.  
-Simply add `%` or `&` to the block metadata:
+Exclude code blocks by adding `%` or `&` to the block metadata:
 
 ```markdown %
 This block will only appear in the slides!
@@ -167,4 +166,10 @@ This block will only appear in the slides!
 This block will only appear in the document!
 ```
 
+## 9. Begin Your Tanglit Journey!
 
+With Tanglit, you can turn a simple Markdown file into **source code**, a **reproducible notebook** or a **presentation** — all in one place.
+
+If you prefer working from the terminal, Tanglit also provides a **Command-Line Interface (CLI)**  
+that lets you use the backend directly, without the graphical interface.  
+See the [CLI documentation](./cli.md) for installation and usage details.
