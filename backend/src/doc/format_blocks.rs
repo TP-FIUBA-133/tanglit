@@ -8,18 +8,6 @@ fn parse_metadata(metadata: &str) -> (Option<String>, Option<String>) {
     let use_re =
         Regex::new(crate::doc::parser::code_block::USE_REGEX).expect("Failed to compile USE_REGEX");
 
-    // // Extract imports
-    // let imports: Vec<String> = use_re
-    //     .captures(metadata)
-    //     .map(|caps| {
-    //         caps[1]
-    //             .split(',')
-    //             .map(|s| s.trim().to_string())
-    //             .filter(|s| !s.is_empty())
-    //             .collect()
-    //     })
-    //     .unwrap_or_default();
-
     // Remove the `use=[...]` part to get the block tag
     let metadata_without_use = use_re.replace(metadata, "");
 
