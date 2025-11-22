@@ -1,20 +1,13 @@
 .code-execution-pair {
-    border: 1px solid #001270;
-    border-radius: 5px;
-    background-color: rgba(40, 88, 159, 0.88);
-    padding: 1em;
+    border-radius: 3px;
     display: flex;
     flex-direction: column;
-    gap: 5pt;
     margin-bottom: 1em;
     margin-top: 1em;
 }
 
 .code-block {
-    background-color: rgb(39, 80, 141);
-    border: 1px solid #001270;
-    border-radius: 5px;
-    padding: 1em;
+    border-radius: 3px;
     font-family: monospace;
     overflow-x: auto;
     word-wrap: break-word; /* Break long words */
@@ -24,40 +17,42 @@
 
 .block-tag {
     font-family: monospace;
-    color: #000000;
-    background-color: #b8b8b8;
-    border: 1px solid #000000;
-    border-radius: 3px;
-    width: fit-content;
+    background: rgba(127, 127, 127, 0.12);
+    color: currentColor;
+    border: 1px solid currentColor;
+    border-radius: 3px 3px 0 0;
     padding: 2pt;
     font-weight: bold;
     font-size: 14px;
-    margin-bottom: 1em;
 }
 
-.block-lang {
-    font-family: monospace;
-    color: #717171;
-    background-color: #b8b8b8;
-    border: 1px solid #000000;
-    border-radius: 3px;
-    width: fit-content;
-    padding: 2pt;
-    font-style: italic;
-    font-size: 14px;
-    margin-bottom: 1em;
+.block-tag + pre {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 0 !important;
+}
+
+.block-tag + pre > code {
+    border-radius: 0 0 !important;
 }
 
 .output-header {
-    font-family: monospace;
-    color: #000000;
-    background-color: #b8b8b8;
-    border: 1px solid #000000;
-    border-radius: 3px;
-    width: fit-content;
+    color: currentColor;
+    background: rgba(127, 127, 127, 0.12);
+    font-family: sans-serif;
+    border: 1px solid currentColor;
+    border-radius: 0;
     padding: 2pt;
-    font-weight: bold;
-    font-size: 14px;
-    margin-bottom: 1em;
+    font-size: 12px;
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
+.output-header + pre{
+    margin-top: 0 !important;
+    border-radius: 0 0 !important;
+}
+
+.output-header + pre > code {
+    border-radius: 0 0 !important;
+}
