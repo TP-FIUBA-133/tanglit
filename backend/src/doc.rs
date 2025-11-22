@@ -82,7 +82,8 @@ impl TanglitDoc {
     }
 
     pub fn generate_md_slides_vec(&self) -> Result<Vec<String>, DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Slides);
+        let ast_with_exclusions =
+            exclude_from_ast(&self.ast, FilterTarget::Slides, &self.raw_markdown);
         let slides = parse_slides_from_ast(&ast_with_exclusions, &self.raw_markdown);
         let mut v: Vec<String> = vec![];
         for slide in slides.iter() {
@@ -161,7 +162,8 @@ impl TanglitDoc {
     }
 
     pub fn filter_content_for_doc(&self) -> Result<String, DocError> {
-        let ast_with_exclusions = exclude_from_ast(&self.ast, FilterTarget::Doc);
+        let ast_with_exclusions =
+            exclude_from_ast(&self.ast, FilterTarget::Doc, &self.raw_markdown);
         Ok(ast_to_markdown(&ast_with_exclusions)?)
     }
 
@@ -473,5 +475,30 @@ println!("Hello, world!");
 
         // This should panic because "nonexistent" block doesn't exist
         doc.format_output("nonexistent", &output).unwrap();
+    }
+
+    #[test]
+    fn test_filter() {
+        let markdown = r#"# Foo
+
+Hello *world* bla % 
+Hello **world** ble
+"#;
+
+        let doc = TanglitDoc::new_from_string(markdown).unwrap();
+        let output = ExecutionOutput {
+            stdout: "test".to_string(),
+            stderr: "".to_string(),
+            status: Some(0),
+        };
+
+        // This should panic because "nonexistent" block doesn't exist
+        let r = doc.filter_content_for_doc().unwrap();
+        assert!(
+            &r == r#"# Foo
+
+Hello **world** ble
+"#
+        );
     }
 }

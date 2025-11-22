@@ -1,7 +1,11 @@
 use crate::doc::parser::exclude::to_node::ToNode;
-use markdown::mdast::{Code, List, ListItem, Node, Paragraph, Text};
+use crate::doc::parser::parse_from_string;
+use log::debug;
+use markdown::mdast::{Code, List, ListItem, Node, Paragraph};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::fmt;
+use std::fmt::Display;
 
 #[cfg(test)]
 mod test;
@@ -15,9 +19,19 @@ const PARAGRAPH_MARKER: char = 'p';
 const LIST_MARKER: char = 'l';
 const LIST_ITEM_MARKER: char = 'i';
 
+#[derive(Debug)]
 pub enum FilterTarget {
     Doc,
     Slides,
+}
+
+impl Display for FilterTarget {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FilterTarget::Doc => write!(f, "Doc (%)"),
+            FilterTarget::Slides => write!(f, "Slides (&)"),
+        }
+    }
 }
 
 impl FilterTarget {
@@ -72,21 +86,21 @@ fn strip_all_trailing_markers(s: &str) -> String {
     TRAILING_MARKERS.replace(s, "").to_string()
 }
 
-pub fn exclude_from_ast(mdast: &Node, target: FilterTarget) -> Node {
+pub fn exclude_from_ast(mdast: &Node, target: FilterTarget, input: &str) -> Node {
     let mut new_mdast = mdast.clone();
-    let new_children = process_children(mdast.children().unwrap(), &target);
+    let new_children = process_children(mdast.children().unwrap(), &target, input);
     if let Node::Root(r) = &mut new_mdast {
         r.children = new_children;
     }
     new_mdast
 }
 
-fn process_children(children: &Vec<Node>, target: &FilterTarget) -> Vec<Node> {
+fn process_children(children: &Vec<Node>, target: &FilterTarget, input: &str) -> Vec<Node> {
     let mut new_children: Vec<Node> = vec![];
     for child in children {
         match child {
             Node::Paragraph(p) => {
-                let Some(new_paragraph) = process_paragraph(p, target) else {
+                let Some(new_paragraph) = process_paragraph(p, target, input) else {
                     continue;
                 };
                 new_children.push(new_paragraph.to_node());
@@ -98,7 +112,7 @@ fn process_children(children: &Vec<Node>, target: &FilterTarget) -> Vec<Node> {
                 new_children.push(new_code.to_node());
             }
             Node::List(list) => {
-                let Some(new_list) = process_list(list, target) else {
+                let Some(new_list) = process_list(list, target, input) else {
                     continue;
                 };
                 new_children.push(new_list.to_node());
@@ -112,29 +126,61 @@ fn process_children(children: &Vec<Node>, target: &FilterTarget) -> Vec<Node> {
     new_children
 }
 
-fn process_paragraph(paragraph: &Paragraph, target: &FilterTarget) -> Option<Paragraph> {
-    let mut new_paragraph = Paragraph {
-        children: vec![],
-        position: None,
-    };
+fn process_paragraph(
+    paragraph: &Paragraph,
+    target: &FilterTarget,
+    input: &str,
+) -> Option<Paragraph> {
+    let paragraph_string = input[paragraph.position.as_ref().unwrap().start.offset
+        ..paragraph.position.as_ref().unwrap().end.offset]
+        .to_string();
+
+    debug!(
+        "Processing paragraph for exclusion target {:}: \n{}",
+        target, paragraph_string
+    );
 
     // Exclude the entire paragraph if the first line's trailing markers include the paragraph marker
     if paragraph_has_marker(paragraph, target, Some(PARAGRAPH_MARKER)) {
+        debug!("Excluding entire paragraph");
         return None;
     }
 
-    for child in &paragraph.children {
-        let Node::Text(text) = child else {
-            new_paragraph.children.push(child.clone());
+    let mut new_paragraph_string = String::new();
+
+    // process line by line
+    for line in paragraph_string.lines() {
+        // Exclude the entire line if trailing markers include *target* bare marker (%, &)
+        if has_target_marker(line, target, None) {
             continue;
-        };
-        let Some(new_text) = process_text(text, target) else {
-            continue; // Skip this text if it should be excluded
-        };
-        new_paragraph.children.push(new_text.to_node());
+        }
+
+        // Strip ALL trailing markers (both %... and &...) on kept lines
+        let cleaned_line = strip_all_trailing_markers(line);
+        new_paragraph_string.push_str(cleaned_line.as_str());
+        new_paragraph_string.push('\n');
     }
 
-    Some(new_paragraph)
+    if new_paragraph_string.trim().is_empty() {
+        debug!("Paragraph is empty after exclusions");
+        return None;
+    }
+
+    debug!("New paragraph:  \n{}", new_paragraph_string);
+    // Rebuild the paragraph node from the new string
+    let Ok(new_ast) = parse_from_string(&new_paragraph_string) else {
+        return None;
+    }; // won't happen, but we should raise the error
+    let Node::Root(root) = new_ast else {
+        return None; // won't happen, but we should raise the error
+    };
+    let Node::Paragraph(new_paragraph) = &root.children[0] else {
+        return None; // won't happen, but we should raise the error
+    };
+
+    debug!("New paragraph node: \n{:?}", new_paragraph);
+
+    Some(new_paragraph.clone())
 }
 
 fn process_code(code: &Code, target: &FilterTarget) -> Option<Code> {
@@ -156,7 +202,7 @@ fn process_code(code: &Code, target: &FilterTarget) -> Option<Code> {
     Some(new_code)
 }
 
-fn process_list(list_node: &List, target: &FilterTarget) -> Option<List> {
+fn process_list(list_node: &List, target: &FilterTarget, input: &str) -> Option<List> {
     let mut new_list = List {
         children: vec![],
         position: None,
@@ -177,7 +223,7 @@ fn process_list(list_node: &List, target: &FilterTarget) -> Option<List> {
         let Node::ListItem(list_item) = item else {
             panic!("Expected a ListItem");
         };
-        let Some(new_item) = process_list_item(list_item, target) else {
+        let Some(new_item) = process_list_item(list_item, target, input) else {
             continue; // Skip this item if it should be excluded
         };
         new_list.children.push(new_item.to_node());
@@ -185,12 +231,12 @@ fn process_list(list_node: &List, target: &FilterTarget) -> Option<List> {
     Some(new_list)
 }
 
-fn process_list_item(list_item: &ListItem, target: &FilterTarget) -> Option<ListItem> {
+fn process_list_item(list_item: &ListItem, target: &FilterTarget, input: &str) -> Option<ListItem> {
     if should_exclude_list_item(list_item, target) {
         return None;
     }
     let mut new_item = list_item.clone();
-    new_item.children = process_children(&list_item.children, target);
+    new_item.children = process_children(&list_item.children, target, input);
     Some(new_item)
 }
 
@@ -218,30 +264,6 @@ fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget) -> bool
         return false;
     };
     paragraph_has_marker(p, target, Some(LIST_ITEM_MARKER))
-}
-
-fn process_text(text: &Text, target: &FilterTarget) -> Option<Text> {
-    let mut content = String::new();
-
-    for line in text.value.lines() {
-        // Exclude the entire line if trailing markers include *target* bare marker (%, &)
-        if has_target_marker(line, target, None) {
-            continue;
-        }
-
-        // Strip ALL trailing markers (both %... and &...) on kept lines
-        let cleaned_line = strip_all_trailing_markers(line);
-        content.push_str(cleaned_line.trim_end());
-        content.push('\n');
-    }
-
-    if content.trim().is_empty() {
-        return None;
-    }
-    Some(Text {
-        value: content.trim().to_string(),
-        position: None,
-    })
 }
 
 fn paragraph_has_marker(
