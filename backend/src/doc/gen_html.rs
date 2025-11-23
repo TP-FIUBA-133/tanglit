@@ -1,7 +1,6 @@
 use base64::Engine;
 use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Plugins, markdown_to_html_with_plugins};
-use log::warn;
 use std::string::ToString;
 
 use lol_html::{HtmlRewriter, Settings, element};
@@ -30,31 +29,13 @@ pub const THEME_CSS: &[(&str, &str); 4] = &[
     ("latex", LATEX_CSS),
 ];
 
-fn get_theme_css(theme: &str) -> Option<&'static str> {
+pub(crate) fn get_theme_css(theme: &str) -> Option<&'static str> {
     THEME_CSS
         .iter()
         .find_map(|(k, v)| if *k == theme { Some(*v) } else { None })
 }
 
-pub fn markdown_to_html(input: &str, theme: &str) -> String {
-    let mut final_theme = theme.to_string();
-    if !AVAILABLE_THEMES.contains(&theme) {
-        warn!(
-            "Theme '{}' is not available. Available themes: {:?}",
-            theme, AVAILABLE_THEMES
-        );
-        warn!("Falling back to default theme {}", DEFAULT_THEME);
-        final_theme = DEFAULT_THEME.to_string();
-    }
-    let fragment = markdown_to_html_fragment(input);
-    let html = wrap_in_html_doc(
-        &fragment,
-        "Document", // TODO get title from arg or extract from markdown
-        &[get_theme_css(final_theme.as_str()).unwrap().to_string()],
-    );
-    embed_local_images(&html)
-}
-
+pub const CUSTOM_CSS: &str = include_str!("../../resources/custom.css");
 pub fn embed_local_images(html: &str) -> String {
     let mut output = vec![];
     let mut rewriter = HtmlRewriter::new(

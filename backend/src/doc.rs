@@ -1,13 +1,15 @@
 mod error;
+mod format_blocks;
 mod gen_html;
 mod generate_pdf;
 mod parser;
 mod tangle;
 
+use crate::doc::format_blocks::format_code_blocks;
 pub use crate::doc::gen_html::DEFAULT_THEME;
 use crate::doc::gen_html::{
-    GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS, markdown_to_html,
-    markdown_to_html_fragment, wrap_in_html_doc,
+    AVAILABLE_THEMES, CUSTOM_CSS, GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS,
+    embed_local_images, markdown_to_html_fragment, wrap_in_html_doc,
 };
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
@@ -15,7 +17,10 @@ use crate::doc::parser::slides::parse_slides_from_ast;
 use crate::doc::parser::{ast_to_markdown, parse_code_blocks_from_ast, parse_from_string};
 use crate::execution::ExecutionOutput;
 use crate::execution::write_code_to_file;
+use comrak::plugins::syntect::SyntectAdapterBuilder;
+use comrak::{Arena, ComrakOptions, Plugins, parse_document};
 pub use error::DocError;
+use log::warn;
 use markdown::mdast::Node;
 pub use parser::ParserError;
 pub use parser::code_block::CodeBlock;
@@ -24,6 +29,7 @@ pub use parser::slides::SlideByIndex;
 use parser::slides::parse_slides_index_from_ast;
 use serde::Serialize;
 use std::collections::HashMap;
+use syntect::highlighting::ThemeSet;
 pub use tangle::CodeBlocks;
 pub use tangle::TangleError;
 
@@ -166,13 +172,67 @@ impl TanglitDoc {
 
     pub fn generate_html(&self, theme: &str) -> Result<String, DocError> {
         let markdown_with_exclusions = self.filter_content_for_doc()?;
-        Ok(markdown_to_html(&markdown_with_exclusions, theme))
+
+        let arena = Arena::new();
+        let root = parse_document(&arena, &markdown_with_exclusions, &ComrakOptions::default());
+
+        format_code_blocks(root, &arena); // add block names, etc.
+
+        let mut html = vec![];
+        let mut options = comrak::Options::default();
+        options.extension.strikethrough = true;
+        options.extension.table = true;
+        options.extension.tagfilter = true;
+        options.extension.tasklist = true;
+        options.extension.autolink = true;
+        options.extension.footnotes = true;
+        options.extension.header_ids = Some("user-content-".to_string()); // mimics GitHub's prefix
+        options.render.github_pre_lang = true;
+        options.render.unsafe_ = true; // Allow raw HTML, this is needed for format_code_blocks to work
+
+        let builder = SyntectAdapterBuilder::new().theme("Solarized (dark)");
+        let adapter = builder.build();
+        let mut plugins = Plugins::default();
+
+        let ts = ThemeSet::load_defaults();
+
+        println!("Available built-in themes:");
+        for name in ts.themes.keys() {
+            println!("- {}", name);
+        }
+
+        plugins.render.codefence_syntax_highlighter = Some(&adapter);
+
+        comrak::format_html_with_plugins(root, &options, &mut html, &plugins)?;
+
+        let inner_html = String::from_utf8(html).unwrap();
+
+        let mut final_theme = theme.to_string();
+        if !AVAILABLE_THEMES.contains(&theme) {
+            warn!(
+                "Theme '{}' is not available. Available themes: {:?}",
+                theme, AVAILABLE_THEMES
+            );
+            warn!("Falling back to default theme {}", DEFAULT_THEME);
+            final_theme = DEFAULT_THEME.to_string();
+        }
+
+        let html = wrap_in_html_doc(
+            &inner_html,
+            "Document", // TODO get title from arg or extract from markdown
+            &[
+                crate::doc::gen_html::get_theme_css(final_theme.as_str())
+                    .unwrap()
+                    .to_string(),
+                CUSTOM_CSS.to_string(),
+            ],
+        );
+        Ok(embed_local_images(&html))
     }
 
     pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
-        let markdown_with_exclusions = self.filter_content_for_doc()?;
-        let html_with_exclusions = markdown_to_html(&markdown_with_exclusions, theme);
-        generate_pdf(&html_with_exclusions, output_file_path)?;
+        let html = self.generate_html(theme)?;
+        generate_pdf(&html, output_file_path)?;
         Ok(())
     }
 

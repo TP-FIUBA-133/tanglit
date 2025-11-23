@@ -5,7 +5,7 @@ use regex::Regex;
 use serde::Serialize;
 
 // Regex to capture `use=[...]`
-const USE_REGEX: &str = r"use=\[([^\]]*)\]";
+pub(crate) const USE_REGEX: &str = r"use=\[([^\]]*)\]";
 static USE_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(USE_REGEX).expect("Failed to compile USE_REGEX"));
 
