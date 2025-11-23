@@ -1,12 +1,10 @@
 use base64::Engine;
-use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Plugins, markdown_to_html_with_plugins};
 use std::string::ToString;
 
 use lol_html::{HtmlRewriter, Settings, element};
 // Taken from https://github.com/sindresorhus/github-markdown-css/blob/bedb4b771f5fa1ae117df597c79993fd1eb4dff0/github-markdown-light.css
-pub const GITHUB_MARKDOWN_LIGHT_CSS: &str =
-    include_str!("../../resources/github-markdown-light.css");
+pub const REVEAL_TEMPLATE: &str = include_str!("../../resources/reveal_template.html");
 
 pub const DEFAULT_THEME: &str = "pico";
 
@@ -17,9 +15,6 @@ pub const WATER_CSS: &str = include_str!("../../resources/water.min.css");
 pub const SAKURA_CSS: &str = include_str!("../../resources/sakura.css");
 
 pub const LATEX_CSS: &str = include_str!("../../resources/style.min.css");
-
-pub const PAGE_BREAK_AND_CENTER_CSS: &str =
-    include_str!("../../resources/page_break_and_center.css");
 
 pub const AVAILABLE_THEMES: &[&str; 4] = &["pico", "water", "sakura", "latex"];
 pub const THEME_CSS: &[(&str, &str); 4] = &[
@@ -86,9 +81,6 @@ pub fn markdown_to_html_fragment(input: &str) -> String {
     // base16-mocha.dark
     // base16-ocean.dark
     // base16-ocean.light
-    let adapter = SyntectAdapterBuilder::new()
-        .theme("base16-ocean.light")
-        .build();
 
     let mut options = comrak::Options::default();
     options.extension.strikethrough = true;
@@ -101,9 +93,7 @@ pub fn markdown_to_html_fragment(input: &str) -> String {
     options.extension.header_ids = Some("user-content-".to_string()); // mimics GitHub's prefix
     options.render.github_pre_lang = true;
 
-    let mut plugins = Plugins::default();
-
-    plugins.render.codefence_syntax_highlighter = Some(&adapter);
+    let plugins = Plugins::default();
 
     markdown_to_html_with_plugins(input, &options, &plugins)
 }

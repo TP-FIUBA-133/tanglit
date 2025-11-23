@@ -32,11 +32,15 @@ impl From<std::io::Error> for GeneratePdfError {
     }
 }
 
-pub fn generate_pdf(html: &str, output_file_path: &str) -> Result<(), GeneratePdfError> {
+pub fn generate_pdf(
+    html: &str,
+    print_options: PrintToPdfOptions,
+    output_file_path: &str,
+) -> Result<(), GeneratePdfError> {
     let temp_file = get_temp_dir().join("temp.html");
     fs::write(&temp_file, html)?;
     let abs_path = fs::canonicalize(&temp_file)?;
-    let file_url = format!("file://{}", abs_path.to_string_lossy());
+    let file_url = format!("file://{}?print-pdf", abs_path.to_string_lossy());
 
     // Launch headless Chromium
     let browser = Browser::default()
@@ -54,10 +58,7 @@ pub fn generate_pdf(html: &str, output_file_path: &str) -> Result<(), GeneratePd
 
     // Print to PDF and save it
     let pdf_data = tab
-        .print_to_pdf(Some(PrintToPdfOptions {
-            print_background: Some(true),
-            ..Default::default()
-        }))
+        .print_to_pdf(Some(print_options))
         .map_err(|e| GeneratePdfError::ChromeError(format!("Failed to print to PDF: {}", e)))?;
 
     std::fs::write(output_file_path, pdf_data)?;

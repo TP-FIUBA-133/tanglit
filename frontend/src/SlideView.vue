@@ -9,6 +9,8 @@ const { slides_markdown } = defineProps<{ slides_markdown: string[] }>();
 
 let deck: Reveal.Api | null = null;
 
+const emit = defineEmits(["change-theme"]);
+
 const availableCodeThemes = [
   "agate",
   "ascetic",
@@ -97,6 +99,7 @@ watch(selectedSlideTheme, (newTheme) => {
   if (themeLink) {
     themeLink.href = `/node_modules/reveal.js/dist/theme/${newTheme}.css`;
   }
+  emit("change-theme", newTheme);
 });
 
 watch(selectedCodeTheme, (newTheme) => {

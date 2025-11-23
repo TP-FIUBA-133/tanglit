@@ -121,7 +121,10 @@ fn handle_generate_slides_pdf(
     generate_slides_args: GenerateSlidesPdfArgs,
 ) -> Result<String, ExecutionError> {
     let doc = TanglitDoc::new_from_file(&generate_slides_args.input.in_file)?;
-    doc.generate_slides_pdf(&generate_slides_args.output.out_file)?;
+    doc.generate_slides_pdf(
+        &generate_slides_args.output.out_file,
+        &generate_slides_args.theme,
+    )?;
 
     Ok(format!(
         "✅ Slides PDF saved to {}",

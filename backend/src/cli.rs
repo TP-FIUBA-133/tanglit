@@ -135,4 +135,14 @@ pub struct GenerateSlidesPdfArgs {
     pub input: InputFileArg,
     #[command(flatten)]
     pub output: OutputFileArg,
+    #[arg(
+        long,
+        short,
+        value_name = "THEME",
+        help = "Theme to use for the generated slides ('black', 'white', 'league', 'beige', 'sky', 'night', 'solarized', ...)",
+        help_heading = "Slide Generation Args",
+        env = "THEME",
+        default_value = "black"
+    )]
+    pub theme: String,
 }
