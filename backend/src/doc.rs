@@ -9,7 +9,7 @@ use crate::doc::format_blocks::format_code_blocks;
 pub use crate::doc::gen_html::DEFAULT_THEME;
 use crate::doc::gen_html::{
     AVAILABLE_THEMES, CUSTOM_CSS, GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS,
-    markdown_to_html_fragment, wrap_in_html_doc,
+    embed_local_images, markdown_to_html_fragment, wrap_in_html_doc,
 };
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
@@ -219,7 +219,7 @@ impl TanglitDoc {
             final_theme = DEFAULT_THEME.to_string();
         }
 
-        Ok(wrap_in_html_doc(
+        let html = wrap_in_html_doc(
             &inner_html,
             "Document", // TODO get title from arg or extract from markdown
             &[
@@ -228,7 +228,8 @@ impl TanglitDoc {
                     .to_string(),
                 CUSTOM_CSS.to_string(),
             ],
-        ))
+        );
+        Ok(embed_local_images(&html))
     }
 
     pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
@@ -481,7 +482,7 @@ println!("Hello, world!");
     fn test_filter() {
         let markdown = r#"# Foo
 
-Hello *world* bla % 
+Hello *world* bla %
 Hello **world** ble
 "#;
 

@@ -86,9 +86,9 @@ pub fn ast_format_single_code_block(
 ) -> (String, String) {
     let main_opening_html = r#"<div class="code-block">"#.to_string();
     let main_closing_html = r#"</div>"#.to_string();
-    let block_tag_html = tag.as_ref().map(|_tag| {
-        format!(r#"<div class="block-header"><span class="block-tag">{_tag}</span></div>"#)
-    });
+    let block_tag_html = tag
+        .as_ref()
+        .map(|_tag| format!(r#"<div class="block-tag">{_tag}</div>"#));
     let mut opening_html = main_opening_html;
     if let Some(block_tag) = block_tag_html {
         opening_html.push_str(&block_tag);
@@ -110,7 +110,7 @@ pub fn format_output_ast<'a>(
     insert_html_before(
         arena,
         output_block,
-        r#"<div class="output-header">OUTPUT</div>"#,
+        r#"<div class="output-header">Execution result:</div>"#,
     );
     let closing_div = wrap(
         arena,
