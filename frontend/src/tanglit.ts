@@ -81,7 +81,6 @@ export async function preview_html(raw_markdown: string, theme: string) {
 }
 
 export async function preview_slides(raw_markdown: string, theme: string, code_theme: string) {
-  console.log("preving slide with thene: ", theme);
   return (await invoke(TANGLIT_COMMANDS.preview_slides, { raw_markdown, theme, code_theme })) as string;
 }
 
