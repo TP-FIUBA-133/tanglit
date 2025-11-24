@@ -246,7 +246,7 @@ impl TanglitDoc {
         Ok(())
     }
 
-    pub fn generate_slides_html(&self, theme: &str) -> Result<String, DocError> {
+    pub fn generate_slides_html(&self, theme: &str, code_theme: &str) -> Result<String, DocError> {
         let slides_md = self.generate_md_slides_vec()?;
 
         // Build the HTML for all slides
@@ -258,12 +258,18 @@ impl TanglitDoc {
         }
 
         let all_slides_html_1 = REVEAL_TEMPLATE.replace("{slides_content}", &slides_sections);
-        let all_slides_html = all_slides_html_1.replace("{slide_theme}", theme);
-        Ok(all_slides_html)
+        let all_slides_html_2 = all_slides_html_1.replace("{slide_theme}", theme);
+        let all_slides_html_3 = all_slides_html_2.replace("{code_theme}", code_theme);
+        Ok(all_slides_html_3)
     }
 
-    pub fn generate_slides_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
-        let all_slides_html = self.generate_slides_html(theme)?;
+    pub fn generate_slides_pdf(
+        &self,
+        output_file_path: &str,
+        theme: &str,
+        code_theme: &str,
+    ) -> Result<(), DocError> {
+        let all_slides_html = self.generate_slides_html(theme, code_theme)?;
 
         // print to pdf with different settings than normal doc
         generate_pdf(

@@ -124,6 +124,7 @@ fn handle_generate_slides_pdf(
     doc.generate_slides_pdf(
         &generate_slides_args.output.out_file,
         &generate_slides_args.theme,
+        &generate_slides_args.code_theme,
     )?;
 
     Ok(format!(

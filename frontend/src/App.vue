@@ -23,6 +23,7 @@ const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ line: undefined, error: undefined, output: undefined });
 const html_preview = ref("");
 const slide_theme = ref("");
+const slide_code_theme = ref("");
 const slides_html = ref("");
 const currentFilePath: Ref<string | null> = ref(null);
 
@@ -116,15 +117,14 @@ async function run_block(line: number) {
 
 async function preview_slides() {
   // slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
-  slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value);
+  slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
   console.log("Slides html:", slides_html.value);
   console.log("Slides generated:", slides_markdown.value);
 }
 
 async function save_slides_html() {
   // slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
-  slide_theme.value = "moon";
-  slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value);
+  slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
   console.log("Slides html:", slides_html.value);
   console.log("Slides generated:", slides_markdown.value);
   let html_save_path: string | null = await save();
@@ -166,7 +166,7 @@ async function save_pdf(theme = "pico") {
 async function save_slides_pdf() {
   let pdf_save_path: string | null = await save();
   if (!pdf_save_path) return;
-  await tanglit.save_slides_pdf(raw_markdown.value, slide_theme.value, pdf_save_path);
+  await tanglit.save_slides_pdf(raw_markdown.value, slide_theme.value, slide_code_theme.value, pdf_save_path);
 }
 
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
@@ -199,9 +199,9 @@ async function tangle() {
   toast.success(`Tangled code (${count} files) to directory: ` + output_dir);
 }
 
-function change_slide_theme(theme: string) {
-  console.log("Changed slides theme to:", theme);
+function change_slide_theme(theme: string, code_theme: string) {
   slide_theme.value = theme;
+  slide_code_theme.value = code_theme;
   preview_slides();
 }
 </script>
