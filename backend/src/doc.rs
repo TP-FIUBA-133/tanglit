@@ -265,6 +265,7 @@ impl TanglitDoc {
     pub fn generate_slides_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
         let all_slides_html = self.generate_slides_html(theme)?;
 
+        // print to pdf with different settings than normal doc
         generate_pdf(
             &all_slides_html,
             PrintToPdfOptions {
