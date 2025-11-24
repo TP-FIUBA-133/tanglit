@@ -11,6 +11,7 @@ import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useToast } from "vue-toastification";
 import SlidePreview from "./SlidePreview.vue";
+import HtmlPreview from "./HtmlPreview.vue";
 
 const toast = useToast();
 
@@ -225,14 +226,10 @@ function change_slide_theme(theme: string) {
         <pane min-size="30">
           <splitpanes horizontal class="default-theme">
             <pane min-size="30">
-              <!--              <SlideViewMain-->
-              <!--                class="slide-view"-->
-              <!--                :slides_markdown="slides_markdown"-->
-              <!--                v-on:change-theme="change_slide_theme"-->
-              <!--              />-->
+              <SlidePreview :slides_html="slides_html" v-on:change-theme="change_slide_theme" />
             </pane>
             <pane min-size="30">
-              <SlidePreview :slides_html="slides_html" v-on:change-theme="change_slide_theme" />
+              <HtmlPreview :html="html_preview" v-on:change-theme="preview_html" />
             </pane>
           </splitpanes>
         </pane>
