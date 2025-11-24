@@ -30,7 +30,6 @@ pub use parser::slides::SlideByIndex;
 use parser::slides::parse_slides_index_from_ast;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fs;
 use syntect::highlighting::ThemeSet;
 pub use tangle::CodeBlocks;
 pub use tangle::TangleError;
@@ -260,7 +259,6 @@ impl TanglitDoc {
 
         let all_slides_html_1 = REVEAL_TEMPLATE.replace("{slides_content}", &slides_sections);
         let all_slides_html = all_slides_html_1.replace("{slide_theme}", theme);
-        fs::write("/home/chris/Desktop/slides.html", &all_slides_html).ok(); // for debugging
         Ok(all_slides_html)
     }
 
