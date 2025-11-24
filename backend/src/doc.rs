@@ -258,22 +258,6 @@ impl TanglitDoc {
             slides_sections.push_str(&format!(r#"<section class="slide">{}</section>"#, frag));
         }
 
-        // themes:
-        // "black",
-        // "white",
-        // "league",
-        // "beige",
-        // "sky",
-        // "night",
-        // "serif",
-        // "simple",
-        // "solarized",
-        // "blood",
-        // "moon",
-        // "dracula",
-        // "black-constrast",
-        // "white-contrast",
-
         let all_slides_html_1 = REVEAL_TEMPLATE.replace("{slides_content}", &slides_sections);
         let all_slides_html = all_slides_html_1.replace("{slide_theme}", theme);
         fs::write("/home/chris/Desktop/slides.html", &all_slides_html).ok(); // for debugging
