@@ -3,7 +3,6 @@ use comrak::{Plugins, markdown_to_html_with_plugins};
 use std::string::ToString;
 
 use lol_html::{HtmlRewriter, Settings, element};
-// Taken from https://github.com/sindresorhus/github-markdown-css/blob/bedb4b771f5fa1ae117df597c79993fd1eb4dff0/github-markdown-light.css
 pub const REVEAL_TEMPLATE: &str = include_str!("../../resources/reveal_template.html");
 
 pub const DEFAULT_THEME: &str = "pico";
@@ -74,14 +73,6 @@ pub fn embed_local_images(html: &str) -> String {
 
 // TODO: Make all options configurable
 pub fn markdown_to_html_fragment(input: &str) -> String {
-    // InspiredGitHub
-    // Solarized (dark)
-    // Solarized (light)
-    // base16-eighties.dark
-    // base16-mocha.dark
-    // base16-ocean.dark
-    // base16-ocean.light
-
     let mut options = comrak::Options::default();
     options.extension.strikethrough = true;
     options.extension.table = true;
