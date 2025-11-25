@@ -85,7 +85,7 @@ When you run the block above, you’ll see that the message is printed successfu
 
 Tanglit also supports exporting the source code of a block using the `export=filename` syntax in the block metadata:
 
-```python export=hello
+```python example_export export=hello
 @[hello_message]
 print(hello_message)
 ```
@@ -134,6 +134,8 @@ To exclude a paragraph from the generated document (but keep it in the slides),
 use the `%p` marker at the end of the first line.
 
 This paragraph will appear **only** in the rendered slides.   %p
+
+This paragraph will appear **only** in the rendered document.   &p
 
 To hide a single line instead of a full paragraph,  
 use `&` or `%` at the end of the line.
