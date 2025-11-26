@@ -141,7 +141,7 @@ fn process_paragraph(
     );
 
     // Exclude the entire paragraph if the first line's trailing markers include the paragraph marker
-    if paragraph_has_marker(paragraph, target, Some(PARAGRAPH_MARKER)) {
+    if paragraph_has_marker(&paragraph_string, target, Some(PARAGRAPH_MARKER)) {
         debug!("Excluding entire paragraph");
         return None;
     }
@@ -215,7 +215,7 @@ fn process_list(list_node: &List, target: &FilterTarget, input: &str) -> Option<
         return Some(new_list);
     }
 
-    if should_exclude_list(list_node, target) {
+    if should_exclude_list(list_node, target, input) {
         return None;
     }
 
@@ -232,7 +232,7 @@ fn process_list(list_node: &List, target: &FilterTarget, input: &str) -> Option<
 }
 
 fn process_list_item(list_item: &ListItem, target: &FilterTarget, input: &str) -> Option<ListItem> {
-    if should_exclude_list_item(list_item, target) {
+    if should_exclude_list_item(list_item, target, input) {
         return None;
     }
     let mut new_item = list_item.clone();
@@ -240,7 +240,7 @@ fn process_list_item(list_item: &ListItem, target: &FilterTarget, input: &str) -
     Some(new_item)
 }
 
-fn should_exclude_list(list_node: &List, target: &FilterTarget) -> bool {
+fn should_exclude_list(list_node: &List, target: &FilterTarget, input: &str) -> bool {
     let Node::ListItem(first_item) = &list_node.children[0] else {
         panic!("Expected a ListItem")
     };
@@ -251,30 +251,31 @@ fn should_exclude_list(list_node: &List, target: &FilterTarget) -> bool {
     let Node::Paragraph(p) = &first_item.children[0] else {
         return false;
     };
-
+    let position = p.position.as_ref().unwrap();
+    let p_string = &input[position.start.offset..position.end.offset];
     // Exclude the entire list if the first line of the first item has the list marker
-    paragraph_has_marker(p, target, Some(LIST_MARKER))
+    paragraph_has_marker(p_string, target, Some(LIST_MARKER))
 }
 
-fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget) -> bool {
+fn should_exclude_list_item(list_item: &ListItem, target: &FilterTarget, input: &str) -> bool {
     if list_item.children.is_empty() {
         return false; // No children to process
     }
     let Node::Paragraph(p) = &list_item.children[0] else {
         return false;
     };
-    paragraph_has_marker(p, target, Some(LIST_ITEM_MARKER))
+    let position = p.position.as_ref().unwrap();
+    let p_string = &input[position.start.offset..position.end.offset];
+    paragraph_has_marker(p_string, target, Some(LIST_ITEM_MARKER))
 }
 
 fn paragraph_has_marker(
-    paragraph: &Paragraph,
+    paragraph_string: &str,
     target: &FilterTarget,
     suffix: Option<char>,
 ) -> bool {
-    if let Some(Node::Text(text)) = paragraph.children.first() {
-        if let Some(first_line) = text.value.lines().next() {
-            return has_target_marker(first_line, target, suffix);
-        }
+    if let Some(first_line) = paragraph_string.lines().next() {
+        return has_target_marker(first_line, target, suffix);
     }
     false
 }
