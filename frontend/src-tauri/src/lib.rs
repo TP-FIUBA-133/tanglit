@@ -1,6 +1,6 @@
-use backend::configuration::init_configuration;
-use backend::doc::{CodeBlock, Edit, SlideByIndex, TanglitDoc};
-use backend::execution::ExecutionOutput;
+use tanglit::configuration::init_configuration;
+use tanglit::doc::{CodeBlock, Edit, SlideByIndex, TanglitDoc};
+use tanglit::execution::ExecutionOutput;
 
 #[tauri::command(rename_all = "snake_case")]
 fn tanglit_exclude(raw_markdown: &str) -> Result<String, String> {
@@ -33,7 +33,7 @@ fn tanglit_execute_block(raw_markdown: &str, block_name: &str) -> Result<Executi
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
 
-    backend::execution::execute(&doc, block_name)
+    tanglit::execution::execute(&doc, block_name)
         .map_err(|e| format!("Error executing block: {}", e))
 }
 
