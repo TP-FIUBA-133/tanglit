@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-
 const { slides_html } = defineProps<{ slides_html: string }>();
-
-const emit = defineEmits(["change-theme"]);
 
 const AVAILABLE_MAIN_THEMES = [
   "black",
@@ -34,18 +30,8 @@ const AVAILABLE_CODE_THEMES = [
   "obsidian",
 ];
 
-const main_theme = ref("black"); // Default theme
-const code_theme = ref("monokai"); // Default theme
-
-function refresh() {
-  emit("change-theme", main_theme.value, code_theme.value);
-}
-
-watch(main_theme, refresh);
-
-watch(code_theme, refresh);
-
-onMounted(refresh);
+const main_theme = defineModel("main_theme");
+const code_theme = defineModel("code_theme");
 </script>
 
 <template>
