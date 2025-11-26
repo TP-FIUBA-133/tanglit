@@ -7,11 +7,11 @@ import MainMenu from "./MainMenu.vue";
 import "splitpanes/dist/splitpanes.css";
 // @ts-expect-error missing types
 import { Pane, Splitpanes } from "splitpanes";
-import SlideViewMain from "./SlideViewMain.vue";
-import HtmlPreview from "./HtmlPreview.vue";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useToast } from "vue-toastification";
+import SlidePreview from "./SlidePreview.vue";
+import HtmlPreview from "./HtmlPreview.vue";
 
 const toast = useToast();
 
@@ -22,6 +22,9 @@ const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ line: undefined, error: undefined, output: undefined });
 const html_preview = ref("");
+const slide_theme = ref("");
+const slide_code_theme = ref("");
+const slides_html = ref("");
 const currentFilePath: Ref<string | null> = ref(null);
 
 function load_sample_markdown() {
@@ -113,8 +116,27 @@ async function run_block(line: number) {
 }
 
 async function preview_slides() {
-  slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
+  // slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
+  slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
+  console.log("Slides html:", slides_html.value);
   console.log("Slides generated:", slides_markdown.value);
+}
+
+async function save_slides_html() {
+  // slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
+  slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
+  console.log("Slides html:", slides_html.value);
+  console.log("Slides generated:", slides_markdown.value);
+  let html_save_path: string | null = await save();
+  if (!html_save_path) return;
+
+  writeTextFile(html_save_path, slides_html.value)
+    .then(() => {
+      toast.success(`Saved file ${html_save_path}`);
+    })
+    .catch((error: string) => {
+      toast.error(`Error saving file: ${error}`);
+    });
 }
 
 async function preview_html(theme = "pico") {
@@ -139,6 +161,12 @@ async function save_pdf(theme = "pico") {
   let pdf_save_path: string | null = await save();
   if (!pdf_save_path) return;
   await tanglit.save_pdf(raw_markdown.value, theme, pdf_save_path);
+}
+
+async function save_slides_pdf() {
+  let pdf_save_path: string | null = await save();
+  if (!pdf_save_path) return;
+  await tanglit.save_slides_pdf(raw_markdown.value, slide_theme.value, slide_code_theme.value, pdf_save_path);
 }
 
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);
@@ -170,6 +198,12 @@ async function tangle() {
   let count = await tanglit.tangle(raw_markdown.value, output_dir);
   toast.success(`Tangled code (${count} files) to directory: ` + output_dir);
 }
+
+function change_slide_theme(theme: string, code_theme: string) {
+  slide_theme.value = theme;
+  slide_code_theme.value = code_theme;
+  preview_slides();
+}
 </script>
 
 <template>
@@ -192,9 +226,9 @@ async function tangle() {
         <pane min-size="30">
           <splitpanes horizontal class="default-theme">
             <pane min-size="30">
-              <SlideViewMain class="slide-view" :slides_markdown="slides_markdown" />
+              <SlidePreview :slides_html="slides_html" v-on:change-theme="change_slide_theme" />
             </pane>
-            <pane min-size="30" v-if="html_preview">
+            <pane min-size="30">
               <HtmlPreview :html="html_preview" v-on:change-theme="preview_html" />
             </pane>
           </splitpanes>
@@ -209,6 +243,8 @@ async function tangle() {
       v-on:save_file="save_file"
       v-on:save_html="save_html"
       v-on:save_pdf="save_pdf"
+      v-on:save_slides_pdf="save_slides_pdf"
+      v-on:save_slides_html="save_slides_html"
       v-on:tangle="tangle"
     />
   </main>
@@ -227,6 +263,12 @@ async function tangle() {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+.slide-preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 .slide-view {

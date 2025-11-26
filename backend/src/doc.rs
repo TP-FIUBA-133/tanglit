@@ -8,8 +8,8 @@ mod tangle;
 use crate::doc::format_blocks::format_code_blocks;
 pub use crate::doc::gen_html::DEFAULT_THEME;
 use crate::doc::gen_html::{
-    AVAILABLE_THEMES, CUSTOM_CSS, GITHUB_MARKDOWN_LIGHT_CSS, PAGE_BREAK_AND_CENTER_CSS,
-    embed_local_images, markdown_to_html_fragment, wrap_in_html_doc,
+    AVAILABLE_THEMES, CUSTOM_CSS, REVEAL_TEMPLATE, embed_local_images, markdown_to_html_fragment,
+    wrap_in_html_doc,
 };
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
@@ -20,6 +20,7 @@ use crate::execution::write_code_to_file;
 use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Arena, ComrakOptions, Plugins, parse_document};
 pub use error::DocError;
+use headless_chrome::types::PrintToPdfOptions;
 use log::warn;
 use markdown::mdast::Node;
 pub use parser::ParserError;
@@ -234,31 +235,54 @@ impl TanglitDoc {
 
     pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
         let html = self.generate_html(theme)?;
-        generate_pdf(&html, output_file_path)?;
+        generate_pdf(
+            &html,
+            PrintToPdfOptions {
+                print_background: Some(true),
+                ..Default::default()
+            },
+            output_file_path,
+        )?;
         Ok(())
     }
 
-    pub fn generate_slides_pdf(&self, output_file_path: &str) -> Result<(), DocError> {
+    pub fn generate_slides_html(&self, theme: &str, code_theme: &str) -> Result<String, DocError> {
         let slides_md = self.generate_md_slides_vec()?;
 
         // Build the HTML for all slides
         let mut slides_sections = String::new();
         for slide_md in slides_md.iter() {
             let frag = markdown_to_html_fragment(slide_md);
+            println!("\n{}", frag);
             slides_sections.push_str(&format!(r#"<section class="slide">{}</section>"#, frag));
         }
 
-        // Wrap once into a complete HTML document.
-        let all_slides_html = wrap_in_html_doc(
-            &slides_sections,
-            "Slides",
-            &[
-                GITHUB_MARKDOWN_LIGHT_CSS.to_string(),
-                PAGE_BREAK_AND_CENTER_CSS.to_string(),
-            ],
-        );
+        let all_slides_html_1 = REVEAL_TEMPLATE.replace("{slides_content}", &slides_sections);
+        let all_slides_html_2 = all_slides_html_1.replace("{slide_theme}", theme);
+        let all_slides_html_3 = all_slides_html_2.replace("{code_theme}", code_theme);
+        Ok(all_slides_html_3)
+    }
 
-        generate_pdf(&all_slides_html, output_file_path)?;
+    pub fn generate_slides_pdf(
+        &self,
+        output_file_path: &str,
+        theme: &str,
+        code_theme: &str,
+    ) -> Result<(), DocError> {
+        let all_slides_html = self.generate_slides_html(theme, code_theme)?;
+
+        // print to pdf with different settings than normal doc
+        generate_pdf(
+            &all_slides_html,
+            PrintToPdfOptions {
+                landscape: Some(true),
+                prefer_css_page_size: Some(true),
+                print_background: Some(true),
+                ..Default::default()
+            },
+            output_file_path,
+        )?;
+
         Ok(())
     }
 

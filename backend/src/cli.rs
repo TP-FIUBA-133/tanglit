@@ -135,4 +135,24 @@ pub struct GenerateSlidesPdfArgs {
     pub input: InputFileArg,
     #[command(flatten)]
     pub output: OutputFileArg,
+    #[arg(
+        long,
+        short,
+        value_name = "THEME",
+        help = "Theme to use for the generated slides ('black', 'white', 'league', 'beige', 'sky', 'night', 'solarized', ...)",
+        help_heading = "Slide Generation Args",
+        env = "THEME",
+        default_value = "black"
+    )]
+    pub theme: String,
+    #[arg(
+        long,
+        short,
+        value_name = "THEME",
+        help = "Theme to use for the code in the generated slides (default, github, monokai, github-dark, agate, ascetic, ...). \nFull list at: https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/",
+        help_heading = "Slide Generation Args",
+        env = "CODE_THEME",
+        default_value = "default"
+    )]
+    pub code_theme: String,
 }
