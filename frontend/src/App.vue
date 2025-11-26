@@ -139,8 +139,14 @@ async function save_slides_html() {
     });
 }
 
-async function preview_html(theme = "pico") {
-  await tanglit.preview_html(raw_markdown.value, theme).then((html: string) => {
+const html_theme = ref("pico");
+
+watch(html_theme, () => {
+  preview_html();
+});
+
+async function preview_html() {
+  await tanglit.preview_html(raw_markdown.value, html_theme.value).then((html: string) => {
     html_preview.value = html;
   });
 }
@@ -229,7 +235,7 @@ function change_slide_theme(theme: string, code_theme: string) {
               <SlidePreview :slides_html="slides_html" v-on:change-theme="change_slide_theme" />
             </pane>
             <pane min-size="30">
-              <HtmlPreview :html="html_preview" v-on:change-theme="preview_html" />
+              <HtmlPreview :html="html_preview" v-model:html_theme="html_theme" />
             </pane>
           </splitpanes>
         </pane>

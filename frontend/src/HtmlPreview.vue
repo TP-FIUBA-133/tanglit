@@ -1,26 +1,18 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-
-const emit = defineEmits(["changeTheme"]);
-
 defineProps<{
   html: string;
 }>();
 
 const availableThemes = ["pico", "water", "sakura", "latex"];
 
-const selectedTheme = ref("pico"); // Default theme
-
-watch(selectedTheme, (newTheme) => {
-  emit("changeTheme", newTheme);
-});
+const html_theme = defineModel("html_theme");
 </script>
 
 <template>
   <div class="html-preview">
     <div class="theme-selector">
       <label for="theme-select">Doc theme: </label>
-      <select id="theme-select" v-model="selectedTheme">
+      <select id="theme-select" v-model="html_theme">
         <option v-for="theme in availableThemes" :key="theme" :value="theme">
           {{ theme }}
         </option>
