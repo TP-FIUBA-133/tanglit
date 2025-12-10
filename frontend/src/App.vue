@@ -155,6 +155,7 @@ async function preview_html() {
 }
 
 async function save_html() {
+  await preview_html(); // regenerate the html before saving
   let html_save_path: string | null = await save();
   if (!html_save_path) return;
   writeTextFile(html_save_path, html_preview.value)
