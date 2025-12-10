@@ -22,9 +22,10 @@ const slides_markdown = ref<string[]>([]);
 const all_blocks = ref<{ start_line: number; tag: string }[]>([]);
 const block_execute = ref<BlockExecute>({ line: undefined, error: undefined, output: undefined });
 const html_preview = ref("");
-const slide_theme = ref("");
-const slide_code_theme = ref("");
+
 const slides_html = ref("");
+const slide_theme = ref("black");
+const slide_code_theme = ref("monokai");
 const currentFilePath: Ref<string | null> = ref(null);
 
 function load_sample_markdown() {
@@ -122,6 +123,8 @@ async function preview_slides() {
   console.log("Slides generated:", slides_markdown.value);
 }
 
+watch([slide_theme, slide_code_theme], preview_slides);
+
 async function save_slides_html() {
   // slides_markdown.value = await tanglit.gen_slides(raw_markdown.value);
   slides_html.value = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
@@ -205,12 +208,6 @@ async function tangle() {
   let count = await tanglit.tangle(raw_markdown.value, output_dir);
   toast.success(`Tangled code (${count} files) to directory: ` + output_dir);
 }
-
-function change_slide_theme(theme: string, code_theme: string) {
-  slide_theme.value = theme;
-  slide_code_theme.value = code_theme;
-  preview_slides();
-}
 </script>
 
 <template>
@@ -233,7 +230,11 @@ function change_slide_theme(theme: string, code_theme: string) {
         <pane min-size="30">
           <splitpanes horizontal class="default-theme">
             <pane min-size="30">
-              <SlidePreview :slides_html="slides_html" v-on:change-theme="change_slide_theme" />
+              <SlidePreview
+                :slides_html="slides_html"
+                v-model:main_theme="slide_theme"
+                v-model:code_theme="slide_code_theme"
+              />
             </pane>
             <pane min-size="30">
               <HtmlPreview :html="html_preview" v-model:html_theme="html_theme" />
