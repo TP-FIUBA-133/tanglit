@@ -11,16 +11,16 @@ test:
 format:
 	cargo fmt
 
-run: ./target/debug/backend
-	./target/debug/backend
+run: ./target/debug/tanglit
+	./target/debug/tanglit
 
-./target/debug/backend: $(BACKEND_SRC_FILES)
+./target/debug/tanglit: $(BACKEND_SRC_FILES)
 	cargo build
 
-run-release: ./target/release/backend
-	./target/release/backend
+run-release: ./target/release/tanglit
+	./target/release/tanglit
 
-./target/release/backend: $(BACKEND_SRC_FILES)
+./target/release/tanglit: $(BACKEND_SRC_FILES)
 	cargo build --release
 
 check:
