@@ -15,7 +15,7 @@ BIN_PATH="$OUT_DIR/$BASENAME"
 
 C_FILE="$OUT_DIR/$BASENAME.c"
 
-gcc -std=c99 -pedantic -o "$BIN_PATH" "$C_FILE" > /dev/null
+gcc -std=c99 -pedantic-errors -o "$BIN_PATH" "$C_FILE" > /dev/null
 
 cd "$OUT_DIR"
 "./$BASENAME"
