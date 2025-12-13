@@ -155,6 +155,21 @@ pub fn format_code_blocks<'a>(root: &'a AstNode<'a>, arena: &'a Arena<AstNode<'a
                     continue;
                 }
             }
+        } else {
+            // Special case: last node in the whole doc is a standalone code block (it has no siblings)
+            if let NodeValue::CodeBlock(block) = &current_node.data.borrow().value {
+                let (lang, tag) = parse_metadata(block.info.as_ref());
+                let (opening_html, closing_html) = ast_format_single_code_block(&lang, &tag);
+                let closing_div = wrap(
+                    arena,
+                    current_node,
+                    current_node,
+                    &opening_html,
+                    &closing_html,
+                );
+                node = closing_div.next_sibling();
+                continue;
+            }
         }
 
         node = current_node.next_sibling();
