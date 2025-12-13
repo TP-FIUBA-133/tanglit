@@ -14,7 +14,9 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
     <div class="output-main" v-else-if="result.output">
       <div class="output">
         <div class="output-title">status</div>
-        <div class="output-content">{{ props.result.output.status }}</div>
+        <div :class="['output-content', props.result.output.status ? 'status-error' : 'status-ok']">
+          {{ props.result.output.status }}
+        </div>
       </div>
       <div class="output">
         <div class="output-title">stdout</div>
@@ -38,6 +40,7 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
   margin-bottom: 5pt;
   gap: 10pt;
 }
+
 .close {
   position: absolute;
   top: 5pt;
@@ -92,6 +95,16 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
   justify-content: left;
   text-align: left;
   padding: 5px;
+}
+
+.output-content.status-ok {
+  color: forestgreen;
+  border: solid 1px forestgreen;
+}
+
+.output-content.status-error {
+  color: red;
+  border: solid 1px red;
 }
 
 .add-to-markdown-btn {
