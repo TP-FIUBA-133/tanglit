@@ -18,7 +18,7 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
           {{ props.result.output.status }}
         </div>
       </div>
-      <div class="output">
+      <div class="output" v-if="props.result.output.stdout">
         <div class="output-title">stdout</div>
         <div class="output-content">{{ props.result.output.stdout }}</div>
       </div>
