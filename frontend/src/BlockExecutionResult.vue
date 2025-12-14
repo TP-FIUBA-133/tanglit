@@ -5,12 +5,12 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
 </script>
 <template>
   <div class="result">
-    <button class="close" @click="$emit('close')">Close</button>
     <div class="top">
       <span>Block execution</span>
       <button @click="$emit('run_block', line)">Run</button>
+      <button class="close" @click="$emit('close')">Close</button>
     </div>
-    <div class="error" v-if="props.result.error"><span>Error</span>{{ result.error }}</div>
+    <div class="error" v-if="props.result.error">{{ result.error }}</div>
     <div class="output-main" v-else-if="result.output">
       <div class="output">
         <div class="output-title">status</div>
@@ -40,21 +40,43 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
   margin-bottom: 5pt;
   gap: 10pt;
 }
-
+button {
+  border: none;
+  background-color: #5d8cec;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  &:hover {
+    background-color: #295ccc;
+  }
+  &:active {
+    translate: 2px 2px;
+    background-color: #1a3a66;
+    box-shadow: none;
+  }
+}
 .close {
-  position: absolute;
-  top: 5pt;
-  right: 20pt;
+  margin-left: auto;
   background-color: #4a4a4a;
   color: white;
   border: none;
   border-radius: 3pt;
   padding: 2pt 5pt;
+  &:hover {
+    background-color: #6a6a6a;
+  }
+  &:active {
+    background-color: #2a2a2a;
+  }
 }
 
 .result {
   display: flex;
   flex-direction: column;
+  box-shadow: 0 0 7pt rgba(255, 255, 255, 0.2);
+  border: solid 1px #5e5e5e;
   background-color: #2b2b2b;
   color: #d3d3d3;
   width: calc(100% - 20pt);
@@ -74,11 +96,14 @@ defineEmits(["add_output_to_markdown", "run_block", "close"]);
   white-space: pre-wrap;
   justify-content: left;
   text-align: left;
+  padding: 5pt;
 }
 
 .output {
   background-color: #333333;
   margin: 2px;
+  box-shadow: 0 0 7pt rgba(0, 0, 0, 0.64);
+  border: solid 1px #5e5e5e;
 }
 
 .output-title {

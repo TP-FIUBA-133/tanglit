@@ -263,6 +263,15 @@ watch(
   text-align: center;
   line-height: 19px;
   align-content: center;
+
+  &:hover {
+    background-color: transparent;
+    color: #0fb100;
+  }
+  &:active {
+    color: #0b7500;
+    background-color: transparent;
+  }
 }
 
 .vue-monaco-editor {
