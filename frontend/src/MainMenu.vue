@@ -15,7 +15,7 @@ defineEmits([
 </script>
 
 <template>
-  <div>
+  <div class="menu">
     <button @click="$emit('open_file')" class="custom-file-upload">Open</button>
     <button title="Save" @click="$emit('save_file')">Save</button>
     <button title="Load sample markdown" @click="$emit('load_sample_markdown')">Sample markdown</button>
@@ -29,4 +29,31 @@ defineEmits([
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.menu {
+  display: flex;
+  gap: 5pt;
+  padding: 3pt;
+  background-color: rgb(255, 255, 255);
+  box-shadow: rgb(0, 0, 0) 0px -1px 17px;
+  z-index: 100;
+}
+
+button {
+  border: none;
+  background-color: #5d8cec;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  &:hover {
+    background-color: #295ccc;
+  }
+  &:active {
+    translate: 2px 2px;
+    background-color: #1a3a66;
+    box-shadow: none;
+  }
+}
+</style>

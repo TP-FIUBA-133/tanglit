@@ -36,6 +36,7 @@ const code_theme = defineModel("code_theme");
 
 <template>
   <div class="theme-selectors">
+    <span class="preview-title">Slides</span>
     <div class="theme-selector">
       <label for="theme-select">Main theme: </label>
       <select id="theme-select" v-model="main_theme">
@@ -61,5 +62,19 @@ const code_theme = defineModel("code_theme");
 iframe {
   height: 100%;
   width: 100%;
+}
+
+.theme-selectors {
+  display: flex;
+  gap: 20px;
+  margin: 5px;
+  align-items: center;
+}
+
+.preview-title {
+  font-size: 14pt;
+  font-weight: bold;
+  color: #595959;
+  margin-right: 10px;
 }
 </style>
