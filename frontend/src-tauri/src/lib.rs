@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use tanglit::configuration::get_temp_dir;
 use tanglit::configuration::init_configuration;
 use tanglit::doc::{CodeBlock, Edit, SlideByIndex, TanglitDoc};
 use tanglit::execution::ExecutionOutput;
@@ -70,6 +68,27 @@ fn tanglit_preview_html(raw_markdown: &str, theme: &str) -> Result<String, Strin
 }
 
 #[tauri::command(rename_all = "snake_case")]
+fn tanglit_save_pdf(raw_markdown: &str, theme: &str, output_path: &str) -> Result<(), String> {
+    let doc = TanglitDoc::new_from_string(raw_markdown)
+        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
+    doc.generate_doc_pdf(output_path, theme)
+        .map_err(|e| format!("Error generating PDF: {}", e))
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn tanglit_save_slides_pdf(
+    raw_markdown: &str,
+    theme: &str,
+    code_theme: &str,
+    output_path: &str,
+) -> Result<(), String> {
+    let doc = TanglitDoc::new_from_string(raw_markdown)
+        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
+    doc.generate_slides_pdf(output_path, theme, code_theme)
+        .map_err(|e| format!("Error generating PDF: {}", e))
+}
+
+#[tauri::command(rename_all = "snake_case")]
 fn tanglit_preview_slides(
     raw_markdown: &str,
     theme: &str,
@@ -79,17 +98,6 @@ fn tanglit_preview_slides(
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
     doc.generate_slides_html(theme, code_theme)
         .map_err(|e| format!("Error generating Slides: {}", e))
-}
-
-#[tauri::command(rename_all = "snake_case")]
-fn tanglit_write_print_html(html: &str) -> Result<String, String> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis();
-    let file_path = get_temp_dir().join(format!("tanglit-print-{}.html", timestamp));
-    std::fs::write(&file_path, html).map_err(|e| format!("Error writing temp file: {}", e))?;
-    Ok(file_path.to_string_lossy().to_string())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -117,7 +125,8 @@ pub fn run() {
             tanglit_gen_slides,
             tanglit_preview_html,
             tanglit_preview_slides,
-            tanglit_write_print_html,
+            tanglit_save_pdf,
+            tanglit_save_slides_pdf,
             tanglit_tangle
         ])
         .run(tauri::generate_context!())
