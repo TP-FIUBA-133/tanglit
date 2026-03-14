@@ -1,6 +1,6 @@
-use crate::doc::{ParserError, TangleError};
 #[cfg(feature = "chrome-pdf")]
 use crate::doc::generate_pdf::GeneratePdfError;
+use crate::doc::{ParserError, TangleError};
 use std::fmt;
 
 #[derive(Debug)]
