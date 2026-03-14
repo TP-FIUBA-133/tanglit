@@ -14,7 +14,8 @@
     "@napi-rs/cli": "^2.18.0"
   },
   "scripts": {
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform"
+    "build": "napi build --release",
+    "build:debug": "napi build",
+    "build:ci": "napi build --platform --release"
   }
 }
