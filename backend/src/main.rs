@@ -2,10 +2,8 @@ use clap::Parser;
 use env_logger::init;
 use std::fs::{self, write};
 use std::path::{Path, PathBuf};
-use tanglit::cli::{
-    Commands, GenerateDocArgs, GenerateSlidesMdArgs, GenerateSlidesPdfArgs, TangleAllArgs,
-    TangleArgs,
-};
+use tanglit::cli::GenerateSlidesPdfArgs;
+use tanglit::cli::{Commands, GenerateDocArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs};
 use tanglit::configuration::init_configuration;
 use tanglit::configuration::language_config::LanguageConfig;
 use tanglit::doc::{DEFAULT_THEME, TangleError, TanglitDoc};

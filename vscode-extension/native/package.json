@@ -1,0 +1,21 @@
+{
+  "name": "tanglit-native",
+  "version": "0.1.0",
+  "napi": {
+    "binaryName": "tanglit",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-pc-windows-msvc"
+    ]
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0"
+  },
+  "scripts": {
+    "build": "napi build --release",
+    "build:debug": "napi build",
+    "build:ci": "napi build --platform --release"
+  }
+}

@@ -1,4 +1,5 @@
-use crate::doc::{ParserError, TangleError, generate_pdf::GeneratePdfError};
+use crate::doc::generate_pdf::GeneratePdfError;
+use crate::doc::{ParserError, TangleError};
 use std::fmt;
 
 #[derive(Debug)]

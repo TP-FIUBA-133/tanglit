@@ -88,10 +88,10 @@ export async function save_pdf(raw_markdown: string, theme: string, output_path:
   return (await invoke(TANGLIT_COMMANDS.save_pdf, { raw_markdown, theme, output_path })) as string;
 }
 
-export async function tangle(raw_markdown: string, output_dir: string) {
-  return (await invoke(TANGLIT_COMMANDS.tangle, { raw_markdown, output_path: output_dir })) as number;
-}
-
 export async function save_slides_pdf(raw_markdown: string, theme: string, code_theme: string, output_path: string) {
   return (await invoke(TANGLIT_COMMANDS.save_slides_pdf, { raw_markdown, theme, code_theme, output_path })) as string;
+}
+
+export async function tangle(raw_markdown: string, output_dir: string) {
+  return (await invoke(TANGLIT_COMMANDS.tangle, { raw_markdown, output_path: output_dir })) as number;
 }
