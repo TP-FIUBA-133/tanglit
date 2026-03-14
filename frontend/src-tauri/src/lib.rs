@@ -68,27 +68,6 @@ fn tanglit_preview_html(raw_markdown: &str, theme: &str) -> Result<String, Strin
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn tanglit_save_pdf(raw_markdown: &str, theme: &str, output_path: &str) -> Result<(), String> {
-    let doc = TanglitDoc::new_from_string(raw_markdown)
-        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    doc.generate_doc_pdf(output_path, theme)
-        .map_err(|e| format!("Error generating PDF: {}", e))
-}
-
-#[tauri::command(rename_all = "snake_case")]
-fn tanglit_save_slides_pdf(
-    raw_markdown: &str,
-    theme: &str,
-    code_theme: &str,
-    output_path: &str,
-) -> Result<(), String> {
-    let doc = TanglitDoc::new_from_string(raw_markdown)
-        .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
-    doc.generate_slides_pdf(output_path, theme, code_theme)
-        .map_err(|e| format!("Error generating PDF: {}", e))
-}
-
-#[tauri::command(rename_all = "snake_case")]
 fn tanglit_preview_slides(
     raw_markdown: &str,
     theme: &str,
@@ -125,8 +104,6 @@ pub fn run() {
             tanglit_gen_slides,
             tanglit_preview_html,
             tanglit_preview_slides,
-            tanglit_save_pdf,
-            tanglit_save_slides_pdf,
             tanglit_tangle
         ])
         .run(tauri::generate_context!())

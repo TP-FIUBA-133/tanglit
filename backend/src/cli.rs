@@ -16,12 +16,14 @@ pub enum Commands {
     Execute(ExecuteArgs),
     #[command(about = "Tangle and export all marked code blocks from a markdown file")]
     TangleAll(TangleAllArgs),
+    #[cfg(feature = "chrome-pdf")]
     #[command(about = "Generates a PDF from an markdown file, skipping the items with % markers")]
     GeneratePDF(GenerateDocArgs),
     #[command(about = "Generates an HTML from an markdown file, skipping the items with % markers")]
     GenerateHTML(GenerateDocArgs),
     #[command(about = "Generates markdown slides from a markdown file")]
     GenerateSlidesMd(GenerateSlidesMdArgs),
+    #[cfg(feature = "chrome-pdf")]
     #[command(about = "Generates a PDF with slides from a markdown file")]
     GenerateSlidesPdf(GenerateSlidesPdfArgs),
 }
@@ -129,6 +131,7 @@ pub struct GenerateSlidesMdArgs {
     pub output: OutputDirArg,
 }
 
+#[cfg(feature = "chrome-pdf")]
 #[derive(Args)]
 pub struct GenerateSlidesPdfArgs {
     #[command(flatten)]

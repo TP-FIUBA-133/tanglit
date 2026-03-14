@@ -168,15 +168,29 @@ async function save_html() {
 }
 
 async function save_pdf(theme = "pico") {
-  let pdf_save_path: string | null = await save();
-  if (!pdf_save_path) return;
-  await tanglit.save_pdf(raw_markdown.value, theme, pdf_save_path);
+  let html_save_path: string | null = await save();
+  if (!html_save_path) return;
+  const html = await tanglit.preview_html(raw_markdown.value, theme);
+  writeTextFile(html_save_path, html)
+    .then(() => {
+      toast.success(`Saved HTML to ${html_save_path} (open in browser to print as PDF)`);
+    })
+    .catch((error: string) => {
+      toast.error(`Error saving file: ${error}`);
+    });
 }
 
 async function save_slides_pdf() {
-  let pdf_save_path: string | null = await save();
-  if (!pdf_save_path) return;
-  await tanglit.save_slides_pdf(raw_markdown.value, slide_theme.value, slide_code_theme.value, pdf_save_path);
+  let html_save_path: string | null = await save();
+  if (!html_save_path) return;
+  const html = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
+  writeTextFile(html_save_path, html)
+    .then(() => {
+      toast.success(`Saved slides HTML to ${html_save_path} (open in browser to print as PDF)`);
+    })
+    .catch((error: string) => {
+      toast.error(`Error saving file: ${error}`);
+    });
 }
 
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);

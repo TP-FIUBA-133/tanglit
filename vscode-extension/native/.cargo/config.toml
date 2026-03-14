@@ -1,0 +1,7 @@
+# napi-rs cross-compilation targets
+# Build with: napi build --platform --release --target <triple>
+# Supported targets:
+# - aarch64-apple-darwin (macOS Apple Silicon)
+# - x86_64-apple-darwin (macOS Intel)
+# - x86_64-unknown-linux-gnu (Linux x64)
+# - x86_64-pc-windows-msvc (Windows x64)

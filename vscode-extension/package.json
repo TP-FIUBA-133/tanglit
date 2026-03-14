@@ -1,0 +1,115 @@
+{
+  "name": "tanglit",
+  "displayName": "Tanglit",
+  "description": "Literate programming toolkit: run code blocks, preview slides & docs, tangle code from Markdown",
+  "version": "0.1.0",
+  "publisher": "tanglit",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tanglit.previewSlides",
+        "title": "Tanglit: Preview Slides",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "tanglit.previewHtml",
+        "title": "Tanglit: Preview HTML",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "tanglit.exportMenu",
+        "title": "Tanglit: Export...",
+        "icon": "$(export)"
+      },
+      {
+        "command": "tanglit.runBlock",
+        "title": "Tanglit: Run Block"
+      },
+      {
+        "command": "tanglit.tangleAll",
+        "title": "Tanglit: Tangle All"
+      },
+      {
+        "command": "tanglit.exportPdf",
+        "title": "Tanglit: Export PDF"
+      },
+      {
+        "command": "tanglit.exportSlidesPdf",
+        "title": "Tanglit: Export Slides PDF"
+      },
+      {
+        "command": "tanglit.addOutputToMarkdown",
+        "title": "Tanglit: Add Output to Markdown"
+      },
+      {
+        "command": "tanglit.rerunBlock",
+        "title": "Tanglit: Re-run Block"
+      },
+      {
+        "command": "tanglit.runThisBlock",
+        "title": "Tanglit: Run This Block"
+      },
+      {
+        "command": "tanglit.tangleThisBlock",
+        "title": "Tanglit: Tangle This Block"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "tanglit.previewSlides",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "tanglit.previewHtml",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "tanglit.exportMenu",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "tanglit.runThisBlock",
+          "when": "resourceLangId == markdown",
+          "group": "tanglit@1"
+        },
+        {
+          "command": "tanglit.tangleThisBlock",
+          "when": "resourceLangId == markdown",
+          "group": "tanglit@2"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "npm run build:native && tsc",
+    "build:native": "cd native && napi build --release",
+    "watch": "tsc -watch",
+    "lint": "eslint src/",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "puppeteer-core": "^23.0.0"
+  }
+}

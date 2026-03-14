@@ -15,6 +15,9 @@ check-frontend:
 check-backend:
 	cd backend && make check
 
+check-vscode:
+	cd vscode-extension && make check
+
 check: check-frontend check-backend
 
 format-frontend:
@@ -23,4 +26,10 @@ format-frontend:
 format-backend:
 	cd backend && make format
 
+format-vscode:
+	cd vscode-extension && make format
+
 format: format-frontend format-backend
+
+build-vscode:
+	cd vscode-extension && make build

@@ -1,2 +1,8 @@
 **/target
 **.DS_Store
+.claude/
+openspec/
+presentacion_*
+.github/prompts/
+.github/skills/
+**/node_modules/
