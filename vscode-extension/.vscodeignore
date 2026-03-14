@@ -1,0 +1,6 @@
+**/*
+!out/**
+!native/*.node
+!icon.png
+!package.json
+!LICENSE
