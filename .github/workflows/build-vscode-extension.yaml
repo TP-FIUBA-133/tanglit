@@ -34,8 +34,9 @@ jobs:
           node-version: 20
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
+
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
 
       - name: Install napi-rs CLI
         run: npm install -g @napi-rs/cli
