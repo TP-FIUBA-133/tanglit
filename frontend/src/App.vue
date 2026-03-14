@@ -170,10 +170,8 @@ async function save_html() {
 
 async function openPrintWindow(html: string, title: string) {
   // Inject a script that triggers print dialog after the page loads
-  const printHtml = html.replace(
-    "</body>",
-    `<script>window.addEventListener('load', () => setTimeout(() => window.print(), 500));<\/script></body>`,
-  );
+  const printScript = "<script>window.addEventListener('load', () => setTimeout(() => window.print(), 500));<" + "/script>";
+  const printHtml = html.replace("</body>", printScript + "</body>");
   const printWindow = new WebviewWindow(`print-${Date.now()}`, {
     title: `Print: ${title}`,
     width: 800,
