@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+use tanglit::configuration::get_temp_dir;
 use tanglit::configuration::init_configuration;
 use tanglit::doc::{CodeBlock, Edit, SlideByIndex, TanglitDoc};
 use tanglit::execution::ExecutionOutput;
@@ -80,6 +82,17 @@ fn tanglit_preview_slides(
 }
 
 #[tauri::command(rename_all = "snake_case")]
+fn tanglit_write_print_html(html: &str) -> Result<String, String> {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+    let file_path = get_temp_dir().join(format!("tanglit-print-{}.html", timestamp));
+    std::fs::write(&file_path, html).map_err(|e| format!("Error writing temp file: {}", e))?;
+    Ok(file_path.to_string_lossy().to_string())
+}
+
+#[tauri::command(rename_all = "snake_case")]
 fn tanglit_tangle(raw_markdown: &str, output_path: &str) -> Result<usize, String> {
     let doc = TanglitDoc::new_from_string(raw_markdown)
         .map_err(|e| format!("Error creating TanglitDoc: {}", e))?;
@@ -104,6 +117,7 @@ pub fn run() {
             tanglit_gen_slides,
             tanglit_preview_html,
             tanglit_preview_slides,
+            tanglit_write_print_html,
             tanglit_tangle
         ])
         .run(tauri::generate_context!())

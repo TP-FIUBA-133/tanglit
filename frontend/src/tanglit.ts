@@ -27,6 +27,7 @@ enum TANGLIT_COMMANDS {
   gen_slides = "tanglit_gen_slides",
   preview_html = "tanglit_preview_html",
   preview_slides = "tanglit_preview_slides",
+  write_print_html = "tanglit_write_print_html",
   tangle = "tanglit_tangle",
 }
 
@@ -80,6 +81,10 @@ export async function preview_html(raw_markdown: string, theme: string) {
 
 export async function preview_slides(raw_markdown: string, theme: string, code_theme: string) {
   return (await invoke(TANGLIT_COMMANDS.preview_slides, { raw_markdown, theme, code_theme })) as string;
+}
+
+export async function write_print_html(html: string): Promise<string> {
+  return (await invoke(TANGLIT_COMMANDS.write_print_html, { html })) as string;
 }
 
 export async function tangle(raw_markdown: string, output_dir: string) {

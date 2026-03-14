@@ -9,8 +9,7 @@ import "splitpanes/dist/splitpanes.css";
 import { Pane, Splitpanes } from "splitpanes";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { tempDir, join } from "@tauri-apps/api/path";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { useToast } from "vue-toastification";
 import SlidePreview from "./SlidePreview.vue";
 import HtmlPreview from "./HtmlPreview.vue";
@@ -169,24 +168,16 @@ async function save_html() {
     });
 }
 
-async function openPrintWindow(html: string, title: string) {
+async function openPrintWindow(html: string) {
   try {
     // Inject a script that triggers print dialog after the page loads
     const printScript =
       "<script>window.addEventListener('load', () => setTimeout(() => window.print(), 500));<" + "/script>";
     const printHtml = html.replace("</body>", printScript + "</body>");
 
-    // Write HTML to a temp file so the webview can load it via file://
-    const tmp = await tempDir();
-    const filePath = await join(tmp, `tanglit-print-${Date.now()}.html`);
-    await writeTextFile(filePath, printHtml);
-
-    new WebviewWindow(`print-${Date.now()}`, {
-      title: `Print: ${title}`,
-      width: 800,
-      height: 600,
-      url: filePath,
-    });
+    // Write to temp file via Rust (avoids fs scope issues) and open in browser
+    const filePath = await tanglit.write_print_html(printHtml);
+    await openPath(filePath);
   } catch (e) {
     toast.error(`Error opening print window: ${e}`);
   }
@@ -194,12 +185,12 @@ async function openPrintWindow(html: string, title: string) {
 
 async function save_pdf(theme = "pico") {
   const html = await tanglit.preview_html(raw_markdown.value, theme);
-  await openPrintWindow(html, "Document");
+  await openPrintWindow(html);
 }
 
 async function save_slides_pdf() {
   const html = await tanglit.preview_slides(raw_markdown.value, slide_theme.value, slide_code_theme.value);
-  await openPrintWindow(html, "Slides");
+  await openPrintWindow(html);
 }
 
 const markdown_editor = ref<InstanceType<typeof MarkdownEditor> | null>(null);

@@ -3,21 +3,13 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": [
-    "main",
-    "print-*"
+    "main"
   ],
   "permissions": [
     "core:default",
-    "core:window:allow-create",
     "opener:default",
     "dialog:default",
     "fs:default",
-    "fs:allow-write-text-file",
-    {
-      "identifier": "fs:scope",
-      "allow": [
-        { "path": "$TEMP/**" }
-      ]
-    }
+    "fs:allow-write-text-file"
   ]
 }
