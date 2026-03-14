@@ -23,7 +23,7 @@ pub fn parse_slides_index_from_ast(mdast: &Node, input: &str) -> Vec<SlideByInde
     for (i, child) in children.iter().enumerate() {
         let mut new_slide = None;
         if let Node::Heading(heading) = child {
-            if heading.depth == 1 {
+            if heading.depth == 1 || heading.depth == 2 {
                 let start_line = heading.position.as_ref().unwrap().start.line;
                 if heading.children.is_empty() {
                     // it's empty, we still have a slide, but with no title
