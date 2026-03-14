@@ -4,6 +4,12 @@
   "description": "Literate programming toolkit: run code blocks, preview slides & docs, tangle code from Markdown",
   "version": "0.1.0",
   "publisher": "tanglit",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TP-FIUBA-133/tanglit"
+  },
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
