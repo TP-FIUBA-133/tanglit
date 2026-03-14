@@ -10,6 +10,7 @@ import { Pane, Splitpanes } from "splitpanes";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { tempDir, join } from "@tauri-apps/api/path";
 import { useToast } from "vue-toastification";
 import SlidePreview from "./SlidePreview.vue";
 import HtmlPreview from "./HtmlPreview.vue";
@@ -169,18 +170,26 @@ async function save_html() {
 }
 
 async function openPrintWindow(html: string, title: string) {
-  // Inject a script that triggers print dialog after the page loads
-  const printScript = "<script>window.addEventListener('load', () => setTimeout(() => window.print(), 500));<" + "/script>";
-  const printHtml = html.replace("</body>", printScript + "</body>");
-  const printWindow = new WebviewWindow(`print-${Date.now()}`, {
-    title: `Print: ${title}`,
-    width: 800,
-    height: 600,
-    url: `data:text/html;charset=utf-8,${encodeURIComponent(printHtml)}`,
-  });
-  printWindow.once("tauri://error", (e) => {
+  try {
+    // Inject a script that triggers print dialog after the page loads
+    const printScript =
+      "<script>window.addEventListener('load', () => setTimeout(() => window.print(), 500));<" + "/script>";
+    const printHtml = html.replace("</body>", printScript + "</body>");
+
+    // Write HTML to a temp file so the webview can load it via file://
+    const tmp = await tempDir();
+    const filePath = await join(tmp, `tanglit-print-${Date.now()}.html`);
+    await writeTextFile(filePath, printHtml);
+
+    new WebviewWindow(`print-${Date.now()}`, {
+      title: `Print: ${title}`,
+      width: 800,
+      height: 600,
+      url: filePath,
+    });
+  } catch (e) {
     toast.error(`Error opening print window: ${e}`);
-  });
+  }
 }
 
 async function save_pdf(theme = "pico") {
