@@ -74,3 +74,20 @@ export function tangle(rawMarkdown: string, outputPath: string): number {
 export function exclude(rawMarkdown: string): string {
   return native.exclude(rawMarkdown);
 }
+
+export function savePdf(
+  rawMarkdown: string,
+  theme: string,
+  outputPath: string
+): void {
+  native.savePdf(rawMarkdown, theme, outputPath);
+}
+
+export function saveSlidesPdf(
+  rawMarkdown: string,
+  theme: string,
+  codeTheme: string,
+  outputPath: string
+): void {
+  native.saveSlidesPdf(rawMarkdown, theme, codeTheme, outputPath);
+}

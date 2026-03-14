@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-tanglit = { path = "../../backend", default-features = false }
+tanglit = { path = "../../backend", default-features = false, features = ["chrome-pdf"] }
 napi = { version = "2", features = ["napi4", "serde-json"] }
 napi-derive = "2"
 serde = { version = "1", features = ["derive"] }

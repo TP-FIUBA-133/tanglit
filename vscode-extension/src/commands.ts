@@ -130,7 +130,7 @@ export function registerCommands(
     })
   );
 
-  // Export PDF (via Puppeteer)
+  // Export PDF (via backend headless_chrome)
   context.subscriptions.push(
     vscode.commands.registerCommand("tanglit.exportPdf", async () => {
       const editor = vscode.window.activeTextEditor;
@@ -148,8 +148,7 @@ export function registerCommands(
       if (!savePath) return;
 
       try {
-        const html = tanglit.previewHtml(editor.document.getText(), theme);
-        await htmlToPdf(html, savePath.fsPath, false);
+        tanglit.savePdf(editor.document.getText(), theme, savePath.fsPath);
         vscode.window.showInformationMessage(
           `Tanglit: PDF saved to ${savePath.fsPath}`
         );
@@ -183,12 +182,12 @@ export function registerCommands(
       if (!savePath) return;
 
       try {
-        const html = tanglit.previewSlides(
+        tanglit.saveSlidesPdf(
           editor.document.getText(),
           slideTheme,
-          codeTheme
+          codeTheme,
+          savePath.fsPath
         );
-        await htmlToPdf(html, savePath.fsPath, true);
         vscode.window.showInformationMessage(
           `Tanglit: Slides PDF saved to ${savePath.fsPath}`
         );
@@ -342,60 +341,3 @@ async function exportSlidesHtml(): Promise<void> {
   );
 }
 
-async function htmlToPdf(
-  html: string,
-  outputPath: string,
-  landscape: boolean
-): Promise<void> {
-  const fs = await import("fs");
-  const os = await import("os");
-  const path = await import("path");
-
-  // Write HTML to temp file
-  const tempFile = path.join(os.tmpdir(), "tanglit-export.html");
-  fs.writeFileSync(tempFile, html);
-
-  try {
-    const puppeteer = await import("puppeteer-core");
-    // Try to find Chrome/Chromium
-    const browser = await puppeteer.launch({
-      headless: true,
-      executablePath: findChromePath(),
-    });
-    const page = await browser.newPage();
-    await page.goto(`file://${tempFile}`, { waitUntil: "networkidle0" });
-    await page.pdf({
-      path: outputPath,
-      landscape,
-      printBackground: true,
-      preferCSSPageSize: true,
-    });
-    await browser.close();
-  } finally {
-    fs.unlinkSync(tempFile);
-  }
-}
-
-function findChromePath(): string {
-  const paths = [
-    // macOS
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-    // Linux
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium-browser",
-    "/usr/bin/chromium",
-    // Windows
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-  ];
-
-  const fs = require("fs");
-  for (const p of paths) {
-    if (fs.existsSync(p)) return p;
-  }
-
-  throw new Error(
-    "Chrome/Chromium not found. Install Chrome or set the path manually."
-  );
-}

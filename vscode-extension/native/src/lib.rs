@@ -154,3 +154,24 @@ pub fn exclude(raw_markdown: String) -> Result<String> {
     doc.filter_content_for_doc()
         .map_err(|e| Error::from_reason(format!("Exclude error: {}", e)))
 }
+
+#[napi]
+pub fn save_pdf(raw_markdown: String, theme: String, output_path: String) -> Result<()> {
+    let doc = TanglitDoc::new_from_string(&raw_markdown)
+        .map_err(|e| Error::from_reason(format!("Parse error: {}", e)))?;
+    doc.generate_doc_pdf(&output_path, &theme)
+        .map_err(|e| Error::from_reason(format!("PDF generation error: {}", e)))
+}
+
+#[napi]
+pub fn save_slides_pdf(
+    raw_markdown: String,
+    theme: String,
+    code_theme: String,
+    output_path: String,
+) -> Result<()> {
+    let doc = TanglitDoc::new_from_string(&raw_markdown)
+        .map_err(|e| Error::from_reason(format!("Parse error: {}", e)))?;
+    doc.generate_slides_pdf(&output_path, &theme, &code_theme)
+        .map_err(|e| Error::from_reason(format!("Slides PDF generation error: {}", e)))
+}
