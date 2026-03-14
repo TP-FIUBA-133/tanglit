@@ -5,3 +5,6 @@ openspec/
 .github/prompts/
 .github/skills/
 **/node_modules/
+**/out/
+*.node
+vscode-extension/native/index.d.ts
