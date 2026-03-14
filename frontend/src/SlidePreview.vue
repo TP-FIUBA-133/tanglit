@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue";
+
 const { slides_html } = defineProps<{ slides_html: string }>();
 
 const AVAILABLE_MAIN_THEMES = [
@@ -32,10 +34,21 @@ const AVAILABLE_CODE_THEMES = [
 
 const main_theme = defineModel("main_theme");
 const code_theme = defineModel("code_theme");
+
+const isFullscreen = ref(false);
+
+function onMessage(event: MessageEvent) {
+  if (event.data?.type === "toggle-fullscreen") {
+    isFullscreen.value = !isFullscreen.value;
+  }
+}
+
+onMounted(() => window.addEventListener("message", onMessage));
+onUnmounted(() => window.removeEventListener("message", onMessage));
 </script>
 
 <template>
-  <div class="theme-selectors">
+  <div v-if="!isFullscreen" class="theme-selectors">
     <span class="preview-title">Slides</span>
     <div class="theme-selector">
       <label for="theme-select">Main theme: </label>
@@ -55,13 +68,23 @@ const code_theme = defineModel("code_theme");
       </select>
     </div>
   </div>
-  <iframe :srcdoc="slides_html"></iframe>
+  <iframe :srcdoc="slides_html" :class="{ fullscreen: isFullscreen }" allowfullscreen></iframe>
 </template>
 
 <style scoped>
 iframe {
   height: 100%;
   width: 100%;
+}
+
+iframe.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border: none;
 }
 
 .theme-selectors {

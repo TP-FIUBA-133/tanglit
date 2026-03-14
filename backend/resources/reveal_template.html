@@ -21,6 +21,27 @@
             text-align: left;
         }
 
+        /* Title-only slides: centered */
+        .slide:has(> h1:only-child),
+        .slide:has(> h2:only-child) {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        /* Title + subtitle slides (h1 followed by one paragraph, nothing else) */
+        .slide:has(> h1:first-child + p:last-child) {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+
 
         /* Default styles provided by pandoc.
         ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -137,7 +158,7 @@
         disableLayout: false,
 
         // Vertical centering of slides
-        center: false,
+        center: true,
 
         // Enables touch navigation on devices with touch input
         touch: true,
@@ -241,6 +262,15 @@
 
         ]
     });
+
+    // Override fullscreen to work inside iframes (macOS WKWebView doesn't support iframe Fullscreen API)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'f' || e.key === 'F') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            window.parent.postMessage({ type: 'toggle-fullscreen' }, '*');
+        }
+    }, true);
 </script>
 </body>
 </html>
