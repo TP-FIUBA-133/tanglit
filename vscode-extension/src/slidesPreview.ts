@@ -6,6 +6,14 @@ export class SlidesPreviewManager {
   private currentTheme = "black";
   private currentCodeTheme = "monokai";
 
+  get theme(): string {
+    return this.currentTheme;
+  }
+
+  get codeTheme(): string {
+    return this.currentCodeTheme;
+  }
+
   constructor(private context: vscode.ExtensionContext) {}
 
   show(document: vscode.TextDocument): void {

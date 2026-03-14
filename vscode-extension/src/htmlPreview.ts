@@ -5,6 +5,10 @@ export class HtmlPreviewManager {
   private panel: vscode.WebviewPanel | undefined;
   private currentTheme = "pico";
 
+  get theme(): string {
+    return this.currentTheme;
+  }
+
   constructor(private context: vscode.ExtensionContext) {}
 
   show(document: vscode.TextDocument): void {

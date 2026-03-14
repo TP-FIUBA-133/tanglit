@@ -136,16 +136,19 @@ export function registerCommands(
       const editor = vscode.window.activeTextEditor;
       if (!editor) return;
 
+      const theme = await vscode.window.showQuickPick(
+        ["pico", "water", "sakura", "latex"],
+        { placeHolder: "Select document theme", title: "Export PDF" }
+      );
+      if (!theme) return;
+
       const savePath = await vscode.window.showSaveDialog({
         filters: { PDF: ["pdf"] },
       });
       if (!savePath) return;
 
       try {
-        const html = tanglit.previewHtml(
-          editor.document.getText(),
-          "pico"
-        );
+        const html = tanglit.previewHtml(editor.document.getText(), theme);
         await htmlToPdf(html, savePath.fsPath, false);
         vscode.window.showInformationMessage(
           `Tanglit: PDF saved to ${savePath.fsPath}`
@@ -162,6 +165,18 @@ export function registerCommands(
       const editor = vscode.window.activeTextEditor;
       if (!editor) return;
 
+      const slideTheme = await vscode.window.showQuickPick(
+        ["black", "white", "league", "beige", "sky", "night", "solarized"],
+        { placeHolder: "Select slide theme", title: "Export Slides PDF" }
+      );
+      if (!slideTheme) return;
+
+      const codeTheme = await vscode.window.showQuickPick(
+        ["default", "monokai", "github", "github-dark", "agate", "ascetic"],
+        { placeHolder: "Select code theme", title: "Export Slides PDF" }
+      );
+      if (!codeTheme) return;
+
       const savePath = await vscode.window.showSaveDialog({
         filters: { PDF: ["pdf"] },
       });
@@ -170,8 +185,8 @@ export function registerCommands(
       try {
         const html = tanglit.previewSlides(
           editor.document.getText(),
-          "black",
-          "monokai"
+          slideTheme,
+          codeTheme
         );
         await htmlToPdf(html, savePath.fsPath, true);
         vscode.window.showInformationMessage(
@@ -275,12 +290,18 @@ async function exportHtml(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) return;
 
+  const theme = await vscode.window.showQuickPick(
+    ["pico", "water", "sakura", "latex"],
+    { placeHolder: "Select document theme", title: "Export HTML" }
+  );
+  if (!theme) return;
+
   const savePath = await vscode.window.showSaveDialog({
     filters: { HTML: ["html"] },
   });
   if (!savePath) return;
 
-  const html = tanglit.previewHtml(editor.document.getText(), "pico");
+  const html = tanglit.previewHtml(editor.document.getText(), theme);
   const fs = await import("fs");
   fs.writeFileSync(savePath.fsPath, html);
   vscode.window.showInformationMessage(
@@ -292,6 +313,18 @@ async function exportSlidesHtml(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) return;
 
+  const slideTheme = await vscode.window.showQuickPick(
+    ["black", "white", "league", "beige", "sky", "night", "solarized"],
+    { placeHolder: "Select slide theme", title: "Export Slides HTML" }
+  );
+  if (!slideTheme) return;
+
+  const codeTheme = await vscode.window.showQuickPick(
+    ["default", "monokai", "github", "github-dark", "agate", "ascetic"],
+    { placeHolder: "Select code theme", title: "Export Slides HTML" }
+  );
+  if (!codeTheme) return;
+
   const savePath = await vscode.window.showSaveDialog({
     filters: { HTML: ["html"] },
   });
@@ -299,8 +332,8 @@ async function exportSlidesHtml(): Promise<void> {
 
   const html = tanglit.previewSlides(
     editor.document.getText(),
-    "black",
-    "monokai"
+    slideTheme,
+    codeTheme
   );
   const fs = await import("fs");
   fs.writeFileSync(savePath.fsPath, html);
