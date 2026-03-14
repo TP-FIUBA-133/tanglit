@@ -1,4 +1,3 @@
-#[cfg(feature = "chrome-pdf")]
 use crate::doc::generate_pdf::GeneratePdfError;
 use crate::doc::{ParserError, TangleError};
 use std::fmt;
@@ -7,7 +6,6 @@ use std::fmt;
 pub enum DocError {
     ParseError(ParserError),
     TangleError(TangleError),
-    #[cfg(feature = "chrome-pdf")]
     GeneratePdfError(GeneratePdfError),
     IOError(String),
 }
@@ -17,7 +15,6 @@ impl fmt::Display for DocError {
         match self {
             DocError::ParseError(e) => write!(f, "Error parsing blocks: {}", e),
             DocError::TangleError(e) => write!(f, "Error tangling block: {}", e),
-            #[cfg(feature = "chrome-pdf")]
             DocError::GeneratePdfError(e) => write!(f, "Error generating PDF: {}", e),
             DocError::IOError(msg) => write!(f, "IO Error: {}", msg),
         }
@@ -36,7 +33,6 @@ impl From<TangleError> for DocError {
     }
 }
 
-#[cfg(feature = "chrome-pdf")]
 impl From<GeneratePdfError> for DocError {
     fn from(error: GeneratePdfError) -> Self {
         DocError::GeneratePdfError(error)

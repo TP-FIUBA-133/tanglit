@@ -1,7 +1,6 @@
 mod error;
 mod format_blocks;
 mod gen_html;
-#[cfg(feature = "chrome-pdf")]
 mod generate_pdf;
 mod parser;
 mod tangle;
@@ -12,7 +11,6 @@ use crate::doc::gen_html::{
     AVAILABLE_THEMES, CUSTOM_CSS, REVEAL_TEMPLATE, embed_local_images, markdown_to_html_fragment,
     wrap_in_html_doc,
 };
-#[cfg(feature = "chrome-pdf")]
 use crate::doc::generate_pdf::generate_pdf;
 use crate::doc::parser::exclude::FilterTarget;
 use crate::doc::parser::slides::parse_slides_from_ast;
@@ -22,7 +20,6 @@ use crate::execution::write_code_to_file;
 use comrak::plugins::syntect::SyntectAdapterBuilder;
 use comrak::{Arena, ComrakOptions, Plugins, parse_document};
 pub use error::DocError;
-#[cfg(feature = "chrome-pdf")]
 use headless_chrome::types::PrintToPdfOptions;
 use log::warn;
 use markdown::mdast::Node;
@@ -236,7 +233,6 @@ impl TanglitDoc {
         Ok(embed_local_images(&html))
     }
 
-    #[cfg(feature = "chrome-pdf")]
     pub fn generate_doc_pdf(&self, output_file_path: &str, theme: &str) -> Result<(), DocError> {
         let html = self.generate_html(theme)?;
         generate_pdf(
@@ -267,7 +263,6 @@ impl TanglitDoc {
         Ok(embed_local_images(&all_slides_html_3))
     }
 
-    #[cfg(feature = "chrome-pdf")]
     pub fn generate_slides_pdf(
         &self,
         output_file_path: &str,

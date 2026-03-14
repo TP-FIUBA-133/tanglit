@@ -2,7 +2,6 @@ use clap::Parser;
 use env_logger::init;
 use std::fs::{self, write};
 use std::path::{Path, PathBuf};
-#[cfg(feature = "chrome-pdf")]
 use tanglit::cli::GenerateSlidesPdfArgs;
 use tanglit::cli::{Commands, GenerateDocArgs, GenerateSlidesMdArgs, TangleAllArgs, TangleArgs};
 use tanglit::configuration::init_configuration;
@@ -78,7 +77,6 @@ fn handle_generate_html_command(
     }
 }
 
-#[cfg(feature = "chrome-pdf")]
 fn handle_generate_pdf_command(
     generate_pdf_args: GenerateDocArgs,
 ) -> Result<String, ExecutionError> {
@@ -116,7 +114,6 @@ fn handle_generate_md_slides(args: GenerateSlidesMdArgs) -> Result<String, Execu
     Ok("✅ Slides Generated".to_string())
 }
 
-#[cfg(feature = "chrome-pdf")]
 fn handle_generate_slides_pdf(
     generate_slides_args: GenerateSlidesPdfArgs,
 ) -> Result<String, ExecutionError> {
@@ -147,12 +144,10 @@ fn main() {
     let result = match cli.command {
         Commands::Tangle(args) => handle_tangle_command(args),
         Commands::Execute(args) => handle_execute_command(args),
-        #[cfg(feature = "chrome-pdf")]
         Commands::GeneratePDF(args) => handle_generate_pdf_command(args),
         Commands::GenerateHTML(args) => handle_generate_html_command(args),
         Commands::TangleAll(args) => handle_tangle_all_command(args),
         Commands::GenerateSlidesMd(args) => handle_generate_md_slides(args),
-        #[cfg(feature = "chrome-pdf")]
         Commands::GenerateSlidesPdf(args) => handle_generate_slides_pdf(args),
     };
     match result {
