@@ -1,6 +1,33 @@
 // Native addon bindings for the tanglit Rust backend
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const native = require("../native/tanglit.node");
+// Load the platform-specific native addon
+// Local dev builds produce tanglit.node, CI builds produce tanglit.<platform>.node
+import * as os from "os";
+import * as path from "path";
+
+function loadNativeAddon() {
+  const nativeDir = path.join(__dirname, "..", "native");
+  // Try the generic name first (local dev builds)
+  try {
+    return require(path.join(nativeDir, "tanglit.node"));
+  } catch {
+    // Fall back to platform-specific name (CI builds)
+    const platform = os.platform();
+    const arch = os.arch();
+    const platformMap: Record<string, string> = {
+      "darwin-arm64": "tanglit.darwin-arm64.node",
+      "darwin-x64": "tanglit.darwin-x64.node",
+      "linux-x64": "tanglit.linux-x64-gnu.node",
+      "win32-x64": "tanglit.win32-x64-msvc.node",
+    };
+    const filename = platformMap[`${platform}-${arch}`];
+    if (!filename) {
+      throw new Error(`Unsupported platform: ${platform}-${arch}`);
+    }
+    return require(path.join(nativeDir, filename));
+  }
+}
+
+const native = loadNativeAddon();
 
 export interface CodeBlock {
   tag: string;
