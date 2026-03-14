@@ -260,7 +260,7 @@ impl TanglitDoc {
         let all_slides_html_1 = REVEAL_TEMPLATE.replace("{slides_content}", &slides_sections);
         let all_slides_html_2 = all_slides_html_1.replace("{slide_theme}", theme);
         let all_slides_html_3 = all_slides_html_2.replace("{code_theme}", code_theme);
-        Ok(all_slides_html_3)
+        Ok(embed_local_images(&all_slides_html_3))
     }
 
     pub fn generate_slides_pdf(
